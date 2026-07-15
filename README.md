@@ -22,6 +22,12 @@ Canonical home of the Godsend Consulting IBM i coding standards.
   `--embed-resources` inlines the CSS (hence the explicit path) so the HTML
   is fully self-contained.
 
+- [pandoc_setup.cmd](pandoc_setup.cmd) — one-shot pandoc setup: installs or
+  upgrades pandoc via winget, downloads the latest
+  [github-markdown-css](https://github.com/sindresorhus/github-markdown-css),
+  installs it and [github-markdown.html](github-markdown.html) (the pandoc
+  template, master copy kept here) into `%APPDATA%\pandoc`, and smoke-tests a
+  conversion.
 - [sync-standards.ps1](sync-standards.ps1) — copies the canonical file into
   every sibling IBM i repo (any directory beside this one containing
   `QRPGLESRC`, `QCLSRC`, or `QSQLSRC`), so each repo carries an identical

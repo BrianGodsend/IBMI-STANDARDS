@@ -1,0 +1,5 @@
+# Byproducts of pandoc_setup.cmd: the CSS is downloaded fresh from
+# sindresorhus/github-markdown-css and installed to %APPDATA%\pandoc;
+# temp/ holds its conversion smoke test.
+github-markdown.css
+temp/
