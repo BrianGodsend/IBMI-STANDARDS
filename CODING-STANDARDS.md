@@ -109,7 +109,10 @@ them on the IBM i (see `QRPGLESRC/BLDOBJ.SQLRPGLE` header for the full reference
     which must fit **columns 8–80**: the compiler does not read free-form code
     past column 80, so a line extending beyond it may cause compiler errors.
     80 is a hard limit for `/FREE` lines.
-  - CL, CMD, SQL, PNLGRP: keep within 80.
+  - CL, CMD, SQL: keep within 80.
+  - PNLGRP: 134 is the hard maximum (the source file permits it); prefer ≤ 80
+    for readability. A `:HELP` title that would exceed 80 stays on one line
+    (see §6) rather than wrapping or being abbreviated.
 - **Section separators:** a full-width comment rule between major sections and a
   shorter/dashed rule between minor groups:
   - RPG: `// ****...****` (major), `// ----...----` (minor)
@@ -380,6 +383,12 @@ ctl-opt actgrp(*CALLER);
   column 14; keyword continuations break with `+` and align under the first
   keyword. Stay within 80 columns.
 - Commands UPPERCASE; comments sentence case.
+- **Block form for conditionals:** wrap `IF`/`ELSE`/`WHEN` bodies in
+  `DO … ENDDO` even when the body is a single statement, so a block can grow
+  later without rewriting the conditional. Recognized exceptions where a
+  one-liner is fine: the standard STDERR handler (`IF COND(&STDERR)
+  THEN(RETURN)` — the most common one, written verbatim across programs),
+  the occasional `SELECT`/`WHEN` one-liner, and legacy code.
 
 ### 3.3 Declarations
 
@@ -615,6 +624,10 @@ CREATE OR REPLACE TABLE ... (
   Consulting, <years>`.
 - **Reuse shared help:** `:IMPORT NAME='*' PNLGRP='TMHLP'.` and `:IMHELP` the
   shared modules (`TMHLP/<PARM>/REQ`) instead of retyping parameter help.
+- **`:HELP` titles stay on one line:** the descriptive text that follows
+  `:HELP NAME='…'.` cannot wrap to the next line, and must not be abbreviated to
+  fit — let the line run long (up to the 134 hard limit) rather than shorten the
+  wording.
 - Command-help members define this fixed set of help IDs, in order:
   1. `'<CMD>/ALL'` — aggregate of all sections (for full-command help)
   2. `'<CMD>'` — extended description

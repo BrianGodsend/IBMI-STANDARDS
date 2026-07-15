@@ -6,8 +6,14 @@ Canonical home of the Godsend Consulting IBM i coding standards.
   RPGLE/SQLRPGLE, CL/CLLE, SQL, CMD, PNLGRP, and DDS source. **Edit it here
   only.**
 - [CODING-STANDARDS.html](CODING-STANDARDS.html) — styled HTML render of the
-  standard for offline reading. Regenerate after editing the markdown
-  (`npx marked --gfm` into the existing `<article>` shell).
+  standard for offline reading. Regenerate after editing the markdown:
+
+  ```text
+  pandoc --from gfm --to html5 --standalone \
+    --metadata title="IBM i Coding Standards" \
+    -o CODING-STANDARDS.html CODING-STANDARDS.md
+  ```
+
 - [sync-standards.ps1](sync-standards.ps1) — copies the canonical file into
   every sibling IBM i repo (any directory beside this one containing
   `QRPGLESRC`, `QCLSRC`, or `QSQLSRC`), so each repo carries an identical

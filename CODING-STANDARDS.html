@@ -1,740 +1,286 @@
-<!doctype html>
-<html id="mdhtml">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui">
-    <meta http-equiv="X-UA-Compatible" content="IE=9">
-    <title>IBM i Coding Standards</title>
-    <style>body {
-  box-sizing: border-box;
-  min-width: 200px;
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 45px;
-}
-
-@font-face {
-  font-family: octicons-link;
-  src: url(data:font/woff;charset=utf-8;base64,d09GRgABAAAAAAZwABAAAAAACFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABEU0lHAAAGaAAAAAgAAAAIAAAAAUdTVUIAAAZcAAAACgAAAAoAAQAAT1MvMgAAAyQAAABJAAAAYFYEU3RjbWFwAAADcAAAAEUAAACAAJThvmN2dCAAAATkAAAABAAAAAQAAAAAZnBnbQAAA7gAAACyAAABCUM+8IhnYXNwAAAGTAAAABAAAAAQABoAI2dseWYAAAFsAAABPAAAAZwcEq9taGVhZAAAAsgAAAA0AAAANgh4a91oaGVhAAADCAAAABoAAAAkCA8DRGhtdHgAAAL8AAAADAAAAAwGAACfbG9jYQAAAsAAAAAIAAAACABiATBtYXhwAAACqAAAABgAAAAgAA8ASm5hbWUAAAToAAABQgAAAlXu73sOcG9zdAAABiwAAAAeAAAAME3QpOBwcmVwAAAEbAAAAHYAAAB/aFGpk3jaTY6xa8JAGMW/O62BDi0tJLYQincXEypYIiGJjSgHniQ6umTsUEyLm5BV6NDBP8Tpts6F0v+k/0an2i+itHDw3v2+9+DBKTzsJNnWJNTgHEy4BgG3EMI9DCEDOGEXzDADU5hBKMIgNPZqoD3SilVaXZCER3/I7AtxEJLtzzuZfI+VVkprxTlXShWKb3TBecG11rwoNlmmn1P2WYcJczl32etSpKnziC7lQyWe1smVPy/Lt7Kc+0vWY/gAgIIEqAN9we0pwKXreiMasxvabDQMM4riO+qxM2ogwDGOZTXxwxDiycQIcoYFBLj5K3EIaSctAq2kTYiw+ymhce7vwM9jSqO8JyVd5RH9gyTt2+J/yUmYlIR0s04n6+7Vm1ozezUeLEaUjhaDSuXHwVRgvLJn1tQ7xiuVv/ocTRF42mNgZGBgYGbwZOBiAAFGJBIMAAizAFoAAABiAGIAznjaY2BkYGAA4in8zwXi+W2+MjCzMIDApSwvXzC97Z4Ig8N/BxYGZgcgl52BCSQKAA3jCV8CAABfAAAAAAQAAEB42mNgZGBg4f3vACQZQABIMjKgAmYAKEgBXgAAeNpjYGY6wTiBgZWBg2kmUxoDA4MPhGZMYzBi1AHygVLYQUCaawqDA4PChxhmh/8ODDEsvAwHgMKMIDnGL0x7gJQCAwMAJd4MFwAAAHjaY2BgYGaA4DAGRgYQkAHyGMF8NgYrIM3JIAGVYYDT+AEjAwuDFpBmA9KMDEwMCh9i/v8H8sH0/4dQc1iAmAkALaUKLgAAAHjaTY9LDsIgEIbtgqHUPpDi3gPoBVyRTmTddOmqTXThEXqrob2gQ1FjwpDvfwCBdmdXC5AVKFu3e5MfNFJ29KTQT48Ob9/lqYwOGZxeUelN2U2R6+cArgtCJpauW7UQBqnFkUsjAY/kOU1cP+DAgvxwn1chZDwUbd6CFimGXwzwF6tPbFIcjEl+vvmM/byA48e6tWrKArm4ZJlCbdsrxksL1AwWn/yBSJKpYbq8AXaaTb8AAHja28jAwOC00ZrBeQNDQOWO//sdBBgYGRiYWYAEELEwMTE4uzo5Zzo5b2BxdnFOcALxNjA6b2ByTswC8jYwg0VlNuoCTWAMqNzMzsoK1rEhNqByEyerg5PMJlYuVueETKcd/89uBpnpvIEVomeHLoMsAAe1Id4AAAAAAAB42oWQT07CQBTGv0JBhagk7HQzKxca2sJCE1hDt4QF+9JOS0nbaaYDCQfwCJ7Au3AHj+LO13FMmm6cl7785vven0kBjHCBhfpYuNa5Ph1c0e2Xu3jEvWG7UdPDLZ4N92nOm+EBXuAbHmIMSRMs+4aUEd4Nd3CHD8NdvOLTsA2GL8M9PODbcL+hD7C1xoaHeLJSEao0FEW14ckxC+TU8TxvsY6X0eLPmRhry2WVioLpkrbp84LLQPGI7c6sOiUzpWIWS5GzlSgUzzLBSikOPFTOXqly7rqx0Z1Q5BAIoZBSFihQYQOOBEdkCOgXTOHA07HAGjGWiIjaPZNW13/+lm6S9FT7rLHFJ6fQbkATOG1j2OFMucKJJsxIVfQORl+9Jyda6Sl1dUYhSCm1dyClfoeDve4qMYdLEbfqHf3O/AdDumsjAAB42mNgYoAAZQYjBmyAGYQZmdhL8zLdDEydARfoAqIAAAABAAMABwAKABMAB///AA8AAQAAAAAAAAAAAAAAAAABAAAAAA==) format('woff');
-}
-
-.markdown-body {
-  -ms-text-size-adjust: 100%;
-  -webkit-text-size-adjust: 100%;
-  line-height: 1.5;
-  color: #24292e;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  font-size: 16px;
-  line-height: 1.5;
-  word-wrap: break-word;
-}
-
-.markdown-body .pl-c {
-  color: #6a737d;
-}
-
-.markdown-body .pl-c1,
-.markdown-body .pl-s .pl-v {
-  color: #005cc5;
-}
-
-.markdown-body .pl-e,
-.markdown-body .pl-en {
-  color: #6f42c1;
-}
-
-.markdown-body .pl-smi,
-.markdown-body .pl-s .pl-s1 {
-  color: #24292e;
-}
-
-.markdown-body .pl-ent {
-  color: #22863a;
-}
-
-.markdown-body .pl-k {
-  color: #d73a49;
-}
-
-.markdown-body .pl-s,
-.markdown-body .pl-pds,
-.markdown-body .pl-s .pl-pse .pl-s1,
-.markdown-body .pl-sr,
-.markdown-body .pl-sr .pl-cce,
-.markdown-body .pl-sr .pl-sre,
-.markdown-body .pl-sr .pl-sra {
-  color: #032f62;
-}
-
-.markdown-body .pl-v,
-.markdown-body .pl-smw {
-  color: #e36209;
-}
-
-.markdown-body .pl-bu {
-  color: #b31d28;
-}
-
-.markdown-body .pl-ii {
-  color: #fafbfc;
-  background-color: #b31d28;
-}
-
-.markdown-body .pl-c2 {
-  color: #fafbfc;
-  background-color: #d73a49;
-}
-
-.markdown-body .pl-c2::before {
-  content: "^M";
-}
-
-.markdown-body .pl-sr .pl-cce {
-  font-weight: bold;
-  color: #22863a;
-}
-
-.markdown-body .pl-ml {
-  color: #735c0f;
-}
-
-.markdown-body .pl-mh,
-.markdown-body .pl-mh .pl-en,
-.markdown-body .pl-ms {
-  font-weight: bold;
-  color: #005cc5;
-}
-
-.markdown-body .pl-mi {
-  font-style: italic;
-  color: #24292e;
-}
-
-.markdown-body .pl-mb {
-  font-weight: bold;
-  color: #24292e;
-}
-
-.markdown-body .pl-md {
-  color: #b31d28;
-  background-color: #ffeef0;
-}
-
-.markdown-body .pl-mi1 {
-  color: #22863a;
-  background-color: #f0fff4;
-}
-
-.markdown-body .pl-mc {
-  color: #e36209;
-  background-color: #ffebda;
-}
-
-.markdown-body .pl-mi2 {
-  color: #f6f8fa;
-  background-color: #005cc5;
-}
-
-.markdown-body .pl-mdr {
-  font-weight: bold;
-  color: #6f42c1;
-}
-
-.markdown-body .pl-ba {
-  color: #586069;
-}
-
-.markdown-body .pl-sg {
-  color: #959da5;
-}
-
-.markdown-body .pl-corl {
-  text-decoration: underline;
-  color: #032f62;
-}
-
-.markdown-body .octicon {
-  display: inline-block;
-  vertical-align: text-top;
-  fill: currentColor;
-}
-
-.markdown-body a {
-  background-color: transparent;
-}
-
-.markdown-body a:active,
-.markdown-body a:hover {
-  outline-width: 0;
-}
-
-.markdown-body h1 {
-  font-size: 2em;
-  margin: 0.67em 0;
-}
-
-.markdown-body img {
-  border-style: none;
-}
-
-.markdown-body code,
-.markdown-body kbd,
-.markdown-body pre {
-  font-family: monospace, monospace;
-  font-size: 1em;
-}
-
-.markdown-body hr {
-  box-sizing: content-box;
-  height: 0;
-  overflow: visible;
-}
-
-.markdown-body input {
-  font: inherit;
-  margin: 0;
-}
-
-.markdown-body input {
-  overflow: visible;
-}
-
-.markdown-body [type="checkbox"] {
-  box-sizing: border-box;
-  padding: 0;
-}
-
-.markdown-body * {
-  box-sizing: border-box;
-}
-
-.markdown-body input {
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
-}
-
-.markdown-body a {
-  color: #0366d6;
-  text-decoration: none;
-}
-
-.markdown-body a:hover {
-  text-decoration: underline;
-}
-
-.markdown-body strong {
-  font-weight: 700;
-}
-
-.markdown-body hr {
-  height: 0;
-  margin: 15px 0;
-  overflow: hidden;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid #dfe2e5;
-}
-
-.markdown-body hr::before {
-  display: table;
-  content: "";
-}
-
-.markdown-body hr::after {
-  display: table;
-  clear: both;
-  content: "";
-}
-
-.markdown-body table {
-  border-spacing: 0;
-  border-collapse: collapse;
-}
-
-.markdown-body td,
-.markdown-body th {
-  padding: 0;
-}
-
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3,
-.markdown-body h4,
-.markdown-body h5,
-.markdown-body h6 {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.markdown-body h1 {
-  font-size: 32px;
-  font-weight: 600;
-}
-
-.markdown-body h2 {
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.markdown-body h3 {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.markdown-body h4 {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.markdown-body h5 {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.markdown-body h6 {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.markdown-body p {
-  margin-top: 0;
-  margin-bottom: 10px;
-}
-
-.markdown-body blockquote {
-  margin: 0;
-}
-
-.markdown-body ul,
-.markdown-body ol {
-  padding-left: 0;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.markdown-body ol ol,
-.markdown-body ul ol {
-  list-style-type: lower-roman;
-}
-
-.markdown-body ul ul ol,
-.markdown-body ul ol ol,
-.markdown-body ol ul ol,
-.markdown-body ol ol ol {
-  list-style-type: lower-alpha;
-}
-
-.markdown-body dd {
-  margin-left: 0;
-}
-
-.markdown-body code {
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-  font-size: 12px;
-}
-
-.markdown-body pre {
-  margin-top: 0;
-  margin-bottom: 0;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-  font-size: 12px;
-}
-
-.markdown-body .octicon {
-  vertical-align: text-bottom;
-}
-
-.markdown-body .pl-0 {
-  padding-left: 0 !important;
-}
-
-.markdown-body .pl-1 {
-  padding-left: 4px !important;
-}
-
-.markdown-body .pl-2 {
-  padding-left: 8px !important;
-}
-
-.markdown-body .pl-3 {
-  padding-left: 16px !important;
-}
-
-.markdown-body .pl-4 {
-  padding-left: 24px !important;
-}
-
-.markdown-body .pl-5 {
-  padding-left: 32px !important;
-}
-
-.markdown-body .pl-6 {
-  padding-left: 40px !important;
-}
-
-.markdown-body::before {
-  display: table;
-  content: "";
-}
-
-.markdown-body::after {
-  display: table;
-  clear: both;
-  content: "";
-}
-
-.markdown-body>*:first-child {
-  margin-top: 0 !important;
-}
-
-.markdown-body>*:last-child {
-  margin-bottom: 0 !important;
-}
-
-.markdown-body a:not([href]) {
-  color: inherit;
-  text-decoration: none;
-}
-
-.markdown-body .anchor {
-  float: left;
-  padding-right: 4px;
-  margin-left: -20px;
-  line-height: 1;
-}
-
-.markdown-body .anchor:focus {
-  outline: none;
-}
-
-.markdown-body p,
-.markdown-body blockquote,
-.markdown-body ul,
-.markdown-body ol,
-.markdown-body dl,
-.markdown-body table,
-.markdown-body pre {
-  margin-top: 0;
-  margin-bottom: 16px;
-}
-
-.markdown-body hr {
-  height: 1px;
-  padding: 0;
-  margin: 24px 0;
-  background-color: #d5d5d6;
-  border: 0;
-}
-
-.markdown-body blockquote {
-  padding: 0 1em;
-  color: #6a737d;
-  border-left: 0.25em solid #dfe2e5;
-  font-style: italic;
-}
-
-.markdown-body blockquote>:first-child {
-  margin-top: 0;
-}
-
-.markdown-body blockquote>:last-child {
-  margin-bottom: 0;
-}
-
-.markdown-body kbd {
-  display: inline-block;
-  padding: 3px 5px;
-  font-size: 11px;
-  line-height: 10px;
-  color: #444d56;
-  vertical-align: middle;
-  background-color: #fafbfc;
-  border: solid 1px #c6cbd1;
-  border-bottom-color: #959da5;
-  border-radius: 3px;
-  box-shadow: inset 0 -1px 0 #959da5;
-}
-
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3,
-.markdown-body h4,
-.markdown-body h5,
-.markdown-body h6 {
-  margin-top: 24px;
-  margin-bottom: 16px;
-  font-weight: 600;
-  line-height: 1.25;
-}
-
-.markdown-body h1 .octicon-link,
-.markdown-body h2 .octicon-link,
-.markdown-body h3 .octicon-link,
-.markdown-body h4 .octicon-link,
-.markdown-body h5 .octicon-link,
-.markdown-body h6 .octicon-link {
-  color: #1b1f23;
-  vertical-align: middle;
-  visibility: hidden;
-}
-
-.markdown-body h1:hover .anchor,
-.markdown-body h2:hover .anchor,
-.markdown-body h3:hover .anchor,
-.markdown-body h4:hover .anchor,
-.markdown-body h5:hover .anchor,
-.markdown-body h6:hover .anchor {
-  text-decoration: none;
-}
-
-.markdown-body h1:hover .anchor .octicon-link,
-.markdown-body h2:hover .anchor .octicon-link,
-.markdown-body h3:hover .anchor .octicon-link,
-.markdown-body h4:hover .anchor .octicon-link,
-.markdown-body h5:hover .anchor .octicon-link,
-.markdown-body h6:hover .anchor .octicon-link {
-  visibility: visible;
-}
-
-.markdown-body h1 {
-  padding-bottom: 0.3em;
-  font-size: 2em;
-  border-bottom: 1px solid #eaecef;
-}
-
-.markdown-body h2 {
-  padding-bottom: 0.3em;
-  font-size: 1.5em;
-  border-bottom: 1px solid #eaecef;
-}
-
-.markdown-body h3 {
-  font-size: 1.25em;
-}
-
-.markdown-body h4 {
-  font-size: 1em;
-}
-
-.markdown-body h5 {
-  font-size: 0.875em;
-}
-
-.markdown-body h6 {
-  font-size: 0.85em;
-  color: #6a737d;
-}
-
-.markdown-body ul,
-.markdown-body ol {
-  padding-left: 2em;
-}
-
-.markdown-body ul ul,
-.markdown-body ul ol,
-.markdown-body ol ol,
-.markdown-body ol ul {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.markdown-body li {
-  word-wrap: break-all;
-}
-
-.markdown-body li>p {
-  margin-top: 16px;
-}
-
-.markdown-body li+li {
-  margin-top: 0.25em;
-}
-
-.markdown-body dl {
-  padding: 0;
-}
-
-.markdown-body dl dt {
-  padding: 0;
-  margin-top: 16px;
-  font-size: 1em;
-  font-style: italic;
-  font-weight: 600;
-}
-
-.markdown-body dl dd {
-  padding: 0 16px;
-  margin-bottom: 16px;
-}
-
-.markdown-body table {
-  display: block;
-  overflow: auto;
-}
-
-.markdown-body table th {
-  font-weight: 600;
-}
-
-.markdown-body table th,
-.markdown-body table td {
-  padding: 6px 13px;
-  border: 1px solid #dfe2e5;
-}
-
-.markdown-body table tr {
-  background-color: #fff;
-  border-top: 1px solid #c6cbd1;
-}
-
-.markdown-body table tr:nth-child(2n) {
-  background-color: #f6f8fa;
-}
-
-.markdown-body img {
-  max-width: 100%;
-  box-sizing: content-box;
-  background-color: #fff;
-}
-
-.markdown-body img[align=right] {
-  padding-left: 20px;
-}
-
-.markdown-body img[align=left] {
-  padding-right: 20px;
-}
-
-.markdown-body code {
-  padding: 0.2em 0.4em;
-  margin: 0;
-  font-size: 85%;
-  background-color: #f1f1f1;
-  border: 1px solid #cecece;
-  border-radius: 3px;
-}
-
-.markdown-body pre {
-  word-wrap: normal;
-}
-
-.markdown-body pre>code {
-  padding: 0;
-  margin: 0;
-  font-size: 100%;
-  word-break: normal;
-  white-space: pre;
-  background: transparent;
-  border: 0;
-}
-
-.markdown-body .highlight {
-  margin-bottom: 16px;
-}
-
-.markdown-body .highlight pre {
-  margin-bottom: 0;
-  word-break: normal;
-}
-
-.markdown-body .highlight pre,
-.markdown-body pre {
-  padding: 16px;
-  overflow: auto;
-  font-size: 85%;
-  line-height: 1.45;
-  background-color: #f1f1f1;
-  border: 1px solid #cecece;
-  border-radius: 3px;
-}
-
-.markdown-body pre code {
-  display: inline;
-  max-width: auto;
-  padding: 0;
-  margin: 0;
-  overflow: visible;
-  line-height: inherit;
-  word-wrap: normal;
-  background-color: transparent;
-  border: 0;
-}
-
-.markdown-body .full-commit .btn-outline:not(:disabled):hover {
-  color: #005cc5;
-  border-color: #005cc5;
-}
-
-.markdown-body kbd {
-  display: inline-block;
-  padding: 3px 5px;
-  font: 11px "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-  line-height: 10px;
-  color: #444d56;
-  vertical-align: middle;
-  background-color: #fafbfc;
-  border: solid 1px #d1d5da;
-  border-bottom-color: #c6cbd1;
-  border-radius: 3px;
-  box-shadow: inset 0 -1px 0 #c6cbd1;
-}
-
-.markdown-body :checked+.radio-label {
-  position: relative;
-  z-index: 1;
-  border-color: #0366d6;
-}
-
-.markdown-body .task-list-item {
-  list-style-type: none;
-}
-
-.markdown-body .task-list-item+.task-list-item {
-  margin-top: 3px;
-}
-
-.markdown-body .task-list-item input {
-  margin: 0 0.2em 0.25em -1.6em;
-  vertical-align: middle;
-}
-
-.markdown-body hr {
-  border-bottom-color: #eee;
-}</style>
-  </head>
-  <body>
-    <article class="markdown-body">
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.10" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>IBM i Coding Standards</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">IBM i Coding Standards</h1>
+</header>
 <h1 id="ibm-i-coding-standards">IBM i Coding Standards</h1>
-<p>Baseline standards for RPGLE/SQLRPGLE, CL/CLLE, SQL, CMD, PNLGRP, and DDS source
-in <strong>all Godsend Consulting IBM i repositories</strong> — BSLIB, RBUTL, and any future
-project. They were derived from the current best practice in these libraries —
-primarily the Task Manager (<code>TM*</code>) and developer-utility (<code>RB*</code>) members in
-<strong>RBUTL</strong>, which is the curated exemplar. BSLIB additionally carries legacy,
-third-party, and scratch code that does <em>not</em> set the standard (see section 10,
-Legacy and scratch code).</p>
+<p>Baseline standards for RPGLE/SQLRPGLE, CL/CLLE, SQL, CMD, PNLGRP, and
+DDS source in <strong>all Godsend Consulting IBM i repositories</strong>
+— BSLIB, RBUTL, and any future project. They were derived from the
+current best practice in these libraries — primarily the Task Manager
+(<code>TM*</code>) and developer-utility (<code>RB*</code>) members in
+<strong>RBUTL</strong>, which is the curated exemplar. BSLIB
+additionally carries legacy, third-party, and scratch code that does
+<em>not</em> set the standard (see section 10, Legacy and scratch
+code).</p>
 <blockquote>
-<p><strong>Canonical copy:</strong> the master of this document lives in the <code>IBMI-STANDARDS</code>
-repository; every IBM i repo carries an identical copy so the standard travels
-with the code. Edit the master, then run its <code>sync-standards.ps1</code> to refresh
-the repo copies — don&#39;t edit a repo copy directly.</p>
+<p><strong>Canonical copy:</strong> the master of this document lives in
+the <code>IBMI-STANDARDS</code> repository; every IBM i repo carries an
+identical copy so the standard travels with the code. Edit the master,
+then run its <code>sync-standards.ps1</code> to refresh the repo copies
+— don't edit a repo copy directly.</p>
 </blockquote>
-<p><strong>Precedence:</strong> when this document and an existing member disagree, follow this
-document for new code. When this document is silent, match the closest RBUTL
-sibling of the same member type.</p>
-<hr>
-<h2 id="1-universal-member-conventions">1. Universal member conventions</h2>
+<p><strong>Precedence:</strong> when this document and an existing
+member disagree, follow this document for new code. When this document
+is silent, match the closest RBUTL sibling of the same member type.</p>
+<hr />
+<h2 id="1-universal-member-conventions">1. Universal member
+conventions</h2>
 <p>These apply to every source member regardless of language.</p>
 <h3 id="11-standard-header">1.1 Standard header</h3>
 <p>Every member begins with, in order:</p>
-<ol>
-<li><strong>Purpose comment</strong> — what the member does, plus any design notes worth a
-paragraph. Write <em>why</em>, not just <em>what</em>.</li>
+<ol type="1">
+<li><strong>Purpose comment</strong> — what the member does, plus any
+design notes worth a paragraph. Write <em>why</em>, not just
+<em>what</em>.</li>
 <li><strong><code>MODIFICATIONS:</code> log</strong> (see 1.2).</li>
 <li><strong>BLDOBJ build directives</strong> (see 1.3).</li>
-<li><strong>Copyright</strong> — <code>(c) Copyright Godsend Consulting, &lt;first year&gt;-&lt;current year&gt;</code>.
-In RPG this is the <code>ctl-opt copyright(...)</code> keyword; in CL the <code>COPYRIGHT</code>
-command; elsewhere a comment line (CMD) or <code>:COPYR.</code> tag (PNLGRP).</li>
+<li><strong>Copyright</strong> —
+<code>(c) Copyright Godsend Consulting, &lt;first year&gt;-&lt;current year&gt;</code>.
+In RPG this is the <code>ctl-opt copyright(...)</code> keyword; in CL
+the <code>COPYRIGHT</code> command; elsewhere a comment line (CMD) or
+<code>:COPYR.</code> tag (PNLGRP).</li>
 </ol>
 <p>Comment syntax per language:</p>
 <table>
@@ -745,14 +291,16 @@ command; elsewhere a comment line (CMD) or <code>:COPYR.</code> tag (PNLGRP).</l
 <th>Build directive line</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td>RPGLE (**FREE)</td>
 <td><code>///</code> doc block / <code>//</code></td>
 <td><code>//  *&gt;  &lt;BLDOBJ CRTDFT/&gt;</code></td>
 </tr>
 <tr>
 <td>CL, CMD</td>
-<td><code>/* ... */</code> with floating <code>+</code> continuation</td>
+<td><code>/* ... */</code> with floating <code>+</code>
+continuation</td>
 <td><code>/*&gt; CRTCMD ... &lt;*/</code></td>
 </tr>
 <tr>
@@ -770,122 +318,143 @@ command; elsewhere a comment line (CMD) or <code>:COPYR.</code> tag (PNLGRP).</l
 <td><code>␣*</code> doc block / <code>A*</code></td>
 <td><code>*&gt; CRTDSPF FILE(&amp;O/&amp;N) ... -</code></td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <h3 id="12-modifications-log">1.2 MODIFICATIONS log</h3>
-<p>Every change appends a dated entry. Format is fixed — tools and habit depend on it:</p>
-<pre><code class="language-text">MODIFICATIONS:
+<p>Every change appends a dated entry. Format is fixed — tools and habit
+depend on it:</p>
+<pre class="text"><code>MODIFICATIONS:
 BS  08/03/25  Created.
 BS  06/15/26  Updated documentation to acknowledge that default
                values for an undefined location effectively remove
                all restrictions that can be set for a location.
-@@
-</code></pre>
+@@</code></pre>
 <ul>
-<li><code>XX  MM/DD/YY  description</code> — contributor initials, US date, sentence-case
-description ending in a period.</li>
-<li>Entries are chronological, oldest first; <strong>append new entries at the bottom</strong>,
-immediately before the <code>@@</code> terminator line.</li>
-<li>Continuation lines align under the description, indented one extra space.</li>
-<li>A change spanning several days may show the extra date(s) on the continuation
-line(s), aligned under the first date.</li>
-<li>One entry may describe several changes made together; start each on its own
-continuation line.</li>
+<li><code>XX  MM/DD/YY  description</code> — contributor initials, US
+date, sentence-case description ending in a period.</li>
+<li>Entries are chronological, oldest first; <strong>append new entries
+at the bottom</strong>, immediately before the <code>@@</code>
+terminator line.</li>
+<li>Continuation lines align under the description, indented one extra
+space.</li>
+<li>A change spanning several days may show the extra date(s) on the
+continuation line(s), aligned under the first date.</li>
+<li>One entry may describe several changes made together; start each on
+its own continuation line.</li>
 <li>The <code>@@</code> line terminates the log. Never remove it.</li>
-<li><code>@TODO</code> lines may follow the log (before the build directives) to record known
-future work.</li>
+<li><code>@TODO</code> lines may follow the log (before the build
+directives) to record known future work.</li>
 </ul>
 <h3 id="13-bldobj-build-directives">1.3 BLDOBJ build directives</h3>
-<p>There is no external build system. Each member embeds its own create/compile
-command(s) between <code>*&gt;</code> and <code>&lt;*</code> markers; the <code>BLDOBJ</code> command extracts and runs
-them on the IBM i (see <code>QRPGLESRC/BLDOBJ.SQLRPGLE</code> header for the full reference).</p>
+<p>There is no external build system. Each member embeds its own
+create/compile command(s) between <code>*&gt;</code> and
+<code>&lt;*</code> markers; the <code>BLDOBJ</code> command extracts and
+runs them on the IBM i (see <code>QRPGLESRC/BLDOBJ.SQLRPGLE</code>
+header for the full reference).</p>
 <ul>
-<li><p>If the default create command for the member type is correct, use:</p>
-<pre><code class="language-text">/*&gt; &lt;BLDOBJ CRTDFT/&gt;                                                &lt;*/
-/*&gt; &lt;BLDOBJ EOF/&gt;                                                   &lt;*/
-</code></pre>
-</li>
-<li><p>Otherwise spell out the command(s) with substitution variables — <code>&amp;O</code> object
-library, <code>&amp;L</code> source library, <code>&amp;F</code> source file, <code>&amp;N</code> member, <code>&amp;ON</code> object name,
-<code>&amp;T</code> type, <code>&amp;X</code> member text:</p>
-<pre><code class="language-text">/*&gt; CRTCMD CMD(&amp;O/&amp;ON) SRCFILE(&amp;L/&amp;F) SRCMBR(&amp;N) PGM(TMACRUSR)      &lt;*/
-/*&gt; &lt;BLDOBJ EOF/&gt;                                                   &lt;*/
-</code></pre>
-</li>
-<li><p>Prefix a command with <code>IGN:</code> when its failure must not stop the build
-(e.g. <code>IGN:DLTF QTEMP/OUTPUT</code>).</p>
-</li>
-<li><p>Always end with <code>&lt;BLDOBJ EOF/&gt;</code> so scanning stops.</p>
-</li>
-<li><p>Keep directives correct when copying a member — that <em>is</em> its build script.</p>
-</li>
+<li><p>If the default create command for the member type is correct,
+use:</p>
+<pre class="text"><code>/*&gt; &lt;BLDOBJ CRTDFT/&gt;                                                &lt;*/
+/*&gt; &lt;BLDOBJ EOF/&gt;                                                   &lt;*/</code></pre></li>
+<li><p>Otherwise spell out the command(s) with substitution variables —
+<code>&amp;O</code> object library, <code>&amp;L</code> source library,
+<code>&amp;F</code> source file, <code>&amp;N</code> member,
+<code>&amp;ON</code> object name, <code>&amp;T</code> type,
+<code>&amp;X</code> member text:</p>
+<pre class="text"><code>/*&gt; CRTCMD CMD(&amp;O/&amp;ON) SRCFILE(&amp;L/&amp;F) SRCMBR(&amp;N) PGM(TMACRUSR)      &lt;*/
+/*&gt; &lt;BLDOBJ EOF/&gt;                                                   &lt;*/</code></pre></li>
+<li><p>Prefix a command with <code>IGN:</code> when its failure must not
+stop the build (e.g. <code>IGN:DLTF QTEMP/OUTPUT</code>).</p></li>
+<li><p>Always end with <code>&lt;BLDOBJ EOF/&gt;</code> so scanning
+stops.</p></li>
+<li><p>Keep directives correct when copying a member — that <em>is</em>
+its build script.</p></li>
 </ul>
 <h3 id="14-layout">1.4 Layout</h3>
 <ul>
-<li><strong>Line width:</strong> target ≤ 80 characters everywhere. Hard limits:<ul>
-<li><code>**FREE</code> RPG: code starts in column 1; the server source files give 100 data
-columns, so 100 is the hard maximum — but stay ≤ 80 for readability (RBUTL
-practice is ~76).</li>
-<li>Hybrid RPG (no <code>**FREE</code>): fixed-form specs are, well, fixed — their columns
-aren&#39;t a style choice. The line-length rule governs the free-form lines,
-which must fit <strong>columns 8–80</strong>: the compiler does not read free-form code
-past column 80, so a line extending beyond it may cause compiler errors.
-80 is a hard limit for <code>/FREE</code> lines.</li>
-<li>CL, CMD, SQL, PNLGRP: keep within 80.</li>
-</ul>
-</li>
-<li><strong>Section separators:</strong> a full-width comment rule between major sections and a
-shorter/dashed rule between minor groups:<ul>
-<li>RPG: <code>// ****...****</code> (major), <code>// ----...----</code> (minor)</li>
-<li>CL/SQL: <code>/* ****...**** */</code></li>
-<li>PNLGRP: <code>.* ****...****</code> with a <code>.* Title</code> + <code>.* -----</code> underline per section</li>
-</ul>
-</li>
-<li><strong>Blocks read top-down:</strong> mainline first, error handling next, subroutines/
-procedures last, each introduced by a one-line comment saying what it does.</li>
-</ul>
-<h3 id="15-naming-and-member-families">1.5 Naming and member families</h3>
+<li><strong>Line width:</strong> target ≤ 80 characters everywhere. Hard
+limits:
 <ul>
-<li><strong>Prefixes:</strong> <code>TM*</code> / <code>*TM</code> = Task Manager, <code>RB*</code> = developer utilities,
-<code>BS*</code> = BSLIB personal utilities. <code>JUNK*</code> = scratch (never promote, git-ignored).</li>
-<li>A user-facing command is a <strong>family sharing one base name</strong>:<ul>
-<li><code>QCMDSRC/NAME.CMD</code> — command definition (<code>HLPPNLGRP(NAME)</code>, <code>MSGF(TMMSG)</code>)</li>
-<li><code>QCLSRC/NAME.CLLE</code> or an RPGLE — command-processing program (CPP)</li>
+<li><code>**FREE</code> RPG: code starts in column 1; the server source
+files give 100 data columns, so 100 is the hard maximum — but stay ≤ 80
+for readability (RBUTL practice is ~76).</li>
+<li>Hybrid RPG (no <code>**FREE</code>): fixed-form specs are, well,
+fixed — their columns aren't a style choice. The line-length rule
+governs the free-form lines, which must fit <strong>columns
+8–80</strong>: the compiler does not read free-form code past column 80,
+so a line extending beyond it may cause compiler errors. 80 is a hard
+limit for <code>/FREE</code> lines.</li>
+<li>CL, CMD, SQL: keep within 80.</li>
+<li>PNLGRP: 134 is the hard maximum (the source file permits it); prefer
+≤ 80 for readability. A <code>:HELP</code> title that would exceed 80
+stays on one line (see §6) rather than wrapping or being
+abbreviated.</li>
+</ul></li>
+<li><strong>Section separators:</strong> a full-width comment rule
+between major sections and a shorter/dashed rule between minor groups:
+<ul>
+<li>RPG: <code>// ****...****</code> (major),
+<code>// ----...----</code> (minor)</li>
+<li>CL/SQL: <code>/* ****...**** */</code></li>
+<li>PNLGRP: <code>.* ****...****</code> with a <code>.* Title</code> +
+<code>.* -----</code> underline per section</li>
+</ul></li>
+<li><strong>Blocks read top-down:</strong> mainline first, error
+handling next, subroutines/ procedures last, each introduced by a
+one-line comment saying what it does.</li>
+</ul>
+<h3 id="15-naming-and-member-families">1.5 Naming and member
+families</h3>
+<ul>
+<li><strong>Prefixes:</strong> <code>TM*</code> / <code>*TM</code> =
+Task Manager, <code>RB*</code> = developer utilities, <code>BS*</code> =
+BSLIB personal utilities. <code>JUNK*</code> = scratch (never promote,
+git-ignored).</li>
+<li>A user-facing command is a <strong>family sharing one base
+name</strong>:
+<ul>
+<li><code>QCMDSRC/NAME.CMD</code> — command definition
+(<code>HLPPNLGRP(NAME)</code>, <code>MSGF(TMMSG)</code>)</li>
+<li><code>QCLSRC/NAME.CLLE</code> or an RPGLE — command-processing
+program (CPP)</li>
 <li><code>QPNLSRC/NAME.PNLGRP</code> — command help</li>
-<li>messages come from the shared <code>TMMSG</code> message file (<code>QREXSRC/TMMSG.REXX</code>)</li>
-</ul>
-</li>
-<li><strong>RPG member suffixes:</strong> base name = program/entry, <code>…H</code> = prototypes/constants
-copybook, <code>…P</code> = service-procedure implementations. Example: <code>RTVLOCTM</code> +
-<code>RTVLOCTMH</code>. An <code>…R</code> suffix (subprocedure-only module, e.g. <code>SQL2XLSXR</code>)
-appears in third-party code and tool-generated members — recognize it as a
-pattern, but it is not required for new members.</li>
+<li>messages come from the shared <code>TMMSG</code> message file
+(<code>QREXSRC/TMMSG.REXX</code>)</li>
+</ul></li>
+<li><strong>RPG member suffixes:</strong> base name = program/entry,
+<code>…H</code> = prototypes/constants copybook, <code>…P</code> =
+service-procedure implementations. Example: <code>RTVLOCTM</code> +
+<code>RTVLOCTMH</code>. An <code>…R</code> suffix (subprocedure-only
+module, e.g. <code>SQL2XLSXR</code>) appears in third-party code and
+tool-generated members — recognize it as a pattern, but it is not
+required for new members.</li>
 <li>Related CRUD commands funnel into one shared CPP distinguished by a
-<code>CONSTANT(*ADD|*CHANGE|…)</code> MODE parameter (e.g. <code>TMACRUSR</code>, <code>TMCCDTSK</code>).</li>
+<code>CONSTANT(*ADD|*CHANGE|…)</code> MODE parameter (e.g.
+<code>TMACRUSR</code>, <code>TMCCDTSK</code>).</li>
 </ul>
-<hr>
+<hr />
 <h2 id="2-rpgle--sqlrpgle">2. RPGLE / SQLRPGLE</h2>
 <h3 id="21-form">2.1 Form</h3>
 <ul>
-<li><p><strong>All new RPG is fully free-form:</strong> <code>**FREE</code> on line 1, column 1.</p>
-</li>
-<li><p>Use <code>.SQLRPGLE</code> when the member contains embedded SQL, <code>.RPGLE</code> otherwise.</p>
-</li>
-<li><p>Never write new fixed-form or hybrid code. Convert opportunistically when a
-fixed member needs nontrivial changes (CVTRPGFREE/CVTRPG1511 tools exist for
-this).</p>
-</li>
-<li><p>When maintaining fixed-form <strong>D specs</strong>: subfields indent the <strong>name only</strong>,
-by one space — nothing else shifts. Keywords always start in the first
-column of the keyword area (column 44); don&#39;t stagger them per line:</p>
-<pre><code class="language-rpgle">     D PgmSts         SDs                  Qualified
+<li><p><strong>All new RPG is fully free-form:</strong>
+<code>**FREE</code> on line 1, column 1.</p></li>
+<li><p>Use <code>.SQLRPGLE</code> when the member contains embedded SQL,
+<code>.RPGLE</code> otherwise.</p></li>
+<li><p>Never write new fixed-form or hybrid code. Convert
+opportunistically when a fixed member needs nontrivial changes
+(CVTRPGFREE/CVTRPG1511 tools exist for this).</p></li>
+<li><p>When maintaining fixed-form <strong>D specs</strong>: subfields
+indent the <strong>name only</strong>, by one space — nothing else
+shifts. Keywords always start in the first column of the keyword area
+(column 44); don't stagger them per line:</p>
+<pre class="rpgle"><code>     D PgmSts         SDs                  Qualified
      D  PgmNam           *Proc
      D  CurJob                       10a   Overlay( PgmSts: 244 )
-     D  UsrPrf                       10a   Overlay( PgmSts: 254 )
-</code></pre>
-</li>
+     D  UsrPrf                       10a   Overlay( PgmSts: 254 )</code></pre></li>
 </ul>
-<h3 id="22-header-and-control-options">2.2 Header and control options</h3>
-<pre><code class="language-rpgle">**FREE
+<h3 id="22-header-and-control-options">2.2 Header and control
+options</h3>
+<pre class="rpgle"><code>**FREE
 ///
 //  Retrieves the attributes for the requested location.  If the
 //       location has not been setup in the Task Manager, default
@@ -907,102 +476,110 @@ ctl-opt extbinint(*YES);
 /IF NOT DEFINED(*CRTRPGMOD)
 ctl-opt dftactgrp(*NO);
 ctl-opt actgrp(*CALLER);
-/ENDIF
-</code></pre>
+/ENDIF</code></pre>
 <ul>
-<li>One keyword per <code>ctl-opt</code> statement, <code>copyright</code> first.</li>
-<li>The standard option set is exactly the block above. Add <code>bnddir(...)</code>,
-<code>alwnull(*USRCTL)</code>, etc. only when needed.</li>
-<li>Guard binding-only keywords with <code>/IF NOT DEFINED(*CRTRPGMOD)</code> so the member
-compiles as either a bound program or a module.</li>
-<li>Activation group: <code>*CALLER</code> for called/service-style programs; <code>*NEW</code> for
-top-level interactive programs (work-with panels, menus).</li>
+<li>One keyword per <code>ctl-opt</code> statement,
+<code>copyright</code> first.</li>
+<li>The standard option set is exactly the block above. Add
+<code>bnddir(...)</code>, <code>alwnull(*USRCTL)</code>, etc. only when
+needed.</li>
+<li>Guard binding-only keywords with
+<code>/IF NOT DEFINED(*CRTRPGMOD)</code> so the member compiles as
+either a bound program or a module.</li>
+<li>Activation group: <code>*CALLER</code> for called/service-style
+programs; <code>*NEW</code> for top-level interactive programs
+(work-with panels, menus).</li>
 </ul>
-<h3 id="23-copybooks-h-members">2.3 Copybooks (<code>…H</code> members)</h3>
+<h3 id="23-copybooks-h-members">2.3 Copybooks (<code>…H</code>
+members)</h3>
 <ul>
-<li><p>Include with <code>/copy qrpglesrc,membername</code> (lowercase, no library).</p>
-</li>
+<li><p>Include with <code>/copy qrpglesrc,membername</code> (lowercase,
+no library).</p></li>
 <li><p>Every copybook starts with an include guard:</p>
-<pre><code class="language-rpgle">**FREE
+<pre class="rpgle"><code>**FREE
 /IF DEFINED(TMXXXWRKH)
 /EOF
 /ENDIF
-/DEFINE TMXXXWRKH
-</code></pre>
-</li>
-<li><p>A copybook contains, in order: nested <code>/copy</code> of its dependencies, named
-constants, data-structure templates, then prototypes. Terminate each group with
-a separator rule.</p>
-</li>
-<li><p>Shared IBM API prototypes live in the <code>QAPIH</code> (QUS*/QMH* APIs), <code>QILEH</code> (ILE
-CEE/QSN), and <code>QUIMH</code> (UIM) copybooks — extend those rather than redeclaring
-APIs inline.</p>
-</li>
-<li><p>Document every prototype with a <code>///</code> doc block in <strong>ILEDoc format</strong>:
-one-line summary, <code>@param</code> per parameter, <code>@return</code> when a value is
-returned. Doc commands are lowercase (<code>@param</code>, <code>@return</code>); use <code>@return</code> —
-<code>@returns</code> (with an s) is not supported.</p>
-</li>
+/DEFINE TMXXXWRKH</code></pre></li>
+<li><p>A copybook contains, in order: nested <code>/copy</code> of its
+dependencies, named constants, data-structure templates, then
+prototypes. Terminate each group with a separator rule.</p></li>
+<li><p>Shared IBM API prototypes live in the <code>QAPIH</code>
+(QUS*/QMH* APIs), <code>QILEH</code> (ILE CEE/QSN), and
+<code>QUIMH</code> (UIM) copybooks — extend those rather than
+redeclaring APIs inline.</p></li>
+<li><p>Document every prototype with a <code>///</code> doc block in
+<strong>ILEDoc format</strong>: one-line summary, <code>@param</code>
+per parameter, <code>@return</code> when a value is returned. Doc
+commands are lowercase (<code>@param</code>, <code>@return</code>); use
+<code>@return</code> — <code>@returns</code> (with an s) is not
+supported.</p></li>
 </ul>
 <h3 id="24-declarations">2.4 Declarations</h3>
 <ul>
-<li><p><strong>Constants:</strong> SCREAMING_SNAKE_CASE prefixed with <code>@</code> (C-style), grouped by
-topic: <code>dcl-c @QUIM_FNCKEY_ENTER 1;</code>, <code>dcl-c @SQLCODE_NODATA 100;</code></p>
-</li>
-<li><p><strong>Templates:</strong> all-lowercase name with a <code>_t</code> suffix — &quot;My Template
-Variable&quot; becomes <code>mytemplatevariable_t</code> — declared <code>template qualified inz</code>:</p>
-<pre><code class="language-rpgle">dcl-ds usrlste_t   template qualified inz;
+<li><p><strong>Constants:</strong> SCREAMING_SNAKE_CASE prefixed with
+<code>@</code> (C-style), grouped by topic:
+<code>dcl-c @QUIM_FNCKEY_ENTER 1;</code>,
+<code>dcl-c @SQLCODE_NODATA 100;</code></p></li>
+<li><p><strong>Templates:</strong> all-lowercase name with a
+<code>_t</code> suffix — "My Template Variable" becomes
+<code>mytemplatevariable_t</code> — declared
+<code>template qualified inz</code>:</p>
+<pre class="rpgle"><code>dcl-ds usrlste_t   template qualified inz;
   opt            Int(5);
   usrPrf         Char(10);
-end-ds;
-</code></pre>
-<p>Instances: <code>dcl-ds usrLstE likeds(usrlste_t) inz(*LIKEDS);</code></p>
-</li>
-<li><p><strong>External-file templates:</strong> one per table, used for <code>like()</code> typing and fetch
-buffers:</p>
-<pre><code class="language-rpgle">dcl-ds tmusr_t  extname(&#39;TMUSR&#39;) inz(*EXTDFT) qualified template;
-end-ds;
-</code></pre>
-</li>
-<li><p>Type fields with <code>like(...)</code>/<code>likeds(...)</code> against templates or other fields —
-avoid re-hardcoding lengths.</p>
-</li>
-<li><p><strong>Casing:</strong> camelCase for variables, procedures, and DS subfields; type
-keywords capitalized (<code>Char</code>, <code>Varchar</code>, <code>Int</code>, <code>Uns</code>, <code>Packed</code>, <code>Ind</code>,
-<code>Timestamp</code>); all other keywords lowercase — opcodes, declarations, and
-control words (<code>dcl-s</code>, <code>dcl-ds</code>, <code>ds</code>, <code>begsr</code>, <code>exsr</code>, <code>endif</code>) and BIFs
-(<code>%scan</code>, <code>%char</code>, <code>%trim</code>); figurative constants and compiler values
-uppercase (<code>*ON</code>, <code>*OFF</code>, <code>*BLANK</code>, <code>*NULL</code>, <code>*VARSIZE</code>, <code>*ESCAPE</code>,
-<code>*LIKEDS</code>).</p>
-</li>
-<li><p>Align the type column within a declaration group; separate groups with blank
-lines or minor rules.</p>
-</li>
-<li><p>Entry parameters take a <code>px</code> prefix (<code>pxTskName</code>); indicators declare <code>Ind</code>;
-cursors are named <code>csrXxx</code>.</p>
-</li>
+end-ds;</code></pre>
+<p>Instances:
+<code>dcl-ds usrLstE likeds(usrlste_t) inz(*LIKEDS);</code></p></li>
+<li><p><strong>External-file templates:</strong> one per table, used for
+<code>like()</code> typing and fetch buffers:</p>
+<pre class="rpgle"><code>dcl-ds tmusr_t  extname(&#39;TMUSR&#39;) inz(*EXTDFT) qualified template;
+end-ds;</code></pre></li>
+<li><p>Type fields with <code>like(...)</code>/<code>likeds(...)</code>
+against templates or other fields — avoid re-hardcoding
+lengths.</p></li>
+<li><p><strong>Casing:</strong> camelCase for variables, procedures, and
+DS subfields; type keywords capitalized (<code>Char</code>,
+<code>Varchar</code>, <code>Int</code>, <code>Uns</code>,
+<code>Packed</code>, <code>Ind</code>, <code>Timestamp</code>); all
+other keywords lowercase — opcodes, declarations, and control words
+(<code>dcl-s</code>, <code>dcl-ds</code>, <code>ds</code>,
+<code>begsr</code>, <code>exsr</code>, <code>endif</code>) and BIFs
+(<code>%scan</code>, <code>%char</code>, <code>%trim</code>); figurative
+constants and compiler values uppercase (<code>*ON</code>,
+<code>*OFF</code>, <code>*BLANK</code>, <code>*NULL</code>,
+<code>*VARSIZE</code>, <code>*ESCAPE</code>,
+<code>*LIKEDS</code>).</p></li>
+<li><p>Align the type column within a declaration group; separate groups
+with blank lines or minor rules.</p></li>
+<li><p>Entry parameters take a <code>px</code> prefix
+(<code>pxTskName</code>); indicators declare <code>Ind</code>; cursors
+are named <code>csrXxx</code>.</p></li>
 </ul>
 <h3 id="25-program-structure">2.5 Program structure</h3>
 <ul>
-<li><p><strong>Entry:</strong> the program&#39;s <code>dcl-pi PGMNAME</code> sits directly under a <code>// *ENTRY</code>
-marker, immediately after <code>/copy</code> of the program&#39;s own <code>…H</code> copybook (the
-copybook carries the matching <code>dcl-pr … extpgm(&#39;PGMNAME&#39;)</code>).</p>
-</li>
-<li><p><strong>Mainline</strong> is linear cycle-main code introduced by a <code>/// main() ///</code> doc
-block. It delegates to subprocedures and ends with <code>exsr exitPgm</code> / <code>return</code>.</p>
-</li>
-<li><p>Use <strong>subroutines</strong> (<code>begsr</code>) only for mainline flow plumbing: <code>exitPgm</code>
-(set <code>*inLR</code>, close handles) and <code>*inzsr</code> (one-time init, cursor DECLAREs).
-All real logic goes in <strong>subprocedures</strong> (<code>dcl-proc</code>).</p>
-</li>
-<li><p>Name subroutines — and subprocedures — <code>&lt;verb&gt;&lt;Object&gt;</code> in camelCase:
-<code>getItemHeader</code>, <code>loadList</code>, <code>sndStsMsg</code>, <code>exitPgm</code>.</p>
-</li>
-<li><p>Every procedure carries a <code>///</code> doc block (ILEDoc, see 2.3): a one-line
-short description, then <code>@param</code> and <code>@return</code> lines as needed.</p>
-</li>
+<li><p><strong>Entry:</strong> the program's <code>dcl-pi PGMNAME</code>
+sits directly under a <code>// *ENTRY</code> marker, immediately after
+<code>/copy</code> of the program's own <code>…H</code> copybook (the
+copybook carries the matching
+<code>dcl-pr … extpgm('PGMNAME')</code>).</p></li>
+<li><p><strong>Mainline</strong> is linear cycle-main code introduced by
+a <code>/// main() ///</code> doc block. It delegates to subprocedures
+and ends with <code>exsr exitPgm</code> / <code>return</code>.</p></li>
+<li><p>Use <strong>subroutines</strong> (<code>begsr</code>) only for
+mainline flow plumbing: <code>exitPgm</code> (set <code>*inLR</code>,
+close handles) and <code>*inzsr</code> (one-time init, cursor DECLAREs).
+All real logic goes in <strong>subprocedures</strong>
+(<code>dcl-proc</code>).</p></li>
+<li><p>Name subroutines — and subprocedures —
+<code>&lt;verb&gt;&lt;Object&gt;</code> in camelCase:
+<code>getItemHeader</code>, <code>loadList</code>,
+<code>sndStsMsg</code>, <code>exitPgm</code>.</p></li>
+<li><p>Every procedure carries a <code>///</code> doc block (ILEDoc, see
+2.3): a one-line short description, then <code>@param</code> and
+<code>@return</code> lines as needed.</p></li>
 <li><p>Subprocedure skeleton:</p>
-<pre><code class="language-rpgle">///
+<pre class="rpgle"><code>///
 // Loads a panel work with ... list
 //
 // @param hdl        Panel handle
@@ -1021,123 +598,138 @@ dcl-proc loadList;
 
   ...body...
   return endOpt &lt;&gt; @QUIM_LSTPOS_FIRST;
-end-proc;
-</code></pre>
-<p><code>dcl-pi *N</code>, locals after a minor rule, single exit where practical.</p>
-</li>
-<li><p>Parameters are <code>const</code> unless returned; use <code>options(*NOPASS)</code> /
-<code>options(*OMIT: *NOPASS)</code> for optional parameters. Test them with:</p>
-<pre><code class="language-rpgle">if %parms() &gt;= %parmnum(topEnt) and %addr(topEnt) &lt;&gt; *NULL;
-</code></pre>
-</li>
-<li><p>Prefer modern expression forms: <code>if x in %list(a: b: c);</code>, <code>%char(%date(): *ISO0)</code>, <code>snd-msg</code>.</p>
-</li>
-<li><p>Indent 2 spaces per level. Continuation lines indent 4 spaces; when breaking a
-parameter list, lead continuation lines with the <code>:</code> separator:</p>
-<pre><code class="language-rpgle">quim_displayPanel(hdl: fncKey: pnlIDName: @QUIM_REDISPLAY_YES
+end-proc;</code></pre>
+<p><code>dcl-pi *N</code>, locals after a minor rule, single exit where
+practical.</p></li>
+<li><p>Parameters are <code>const</code> unless returned; use
+<code>options(*NOPASS)</code> / <code>options(*OMIT: *NOPASS)</code> for
+optional parameters. Test them with:</p>
+<pre class="rpgle"><code>if %parms() &gt;= %parmnum(topEnt) and %addr(topEnt) &lt;&gt; *NULL;</code></pre></li>
+<li><p>Prefer modern expression forms:
+<code>if x in %list(a: b: c);</code>,
+<code>%char(%date(): *ISO0)</code>, <code>snd-msg</code>.</p></li>
+<li><p>Indent 2 spaces per level. Continuation lines indent 4 spaces;
+when breaking a parameter list, lead continuation lines with the
+<code>:</code> separator:</p>
+<pre class="rpgle"><code>quim_displayPanel(hdl: fncKey: pnlIDName: @QUIM_REDISPLAY_YES
     : errc0100: @QUIM_USRTSK_OLD
-    : msgRefKey);
-</code></pre>
-</li>
+    : msgRefKey);</code></pre></li>
 </ul>
-<h3 id="26-error-handling-and-messages">2.6 Error handling and messages</h3>
+<h3 id="26-error-handling-and-messages">2.6 Error handling and
+messages</h3>
 <ul>
-<li>Call APIs through the <code>qapi_*</code>/<code>quim_*</code>/<code>qile_*</code> wrappers with an
-<code>errc0100</code> structure (<code>likeds(qapi_errc0100_t)</code>); <code>reset errc0100;</code> and set
-<code>bytPrv</code> before each call, then test <code>bytAvl</code>.</li>
-<li>Use <code>callp(e)</code> + <code>%error()</code> for tolerated command failures; escalate with
-<code>snd-msg *ESCAPE %msg(...) %target(&#39;*PGMBDY&#39;: 1);</code>.</li>
-<li>Status messages go through a small <code>sndStsMsg</code> procedure (CPDA0FF / *STATUS);
-clear with a blank message when done.</li>
+<li>Call APIs through the
+<code>qapi_*</code>/<code>quim_*</code>/<code>qile_*</code> wrappers
+with an <code>errc0100</code> structure
+(<code>likeds(qapi_errc0100_t)</code>); <code>reset errc0100;</code> and
+set <code>bytPrv</code> before each call, then test
+<code>bytAvl</code>.</li>
+<li>Use <code>callp(e)</code> + <code>%error()</code> for tolerated
+command failures; escalate with
+<code>snd-msg *ESCAPE %msg(...) %target('*PGMBDY': 1);</code>.</li>
+<li>Status messages go through a small <code>sndStsMsg</code> procedure
+(CPDA0FF / *STATUS); clear with a blank message when done.</li>
 </ul>
 <h3 id="27-embedded-sql">2.7 Embedded SQL</h3>
 <ul>
-<li><p><code>exec sql</code> on its own line; the statement indented under it.</p>
-</li>
-<li><p>SQL keywords UPPERCASE; table/column names lowercase; host variables
-<code>:camelCase</code> (qualified DS subfields allowed: <code>:recUsr.usrPrf</code>).</p>
-</li>
-<li><p>Continuation style: <strong>leading commas</strong>, 2-space progressive indent:</p>
-<pre><code class="language-rpgle">exec sql
+<li><p><code>exec sql</code> on its own line; the statement indented
+under it.</p></li>
+<li><p>SQL keywords UPPERCASE; table/column names lowercase; host
+variables <code>:camelCase</code> (qualified DS subfields allowed:
+<code>:recUsr.usrPrf</code>).</p></li>
+<li><p>Continuation style: <strong>leading commas</strong>, 2-space
+progressive indent:</p>
+<pre class="rpgle"><code>exec sql
   SELECT a.usrPrf
       , a.grpPrf, a.usrName, a.emlAdr
     INTO :recUsr
     FROM tmusr a
-    WHERE a.usrPrf = :usrPrf;
-</code></pre>
-</li>
-<li><p>Alias every table (<code>a</code>, <code>b</code>; <code>z</code> for innermost subselects) and qualify every
-column.</p>
-</li>
-<li><p>Singleton reads end with <code>FETCH FIRST 1 ROWS ONLY</code>.</p>
-</li>
-<li><p>Bulk reads use a <code>DECLARE</code>d cursor + multi-row fetch into a <code>dim(...)</code> DS
-array, then <code>CLOSE</code>; row count from <code>sqlEr3</code>:</p>
-<pre><code class="language-rpgle">exec sql
-  FETCH csrUsrs FOR :@WRKUSRTM_USRS_MAX ROWS INTO :recUsrs;
-</code></pre>
-</li>
-<li><p><code>DECLARE CURSOR</code> belongs in the mainline/<code>*inzsr</code>, <strong>not</strong> in a subprocedure
-(activation-group/scoping surprises).</p>
-</li>
-<li><p>Test <code>sqlcode</code> against named constants (<code>@SQLCODE_SUCCESS</code>, <code>@SQLCODE_NODATA</code>)
-right after each statement; reset stale state (e.g. counts) before reuse.</p>
-</li>
+    WHERE a.usrPrf = :usrPrf;</code></pre></li>
+<li><p>Alias every table (<code>a</code>, <code>b</code>; <code>z</code>
+for innermost subselects) and qualify every column.</p></li>
+<li><p>Singleton reads end with
+<code>FETCH FIRST 1 ROWS ONLY</code>.</p></li>
+<li><p>Bulk reads use a <code>DECLARE</code>d cursor + multi-row fetch
+into a <code>dim(...)</code> DS array, then <code>CLOSE</code>; row
+count from <code>sqlEr3</code>:</p>
+<pre class="rpgle"><code>exec sql
+  FETCH csrUsrs FOR :@WRKUSRTM_USRS_MAX ROWS INTO :recUsrs;</code></pre></li>
+<li><p><code>DECLARE CURSOR</code> belongs in the
+mainline/<code>*inzsr</code>, <strong>not</strong> in a subprocedure
+(activation-group/scoping surprises).</p></li>
+<li><p>Test <code>sqlcode</code> against named constants
+(<code>@SQLCODE_SUCCESS</code>, <code>@SQLCODE_NODATA</code>) right
+after each statement; reset stale state (e.g. counts) before
+reuse.</p></li>
 </ul>
-<hr>
+<hr />
 <h2 id="3-cl--clle">3. CL / CLLE</h2>
-<p><code>QCLSRC/TEMPLATE.CLP</code> is the canonical skeleton — start new programs from it.</p>
+<p><code>QCLSRC/TEMPLATE.CLP</code> is the canonical skeleton — start
+new programs from it.</p>
 <h3 id="31-member-type-and-header">3.1 Member type and header</h3>
 <ul>
-<li><p>New CL is <strong>CLLE</strong> (<code>.CLLE</code>). <code>.CLP</code> remains only for legacy/OPM-specific cases.</p>
-</li>
-<li><p>Header: purpose comment, <code>MODIFICATIONS:</code> log (comment lines continued with
-<code>+</code>), BLDOBJ directives, then:</p>
-<pre><code class="language-text">           PGM        PARM(&amp;TSKNAME &amp;#TOLOC ... &amp;PGMXRF)
+<li><p>New CL is <strong>CLLE</strong> (<code>.CLLE</code>).
+<code>.CLP</code> remains only for legacy/OPM-specific cases.</p></li>
+<li><p>Header: purpose comment, <code>MODIFICATIONS:</code> log (comment
+lines continued with <code>+</code>), BLDOBJ directives, then:</p>
+<pre class="text"><code>           PGM        PARM(&amp;TSKNAME &amp;#TOLOC ... &amp;PGMXRF)
            COPYRIGHT  TEXT(&#39;(c) Copyright Godsend Consulting, 2020-2026&#39;)
-           DCLPRCOPT  DFTACTGRP(*NO) ACTGRP(*CALLER)
-</code></pre>
-</li>
+           DCLPRCOPT  DFTACTGRP(*NO) ACTGRP(*CALLER)</code></pre></li>
 </ul>
 <h3 id="32-layout">3.2 Layout</h3>
 <ul>
-<li>Keyword form always — <code>DCL VAR(&amp;X) TYPE(*CHAR) LEN(10)</code>, never positional
-(except <code>CMD</code>/<code>PARM</code> positional prompts where conventional).</li>
-<li>Classic SEU columns: labels start column 2 on their own line; commands start
-column 14; keyword continuations break with <code>+</code> and align under the first
-keyword. Stay within 80 columns.</li>
+<li>Keyword form always —
+<code>DCL VAR(&amp;X) TYPE(*CHAR) LEN(10)</code>, never positional
+(except <code>CMD</code>/<code>PARM</code> positional prompts where
+conventional).</li>
+<li>Classic SEU columns: labels start column 2 on their own line;
+commands start column 14; keyword continuations break with
+<code>+</code> and align under the first keyword. Stay within 80
+columns.</li>
 <li>Commands UPPERCASE; comments sentence case.</li>
+<li><strong>Block form for conditionals:</strong> wrap
+<code>IF</code>/<code>ELSE</code>/<code>WHEN</code> bodies in
+<code>DO … ENDDO</code> even when the body is a single statement, so a
+block can grow later without rewriting the conditional. Recognized
+exceptions where a one-liner is fine: the standard STDERR handler
+(<code>IF COND(&amp;STDERR) THEN(RETURN)</code> — the most common one,
+written verbatim across programs), the occasional
+<code>SELECT</code>/<code>WHEN</code> one-liner, and legacy code.</li>
 </ul>
 <h3 id="33-declarations">3.3 Declarations</h3>
-<p>Order after <code>PGM</code>/<code>COPYRIGHT</code>/<code>DCLPRCOPT</code>:</p>
-<ol>
+<p>Order after
+<code>PGM</code>/<code>COPYRIGHT</code>/<code>DCLPRCOPT</code>:</p>
+<ol type="1">
 <li><strong>Parameters</strong>, in <code>PARM</code> order.</li>
-<li><strong><code>DCLF</code></strong> if the program reads a file (use <code>OPNID</code>).</li>
-<li><strong>Named-constant style variables</strong> (<code>DCL ... VALUE(...)</code>) used as enums,
-e.g. <code>&amp;FROMTO_FRM ... VALUE(1)</code>.</li>
+<li><strong><code>DCLF</code></strong> if the program reads a file (use
+<code>OPNID</code>).</li>
+<li><strong>Named-constant style variables</strong>
+(<code>DCL ... VALUE(...)</code>) used as enums, e.g.
+<code>&amp;FROMTO_FRM ... VALUE(1)</code>.</li>
 <li><strong>Locals, alphabetical.</strong></li>
-<li><strong><code>&amp;STDERR</code> + the global MONMSG</strong> (see 3.4) — always last.</li>
+<li><strong><code>&amp;STDERR</code> + the global MONMSG</strong> (see
+3.4) — always last.</li>
 </ol>
 <ul>
-<li><p>Structure overlays use <code>STG(*DEFINED)</code> with <code>DEFVAR</code>, indented two extra
-spaces under their base variable:</p>
-<pre><code class="language-text">           DCL        VAR(&amp;JOBD) TYPE(*CHAR) LEN(20)
+<li><p>Structure overlays use <code>STG(*DEFINED)</code> with
+<code>DEFVAR</code>, indented two extra spaces under their base
+variable:</p>
+<pre class="text"><code>           DCL        VAR(&amp;JOBD) TYPE(*CHAR) LEN(20)
              DCL        VAR(&amp;JOBD_NAME) TYPE(*CHAR) STG(*DEFINED) +
                           LEN(10) DEFVAR(&amp;JOBD 1)
              DCL        VAR(&amp;JOBD_LIB) TYPE(*CHAR) STG(*DEFINED) +
-                          LEN(10) DEFVAR(&amp;JOBD 11)
-</code></pre>
-</li>
-<li><p>Qualified-object parameters are <code>*CHAR 20</code> (name + library) split with
-overlays, as above.</p>
-</li>
-<li><p>A parameter that can carry special values (<code>*SAME</code>, <code>*N</code>, generics) is named
-<code>&amp;#NAME</code>; resolve it into a plain working variable <code>&amp;NAME</code> before use.</p>
-</li>
+                          LEN(10) DEFVAR(&amp;JOBD 11)</code></pre></li>
+<li><p>Qualified-object parameters are <code>*CHAR 20</code> (name +
+library) split with overlays, as above.</p></li>
+<li><p>A parameter that can carry special values (<code>*SAME</code>,
+<code>*N</code>, generics) is named <code>&amp;#NAME</code>; resolve it
+into a plain working variable <code>&amp;NAME</code> before
+use.</p></li>
 </ul>
-<h3 id="34-error-handling--the-stderr-pattern">3.4 Error handling — the STDERR pattern</h3>
+<h3 id="34-error-handling--the-stderr-pattern">3.4 Error handling — the
+STDERR pattern</h3>
 <p>Every program monitors globally and funnels to one handler:</p>
-<pre><code class="language-text">             DCL        VAR(&amp;STDERR) TYPE(*LGL) VALUE(&#39;0&#39;)
+<pre class="text"><code>             DCL        VAR(&amp;STDERR) TYPE(*LGL) VALUE(&#39;0&#39;)
              MONMSG     MSGID(CEE0000 CPA0000 CPD0000 CPF0000 +
                           CPI0000 CPP0000 MCH0000 QSH0000 PDM0000 +
                           RNI0000 RNQ0000 RNS0000 RNX0000 RPG0000 +
@@ -1151,40 +743,43 @@ overlays, as above.</p>
 
 /* Forward messages, resignaling escape message(s). */
              INCLUDE    SRCMBR(FWDMSGH) SRCFILE(QCLSRC)
-             RETURN
-</code></pre>
+             RETURN</code></pre>
 <ul>
-<li><p>Task Manager programs add <code>DEP0000 EXC0000 LOC0000 OBJ0000 TSK0000 UIM0000</code>
-to the MSGID list.</p>
-</li>
-<li><p>The <code>&amp;STDERR</code> flag prevents handler re-entry; <code>FWDMSGH</code> (QMHMOVPM +
-QMHRSNEM) moves diagnostics to the caller and resignals the escape — callers
-see the original error, not a generic one.</p>
-</li>
-<li><p><strong>Expected</strong> conditions are monitored per-command and cleaned up immediately:</p>
-<pre><code class="language-text">           CHKOBJ     OBJ(QTEMP/&amp;OUTFILE) OBJTYPE(*FILE)
+<li><p>Task Manager programs add
+<code>DEP0000 EXC0000 LOC0000 OBJ0000 TSK0000 UIM0000</code> to the
+MSGID list.</p></li>
+<li><p>The <code>&amp;STDERR</code> flag prevents handler re-entry;
+<code>FWDMSGH</code> (QMHMOVPM + QMHRSNEM) moves diagnostics to the
+caller and resignals the escape — callers see the original error, not a
+generic one.</p></li>
+<li><p><strong>Expected</strong> conditions are monitored per-command
+and cleaned up immediately:</p>
+<pre class="text"><code>           CHKOBJ     OBJ(QTEMP/&amp;OUTFILE) OBJTYPE(*FILE)
            MONMSG     MSGID(CPF9801) EXEC(DO)
              RCVMSG     MSGTYPE(*LAST) RMV(*YES)
              CHGVAR     VAR(&amp;EXISTS) VALUE(&#39;0&#39;)
-           ENDDO
-</code></pre>
-<p>Always <code>RCVMSG ... RMV(*YES)</code> a handled message so the joblog stays honest.</p>
-</li>
+           ENDDO</code></pre>
+<p>Always <code>RCVMSG ... RMV(*YES)</code> a handled message so the
+joblog stays honest.</p></li>
 </ul>
 <h3 id="35-subroutines-and-flow">3.5 Subroutines and flow</h3>
 <ul>
-<li>Mainline delegates with <code>CALLSUBR</code>; <code>SUBR ... ENDSUBR</code> blocks sit after the
-STDERR handler, each preceded by a one-line comment. Use <code>RTNSUBR</code> for early
-exit. Standard names: <code>INITPGM</code>, <code>SNDSTSMSG</code>, plus task-specific ones.</li>
-<li>Optional parameters: <code>IF COND(%PARMS *GE n *AND %ADDR(&amp;VAR) *NE *NULL)</code>.</li>
-<li>Work files live in <code>QTEMP</code>; inline SQL uses <code>RUNSQL ... COMMIT(*NONE)</code>;
-file repositioning uses <code>OVRDBF ... POSITION(*RRN &amp;N) SECURE(*YES)</code> followed by
+<li>Mainline delegates with <code>CALLSUBR</code>;
+<code>SUBR ... ENDSUBR</code> blocks sit after the STDERR handler, each
+preceded by a one-line comment. Use <code>RTNSUBR</code> for early exit.
+Standard names: <code>INITPGM</code>, <code>SNDSTSMSG</code>, plus
+task-specific ones.</li>
+<li>Optional parameters:
+<code>IF COND(%PARMS *GE n *AND %ADDR(&amp;VAR) *NE *NULL)</code>.</li>
+<li>Work files live in <code>QTEMP</code>; inline SQL uses
+<code>RUNSQL ... COMMIT(*NONE)</code>; file repositioning uses
+<code>OVRDBF ... POSITION(*RRN &amp;N) SECURE(*YES)</code> followed by
 <code>DLTOVR</code> — always scope and remove overrides.</li>
 </ul>
-<hr>
+<hr />
 <h2 id="4-sql-qsqlsrc">4. SQL (QSQLSRC)</h2>
-<p>Standards follow <strong>RBUTL</strong> practice exclusively (BSLIB&#39;s QSQLSRC contains ad-hoc
-test members that are not exemplars).</p>
+<p>Standards follow <strong>RBUTL</strong> practice exclusively (BSLIB's
+QSQLSRC contains ad-hoc test members that are not exemplars).</p>
 <h3 id="41-member-types-and-build">4.1 Member types and build</h3>
 <table>
 <thead>
@@ -1193,7 +788,8 @@ test members that are not exemplars).</p>
 <th>Contents</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td><code>.SQLT</code></td>
 <td>One table: DDL + labels + audit trigger + indexes</td>
 </tr>
@@ -1203,168 +799,214 @@ test members that are not exemplars).</p>
 </tr>
 <tr>
 <td><code>.SQLS</code></td>
-<td>Everything else run as a script (UDFs, sequences, fix-up statements)</td>
+<td>Everything else run as a script (UDFs, sequences, fix-up
+statements)</td>
 </tr>
-</tbody></table>
-<p>Every member is built by <code>RUNSQLSTM</code> via its directive header:</p>
-<pre><code class="language-text">/*&gt; RUNSQLSTM SRCFILE(&amp;L/&amp;F) SRCMBR(&amp;N) COMMIT(*NONE) -             &lt;*/
-/*&gt;           DFTRDBCOL(&amp;O) DATFMT(*ISO) TIMFMT(*ISO)               &lt;*/
-</code></pre>
-<h3 id="42-the-schema-resolving-compound-block">4.2 The schema-resolving compound block</h3>
-<p>DDL members are a single <code>BEGIN … END</code> compound statement of <strong>dynamic SQL</strong>, so
-the target schema is resolved at run time (from <code>DFTRDBCOL</code>/<code>*CURLIB</code>) instead of
-being hardcoded:</p>
-<pre><code class="language-sql">BEGIN
-  DECLARE tblNam  VARCHAR(10) DEFAULT &#39;TMTSK&#39;;
-  DECLARE tblLib  VARCHAR(10);
-  DECLARE tblRef  VARCHAR(21);
-  DECLARE sqlStmt VARCHAR(5000);
-
-  --Resolve the DFTRDBCOL/CURRENT SCHEMA/*CURLIB reference
-  CREATE OR REPLACE TABLE bldobj_temp_resolve_dftrdbcol_schema (fld1 char(1));
-  GET DIAGNOSTICS CONDITION 1 tblLib = DB2_ORDINAL_TOKEN_2;
-  SET tblLib = TRIM(tblLib);
-  SET sqlStmt = &#39;
-      DROP TABLE &#39; || tblLib || &#39;.bldobj_temp_resolve_dftrdbcol_schema&#39;;
-  EXECUTE IMMEDIATE sqlStmt;
-  SET tblRef = tblLib || &#39;.&#39; || tblNam;
-  ...
-END;
-</code></pre>
+</tbody>
+</table>
+<p>Every member is built by <code>RUNSQLSTM</code> via its directive
+header:</p>
+<pre class="text"><code>/*&gt; RUNSQLSTM SRCFILE(&amp;L/&amp;F) SRCMBR(&amp;N) COMMIT(*NONE) -             &lt;*/
+/*&gt;           DFTRDBCOL(&amp;O) DATFMT(*ISO) TIMFMT(*ISO)               &lt;*/</code></pre>
+<h3 id="42-the-schema-resolving-compound-block">4.2 The schema-resolving
+compound block</h3>
+<p>DDL members are a single <code>BEGIN … END</code> compound statement
+of <strong>dynamic SQL</strong>, so the target schema is resolved at run
+time (from <code>DFTRDBCOL</code>/<code>*CURLIB</code>) instead of being
+hardcoded:</p>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblNam  <span class="dt">VARCHAR</span>(<span class="dv">10</span>) <span class="kw">DEFAULT</span> <span class="st">&#39;TMTSK&#39;</span>;</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblLib  <span class="dt">VARCHAR</span>(<span class="dv">10</span>);</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblRef  <span class="dt">VARCHAR</span>(<span class="dv">21</span>);</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> sqlStmt <span class="dt">VARCHAR</span>(<span class="dv">5000</span>);</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">--Resolve the DFTRDBCOL/CURRENT SCHEMA/*CURLIB reference</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> bldobj_temp_resolve_dftrdbcol_schema (fld1 <span class="dt">char</span>(<span class="dv">1</span>));</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  GET DIAGNOSTICS CONDITION <span class="dv">1</span> tblLib <span class="op">=</span> DB2_ORDINAL_TOKEN_2;</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblLib <span class="op">=</span> <span class="fu">TRIM</span>(tblLib);</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> sqlStmt <span class="op">=</span> <span class="st">&#39;</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="st">      DROP TABLE &#39;</span> <span class="op">||</span> tblLib <span class="op">||</span> <span class="st">&#39;.bldobj_temp_resolve_dftrdbcol_schema&#39;</span>;</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">EXECUTE</span> <span class="kw">IMMEDIATE</span> sqlStmt;</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblRef <span class="op">=</span> tblLib <span class="op">||</span> <span class="st">&#39;.&#39;</span> <span class="op">||</span> tblNam;</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="op">..</span>.</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span>;</span></code></pre></div>
 <ul>
-<li>Build each statement into <code>sqlStmt</code> and <code>EXECUTE IMMEDIATE</code> it.</li>
-<li>Before re-creating a table, loop the <code>qsys2.sysindexes</code> / <code>qsys2.systrigger</code>
-catalogs and <code>DROP</code> existing indexes and triggers (<code>FOR row AS csr CURSOR FOR … DO … END FOR;</code>).</li>
-<li>Members must be <strong>re-runnable</strong>: <code>CREATE OR REPLACE</code> everywhere; identity
-columns re-seeded at the end with <code>ALTER … RESTART WITH</code> from <code>MAX(id) + 1</code>.</li>
+<li>Build each statement into <code>sqlStmt</code> and
+<code>EXECUTE IMMEDIATE</code> it.</li>
+<li>Before re-creating a table, loop the <code>qsys2.sysindexes</code> /
+<code>qsys2.systrigger</code> catalogs and <code>DROP</code> existing
+indexes and triggers
+(<code>FOR row AS csr CURSOR FOR … DO … END FOR;</code>).</li>
+<li>Members must be <strong>re-runnable</strong>:
+<code>CREATE OR REPLACE</code> everywhere; identity columns re-seeded at
+the end with <code>ALTER … RESTART WITH</code> from
+<code>MAX(id) + 1</code>.</li>
 </ul>
 <h3 id="43-tables-sqlt">4.3 Tables (<code>.SQLT</code>)</h3>
-<pre><code class="language-sql">CREATE OR REPLACE TABLE ... (
-    task_id           FOR COLUMN tskid      BIGINT
-       GENERATED BY DEFAULT
-       AS IDENTITY (START WITH 1 INCREMENT BY 1 CYCLE)
-       PRIMARY KEY
-   ,task_name         FOR COLUMN tskname    CHAR(10)
-       NOT NULL DEFAULT UNIQUE
-   ,task_status       FOR COLUMN tsksts     CHAR(1)
-       NOT NULL DEFAULT &#39;&#39;0&#39;&#39;
-       CHECK(task_status BETWEEN &#39;&#39;0&#39;&#39; AND &#39;&#39;9&#39;&#39;)
-   ...
-) RCDFMT r&#39; || tblNam;
-</code></pre>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> <span class="op">..</span>. (</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    task_id           <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskid      BIGINT</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>       <span class="kw">GENERATED</span> <span class="kw">BY</span> <span class="kw">DEFAULT</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>       <span class="kw">AS</span> IDENTITY (<span class="kw">START</span> <span class="kw">WITH</span> <span class="dv">1</span> <span class="kw">INCREMENT</span> <span class="kw">BY</span> <span class="dv">1</span> <span class="kw">CYCLE</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>       <span class="kw">PRIMARY</span> <span class="kw">KEY</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>   ,task_name         <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskname    <span class="dt">CHAR</span>(<span class="dv">10</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="kw">UNIQUE</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>   ,task_status       <span class="cf">FOR</span> <span class="kw">COLUMN</span> tsksts     <span class="dt">CHAR</span>(<span class="dv">1</span>)</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="st">&#39;&#39;</span><span class="dv">0</span><span class="st">&#39;&#39;</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>       <span class="kw">CHECK</span>(task_status <span class="kw">BETWEEN</span> <span class="st">&#39;&#39;</span><span class="dv">0</span><span class="st">&#39;&#39;</span> <span class="kw">AND</span> <span class="st">&#39;&#39;</span><span class="dv">9</span><span class="st">&#39;&#39;</span>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>   <span class="op">..</span>.</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>) RCDFMT r<span class="st">&#39; || tblNam;</span></span></code></pre></div>
 <ul>
-<li><strong>Long descriptive names</strong> with <code>FOR COLUMN</code> short (≤10) system names.</li>
-<li>Identity <code>BIGINT</code> primary key named <code>&lt;entity&gt;_id</code>.</li>
-<li><code>NOT NULL DEFAULT</code> on business columns; <code>CHECK</code> constraints where the domain
-is enumerable.</li>
-<li><strong>Audit columns</strong>, all <code>IMPLICITLY HIDDEN</code>: <code>audit_timestamp</code> (row change
-timestamp), <code>audit_job_number/user/name</code>, <code>audit_current_user</code>, plus matching
-<code>create_*</code> columns.</li>
-<li>A <code>BEFORE INSERT OR UPDATE … FOR EACH ROW MODE DB2ROW</code> trigger, named
-<code>&lt;table&gt;T1</code>, normalizes keys (<code>LTRIM(UPPER(...))</code>), fills defaults, and
-populates the audit/create columns; new rows are detected by the identity
-column being NULL in the OLD row.</li>
-<li><code>RCDFMT r&lt;table&gt;</code> so record-level access sees a stable format name.</li>
-<li><code>LABEL ON TABLE</code>, <code>LABEL ON COLUMN ... TEXT IS</code> (full text) <strong>and</strong>
-<code>LABEL ON COLUMN ... IS</code> (column headings) for every column.</li>
-<li>Indexes named <code>&lt;table&gt;9</code>, <code>&lt;table&gt;8</code>, … (9 = unique/primary alternate key,
-descending from there), each with <code>LABEL ON INDEX ... IS &#39;By &lt;keys&gt; (u)&#39;</code>.</li>
+<li><strong>Long descriptive names</strong> with <code>FOR COLUMN</code>
+short (≤10) system names.</li>
+<li>Identity <code>BIGINT</code> primary key named
+<code>&lt;entity&gt;_id</code>.</li>
+<li><code>NOT NULL DEFAULT</code> on business columns;
+<code>CHECK</code> constraints where the domain is enumerable.</li>
+<li><strong>Audit columns</strong>, all <code>IMPLICITLY HIDDEN</code>:
+<code>audit_timestamp</code> (row change timestamp),
+<code>audit_job_number/user/name</code>,
+<code>audit_current_user</code>, plus matching <code>create_*</code>
+columns.</li>
+<li>A <code>BEFORE INSERT OR UPDATE … FOR EACH ROW MODE DB2ROW</code>
+trigger, named <code>&lt;table&gt;T1</code>, normalizes keys
+(<code>LTRIM(UPPER(...))</code>), fills defaults, and populates the
+audit/create columns; new rows are detected by the identity column being
+NULL in the OLD row.</li>
+<li><code>RCDFMT r&lt;table&gt;</code> so record-level access sees a
+stable format name.</li>
+<li><code>LABEL ON TABLE</code>,
+<code>LABEL ON COLUMN ... TEXT IS</code> (full text)
+<strong>and</strong> <code>LABEL ON COLUMN ... IS</code> (column
+headings) for every column.</li>
+<li>Indexes named <code>&lt;table&gt;9</code>,
+<code>&lt;table&gt;8</code>, … (9 = unique/primary alternate key,
+descending from there), each with
+<code>LABEL ON INDEX ... IS 'By &lt;keys&gt; (u)'</code>.</li>
 </ul>
 <h3 id="44-views-sqlv">4.4 Views (<code>.SQLV</code>)</h3>
 <ul>
-<li><code>CREATE OR REPLACE VIEW &lt;ref&gt;(col, …) AS</code> with an explicit column list.</li>
-<li>Structure complex logic as <code>WITH</code> CTEs; name CTE columns explicitly.</li>
-<li>Cap recursive/<code>CONNECT BY</code> depth explicitly (e.g. <code>AND a.recid &lt;= 250</code>) and
-document why in the header comment.</li>
-<li><code>LABEL ON TABLE &lt;view&gt; IS &#39;…&#39;</code> after creation.</li>
+<li><code>CREATE OR REPLACE VIEW &lt;ref&gt;(col, …) AS</code> with an
+explicit column list.</li>
+<li>Structure complex logic as <code>WITH</code> CTEs; name CTE columns
+explicitly.</li>
+<li>Cap recursive/<code>CONNECT BY</code> depth explicitly (e.g.
+<code>AND a.recid &lt;= 250</code>) and document why in the header
+comment.</li>
+<li><code>LABEL ON TABLE &lt;view&gt; IS '…'</code> after creation.</li>
 </ul>
-<h3 id="45-routines-udfsprocedures-usually-sqls">4.5 Routines (UDFs/procedures, usually <code>.SQLS</code>)</h3>
+<h3 id="45-routines-udfsprocedures-usually-sqls">4.5 Routines
+(UDFs/procedures, usually <code>.SQLS</code>)</h3>
 <ul>
-<li><code>CREATE OR REPLACE FUNCTION</code> with a <code>SPECIFIC</code> name per overload
-(<code>char8ToDate</code>, <code>dec8ToDate</code>).</li>
-<li>Declare behavior: <code>DETERMINISTIC</code>, <code>CONTAINS SQL</code>/<code>READS SQL DATA</code>,
-<code>RETURNS NULL ON NULL INPUT</code>, <code>NO EXTERNAL ACTION</code>.</li>
-<li>Handle bad input via a scoped <code>DECLARE CONTINUE HANDLER FOR SQLEXCEPTION</code>
-and return NULL rather than erroring.</li>
-<li><code>COMMENT ON SPECIFIC FUNCTION</code> and <code>COMMENT ON PARAMETER</code> for every routine —
-these surface in catalogs and client tools.</li>
-<li>Parameter defaults (<code>DEFAULT &#39;YMD&#39;</code>) instead of overload explosions.</li>
+<li><code>CREATE OR REPLACE FUNCTION</code> with a <code>SPECIFIC</code>
+name per overload (<code>char8ToDate</code>,
+<code>dec8ToDate</code>).</li>
+<li>Declare behavior: <code>DETERMINISTIC</code>,
+<code>CONTAINS SQL</code>/<code>READS SQL DATA</code>,
+<code>RETURNS NULL ON NULL INPUT</code>,
+<code>NO EXTERNAL ACTION</code>.</li>
+<li>Handle bad input via a scoped
+<code>DECLARE CONTINUE HANDLER FOR SQLEXCEPTION</code> and return NULL
+rather than erroring.</li>
+<li><code>COMMENT ON SPECIFIC FUNCTION</code> and
+<code>COMMENT ON PARAMETER</code> for every routine — these surface in
+catalogs and client tools.</li>
+<li>Parameter defaults (<code>DEFAULT 'YMD'</code>) instead of overload
+explosions.</li>
 </ul>
 <h3 id="46-style">4.6 Style</h3>
 <ul>
-<li>Keywords UPPERCASE; identifiers lowercase; 2-space indent; leading commas on
-continuation lines (both column lists and select lists).</li>
+<li>Keywords UPPERCASE; identifiers lowercase; 2-space indent; leading
+commas on continuation lines (both column lists and select lists).</li>
 <li>Alias every table; qualify every column reference.</li>
-<li><code>--</code> for inline comments inside SQL bodies; <code>/* */</code> for the member header.</li>
+<li><code>--</code> for inline comments inside SQL bodies;
+<code>/* */</code> for the member header.</li>
 </ul>
-<hr>
+<hr />
 <h2 id="5-commands-qcmdsrc">5. Commands (QCMDSRC)</h2>
-<pre><code class="language-text">/*  MODIFICATIONS: +
+<pre class="text"><code>/*  MODIFICATIONS: +
     BS  08/02/25  Created. +
     @@  */
 /*&gt; CRTCMD CMD(&amp;O/&amp;ON) SRCFILE(&amp;L/&amp;F) SRCMBR(&amp;N) PGM(TMACRUSR)       &lt;*/
 /*&gt; &lt;BLDOBJ EOF/&gt;                                                    &lt;*/
 /*  (c) Copyright Godsend Consulting, 2025-2026 */
              CMD        PROMPT(&#39;Add User&#39;) MSGF(TMMSG) HLPID(*CMD) +
-                          HLPPNLGRP(ADDUSRTM)
-</code></pre>
+                          HLPPNLGRP(ADDUSRTM)</code></pre>
 <ul>
-<li><p>Every command declares <code>PROMPT</code>, <code>MSGF(TMMSG)</code> (or product message file),
-<code>HLPID(*CMD)</code>, and <code>HLPPNLGRP(&lt;own name&gt;)</code> — help is not optional.</p>
-</li>
+<li><p>Every command declares <code>PROMPT</code>,
+<code>MSGF(TMMSG)</code> (or product message file),
+<code>HLPID(*CMD)</code>, and <code>HLPPNLGRP(&lt;own name&gt;)</code> —
+help is not optional.</p></li>
 <li><p><code>PARM</code> conventions:</p>
 <ul>
 <li><code>EXPR(*YES)</code> on user-enterable parameters.</li>
-<li>Mixed-case text parameters: <code>TYPE(*CHAR) VARY(*YES *INT2) CASE(*MIXED)</code>.</li>
-<li>Special values via <code>SPCVAL((*NONE &#39; &#39;))</code> mapping to storable values.</li>
-<li>Selection lists via <code>CHOICE(*PGM) CHOICEPGM(&lt;…CHC program&gt;)</code>.</li>
+<li>Mixed-case text parameters:
+<code>TYPE(*CHAR) VARY(*YES *INT2) CASE(*MIXED)</code>.</li>
+<li>Special values via <code>SPCVAL((*NONE ' '))</code> mapping to
+storable values.</li>
+<li>Selection lists via
+<code>CHOICE(*PGM) CHOICEPGM(&lt;…CHC program&gt;)</code>.</li>
 <li>Shared-CPP commands pass their mode as
-<code>PARM KWD(MODE) TYPE(*CHAR) CONSTANT(&#39;*ADD&#39;)</code>.</li>
-</ul>
-</li>
+<code>PARM KWD(MODE) TYPE(*CHAR) CONSTANT('*ADD')</code>.</li>
+</ul></li>
 <li><p>Every command ends with the hidden cross-reference parameter:</p>
-<pre><code class="language-text">             PARM       KWD(PGMXRF) TYPE(QPGMXRF) PGM(*YES)
+<pre class="text"><code>             PARM       KWD(PGMXRF) TYPE(QPGMXRF) PGM(*YES)
  QPGMXRF:    QUAL       TYPE(*NAME) LEN(10) CONSTANT(&lt;CPP name&gt;)
-             QUAL       TYPE(*NAME) LEN(10) CONSTANT(&lt;command name&gt;)
-</code></pre>
-<p>The CPP receives it as a 20-byte qualified name (<code>pxPgmXrf</code> / <code>&amp;PGMXRF</code>).</p>
-</li>
+             QUAL       TYPE(*NAME) LEN(10) CONSTANT(&lt;command name&gt;)</code></pre>
+<p>The CPP receives it as a 20-byte qualified name
+(<code>pxPgmXrf</code> / <code>&amp;PGMXRF</code>).</p></li>
 </ul>
-<hr>
+<hr />
 <h2 id="6-panel-groups-qpnlsrc">6. Panel groups (QPNLSRC)</h2>
 <ul>
-<li>Header: <code>.*</code> purpose comment, <code>MODIFICATIONS:</code> log, <code>.*&gt;</code> BLDOBJ directives.</li>
-<li>Open with <code>:PNLGRP ENBGUI=YES.</code> and <code>:COPYR.(c) Copyright Godsend Consulting, &lt;years&gt;</code>.</li>
-<li><strong>Reuse shared help:</strong> <code>:IMPORT NAME=&#39;*&#39; PNLGRP=&#39;TMHLP&#39;.</code> and <code>:IMHELP</code> the
-shared modules (<code>TMHLP/&lt;PARM&gt;/REQ</code>) instead of retyping parameter help.</li>
-<li>Command-help members define this fixed set of help IDs, in order:<ol>
-<li><code>&#39;&lt;CMD&gt;/ALL&#39;</code> — aggregate of all sections (for full-command help)</li>
-<li><code>&#39;&lt;CMD&gt;&#39;</code> — extended description</li>
-<li><code>&#39;&lt;CMD&gt;/&lt;PARM&gt;&#39;</code> — one per parameter, titled
+<li>Header: <code>.*</code> purpose comment, <code>MODIFICATIONS:</code>
+log, <code>.*&gt;</code> BLDOBJ directives.</li>
+<li>Open with <code>:PNLGRP ENBGUI=YES.</code> and
+<code>:COPYR.(c) Copyright Godsend Consulting, &lt;years&gt;</code>.</li>
+<li><strong>Reuse shared help:</strong>
+<code>:IMPORT NAME='*' PNLGRP='TMHLP'.</code> and <code>:IMHELP</code>
+the shared modules (<code>TMHLP/&lt;PARM&gt;/REQ</code>) instead of
+retyping parameter help.</li>
+<li><strong><code>:HELP</code> titles stay on one line:</strong> the
+descriptive text that follows <code>:HELP NAME='…'.</code> cannot wrap
+to the next line, and must not be abbreviated to fit — let the line run
+long (up to the 134 hard limit) rather than shorten the wording.</li>
+<li>Command-help members define this fixed set of help IDs, in order:
+<ol type="1">
+<li><code>'&lt;CMD&gt;/ALL'</code> — aggregate of all sections (for
+full-command help)</li>
+<li><code>'&lt;CMD&gt;'</code> — extended description</li>
+<li><code>'&lt;CMD&gt;/&lt;PARM&gt;'</code> — one per parameter, titled
 <code>&lt;Prompt&gt; (&lt;KWD&gt;) - Help</code></li>
-<li><code>&#39;&lt;CMD&gt;/COMMAND/EXAMPLES&#39;</code> — numbered examples in <code>:XMP.</code> blocks with a
-prose explanation per example</li>
-<li><code>&#39;&lt;CMD&gt;/ERROR/MESSAGES&#39;</code> — <code>:DL COMPACT.</code> list, message text pulled live
-via <code>&amp;msg(MSGID,MSGF,*LIBL,nosub).</code></li>
-</ol>
-</li>
-<li>Work-with (inquiry) panels declare, in separate banner-labeled sections:
-classes (<code>cls&lt;type&gt;&lt;len&gt;</code>, e.g. <code>clsname10</code>, <code>clsyesno</code> with <code>:TL.</code> truth
-labels), variables (lowercase, matching the RPG DS subfields), <code>:VARRCD</code>s
-(<code>header</code>, <code>detail</code>, <code>csrrcd</code>, <code>cmdlin</code>), <code>:LISTDEF</code>s (<code>dtllist</code> with
-<code>EMPHASIS</code> columns), conditions, and key lists — the names must match the
-<code>@…_PNLID</code> / <code>@…_VARRCD</code> / <code>@…_LSTNAM</code> constants in the RPG <code>…H</code> copybook.</li>
+<li><code>'&lt;CMD&gt;/COMMAND/EXAMPLES'</code> — numbered examples in
+<code>:XMP.</code> blocks with a prose explanation per example</li>
+<li><code>'&lt;CMD&gt;/ERROR/MESSAGES'</code> —
+<code>:DL COMPACT.</code> list, message text pulled live via
+<code>&amp;msg(MSGID,MSGF,*LIBL,nosub).</code></li>
+</ol></li>
+<li>Work-with (inquiry) panels declare, in separate banner-labeled
+sections: classes (<code>cls&lt;type&gt;&lt;len&gt;</code>, e.g.
+<code>clsname10</code>, <code>clsyesno</code> with <code>:TL.</code>
+truth labels), variables (lowercase, matching the RPG DS subfields),
+<code>:VARRCD</code>s (<code>header</code>, <code>detail</code>,
+<code>csrrcd</code>, <code>cmdlin</code>), <code>:LISTDEF</code>s
+(<code>dtllist</code> with <code>EMPHASIS</code> columns), conditions,
+and key lists — the names must match the <code>@…_PNLID</code> /
+<code>@…_VARRCD</code> / <code>@…_LSTNAM</code> constants in the RPG
+<code>…H</code> copybook.</li>
 </ul>
-<hr>
+<hr />
 <h2 id="7-display-files-qddssrc">7. Display files (QDDSSRC)</h2>
 <ul>
-<li><p>Standard header applies: <code>A*</code> comment lines carrying the purpose,
-<code>MODIFICATIONS:</code> log, and <code>*&gt;</code> build directives (<code>CRTDSPF</code>, continued
-with <code>-</code>).</p>
-</li>
-<li><p><strong>Record formats are named <code>FMnn?</code></strong> — <code>FM</code>, a two-digit number <code>nn</code>
-(01–99), and a type suffix. Formats that work together (a subfile and its
-control, a window and the records displayed in it) share the same <code>nn</code>:</p>
+<li><p>Standard header applies: <code>A*</code> comment lines carrying
+the purpose, <code>MODIFICATIONS:</code> log, and <code>*&gt;</code>
+build directives (<code>CRTDSPF</code>, continued with
+<code>-</code>).</p></li>
+<li><p><strong>Record formats are named <code>FMnn?</code></strong> —
+<code>FM</code>, a two-digit number <code>nn</code> (01–99), and a type
+suffix. Formats that work together (a subfile and its control, a window
+and the records displayed in it) share the same <code>nn</code>:</p>
 <table>
 <thead>
 <tr>
@@ -1372,7 +1014,8 @@ control, a window and the records displayed in it) share the same <code>nn</code
 <th>Format</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td><em>(none)</em></td>
 <td>Plain record</td>
 </tr>
@@ -1396,55 +1039,62 @@ control, a window and the records displayed in it) share the same <code>nn</code
 <td><code>W</code></td>
 <td>Window</td>
 </tr>
-</tbody></table>
-</li>
-<li><p>Note: these repos hold only a handful of display files from a much larger
-code base, so local DSPF members are weak precedent. Follow the naming rule
-as stated here rather than patterns inferred from the few local examples.</p>
-</li>
+</tbody>
+</table></li>
+<li><p>Note: these repos hold only a handful of display files from a
+much larger code base, so local DSPF members are weak precedent. Follow
+the naming rule as stated here rather than patterns inferred from the
+few local examples.</p></li>
 </ul>
-<hr>
+<hr />
 <h2 id="8-messages">8. Messages</h2>
 <ul>
-<li>Product messages live in one message file (<code>TMMSG</code>), built from
-<code>QREXSRC/TMMSG.REXX</code>; IDs are grouped by prefix (<code>TSK*</code>, <code>OBJ*</code>, <code>LOC*</code>,
+<li>Product messages live in one message file (<code>TMMSG</code>),
+built from <code>QREXSRC/TMMSG.REXX</code>; IDs are grouped by prefix
+(<code>TSK*</code>, <code>OBJ*</code>, <code>LOC*</code>,
 <code>DEP*</code>, <code>EXC*</code>, <code>UIM*</code>).</li>
-<li>Programs send message IDs, not hardcoded text, wherever a message exists;
-status messages use <code>CPDA0FF</code>.</li>
-<li>Escapes propagate (FWDMSGH pattern / <code>%target(&#39;*PGMBDY&#39;: 1)</code>) so the original
-failure reaches the user.</li>
+<li>Programs send message IDs, not hardcoded text, wherever a message
+exists; status messages use <code>CPDA0FF</code>.</li>
+<li>Escapes propagate (FWDMSGH pattern /
+<code>%target('*PGMBDY': 1)</code>) so the original failure reaches the
+user.</li>
 </ul>
-<hr>
+<hr />
 <h2 id="9-cross-cutting-rules">9. Cross-cutting rules</h2>
 <ul>
-<li><strong>Self-documenting builds:</strong> if it can&#39;t be rebuilt from its BLDOBJ
-directives, it isn&#39;t done.</li>
-<li><strong>Re-runnable everything:</strong> DDL re-creates, programs clean up QTEMP, handled
-messages are removed from the joblog.</li>
-<li><strong>No duplicate knowledge:</strong> lengths via <code>like()</code>, help via <code>IMHELP</code>, message
-text via <code>&amp;msg(...)</code>, schema via <code>DFTRDBCOL</code> resolution. One source of truth
-each.</li>
-<li><strong>Order dependencies are documented at both ends</strong> — e.g. the build-order
-<code>CASE</code> in <code>RUNTSKTM</code> and <code>TMOBJWRK</code>&#39;s sort carry matching &quot;keep in sync&quot;
-comments. Do the same for any new coupled logic.</li>
+<li><strong>Self-documenting builds:</strong> if it can't be rebuilt
+from its BLDOBJ directives, it isn't done.</li>
+<li><strong>Re-runnable everything:</strong> DDL re-creates, programs
+clean up QTEMP, handled messages are removed from the joblog.</li>
+<li><strong>No duplicate knowledge:</strong> lengths via
+<code>like()</code>, help via <code>IMHELP</code>, message text via
+<code>&amp;msg(...)</code>, schema via <code>DFTRDBCOL</code>
+resolution. One source of truth each.</li>
+<li><strong>Order dependencies are documented at both ends</strong> —
+e.g. the build-order <code>CASE</code> in <code>RUNTSKTM</code> and
+<code>TMOBJWRK</code>'s sort carry matching "keep in sync" comments. Do
+the same for any new coupled logic.</li>
 </ul>
-<hr>
+<hr />
 <h2 id="10-legacy-and-scratch-code">10. Legacy and scratch code</h2>
 <ul>
-<li><strong>Scratch:</strong> <code>JUNK*</code> members are experiments. Git-ignores them going forward;
-never reference or promote them, and don&#39;t cite them as precedent.</li>
-<li><strong>Third-party:</strong> members with external authorship headers (e.g. Carsten
-Flensburg&#39;s <code>CPYMSGD*</code>, Giuseppe Costagliola&#39;s <code>SQL2XLSX*</code>, Scott Klement&#39;s
-YAJL/JDBCR4 material; <code>BLDOBJ</code> is a branched fork of Klement&#39;s BUILD tool)
-keep their original style and attribution. Fix bugs; don&#39;t restyle.</li>
-<li><strong>Legacy fixed-form:</strong> don&#39;t expand fixed-form code. Small fix = match the
-existing style locally; real enhancement = convert to <code>**FREE</code> first (add a
-MODIFICATIONS entry for the conversion).</li>
-<li><strong>BSLIB vs RBUTL duplicates:</strong> members shared by both repos are expected to be
-byte-identical (verify with <code>scripts/refresh-commit.ps1</code> workflows). When they
-drift, RBUTL is authoritative for TM/RB members; reconcile promptly.</li>
+<li><strong>Scratch:</strong> <code>JUNK*</code> members are
+experiments. Git-ignores them going forward; never reference or promote
+them, and don't cite them as precedent.</li>
+<li><strong>Third-party:</strong> members with external authorship
+headers (e.g. Carsten Flensburg's <code>CPYMSGD*</code>, Giuseppe
+Costagliola's <code>SQL2XLSX*</code>, Scott Klement's YAJL/JDBCR4
+material; <code>BLDOBJ</code> is a branched fork of Klement's BUILD
+tool) keep their original style and attribution. Fix bugs; don't
+restyle.</li>
+<li><strong>Legacy fixed-form:</strong> don't expand fixed-form code.
+Small fix = match the existing style locally; real enhancement = convert
+to <code>**FREE</code> first (add a MODIFICATIONS entry for the
+conversion).</li>
+<li><strong>BSLIB vs RBUTL duplicates:</strong> members shared by both
+repos are expected to be byte-identical (verify with
+<code>scripts/refresh-commit.ps1</code> workflows). When they drift,
+RBUTL is authoritative for TM/RB members; reconcile promptly.</li>
 </ul>
-
-    </article>
-  </body>
+</body>
 </html>
