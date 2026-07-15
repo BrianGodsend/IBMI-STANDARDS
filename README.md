@@ -9,16 +9,18 @@ Canonical home of the Godsend Consulting IBM i coding standards.
   standard for offline reading. Regenerate after editing the markdown:
 
   ```text
-  pandoc --from gfm --to html5 --standalone --mathjax \
-    --template github-markdown.html --css github-markdown.css \
+  pandoc --from gfm --to html5 --standalone --embed-resources --mathjax \
+    --template github-markdown.html \
+    --css "%APPDATA%\pandoc\github-markdown.css" \
     --syntax-highlighting tango \
     --metadata title="IBM i Coding Standards" \
     --output CODING-STANDARDS.html CODING-STANDARDS.md
   ```
 
   `github-markdown.html` and `github-markdown.css` are installed in pandoc's
-  user data directory (`%APPDATA%\pandoc\templates` and `%APPDATA%\pandoc`),
-  so no local copies are needed.
+  user data directory (`%APPDATA%\pandoc\templates` and `%APPDATA%\pandoc`);
+  `--embed-resources` inlines the CSS (hence the explicit path) so the HTML
+  is fully self-contained.
 
 - [sync-standards.ps1](sync-standards.ps1) — copies the canonical file into
   every sibling IBM i repo (any directory beside this one containing
