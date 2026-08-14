@@ -123,10 +123,10 @@ padding: 6px 13px;
         <h1 id="ibm-i-coding-standards">IBM i Coding Standards</h1>
         <p>Baseline standards for RPGLE/SQLRPGLE, CL/CLLE, SQL, CMD,
         PNLGRP, and DDS source in <strong>all Godsend Consulting IBM i
-        repositories</strong> — BSLIB, RBUTL, and any future project.
-        They were derived from the current best practice in these
-        libraries — primarily the Task Manager (<code>TM*</code>) and
-        developer-utility (<code>RB*</code>) members in
+        repositories</strong> — GCUTL, BSLIB, RBUTL, and any future
+        project. They were derived from the current best practice in
+        these libraries — primarily the Task Manager (<code>TM*</code>)
+        and developer-utility (<code>RB*</code>) members in
         <strong>RBUTL</strong>, which is the curated exemplar. BSLIB
         additionally carries legacy, third-party, and scratch code that
         does <em>not</em> set the standard (see section 10, Legacy and
@@ -296,12 +296,13 @@ BS  06/15/26  Updated documentation to acknowledge that default
         <h3 id="15-naming-and-member-families">1.5 Naming and member
         families</h3>
         <ul>
-        <li><strong>Prefixes:</strong> <code>TM*</code> /
+        <li><p><strong>Prefixes:</strong> <code>TM*</code> /
         <code>*TM</code> = Task Manager, <code>RB*</code> = developer
         utilities, <code>BS*</code> = BSLIB personal utilities.
-        <code>JUNK*</code> = scratch (never promote, git-ignored).</li>
-        <li>A user-facing command is a <strong>family sharing one base
-        name</strong>:
+        <code>JUNK*</code> = scratch (never promote,
+        git-ignored).</p></li>
+        <li><p>A user-facing command is a <strong>family sharing one
+        base name</strong>:</p>
         <ul>
         <li><code>QCMDSRC/NAME.CMD</code> — command definition
         (<code>HLPPNLGRP(NAME)</code>, <code>MSGF(TMMSG)</code>)</li>
@@ -311,18 +312,283 @@ BS  06/15/26  Updated documentation to acknowledge that default
         <li>messages come from the shared <code>TMMSG</code> message
         file (<code>QREXSRC/TMMSG.REXX</code>)</li>
         </ul></li>
-        <li><strong>RPG member suffixes:</strong> base name =
+        <li><p><strong>RPG member suffixes:</strong> base name =
         program/entry, <code>…H</code> = prototypes/constants copybook,
         <code>…P</code> = service-procedure implementations. Example:
         <code>RTVLOCTM</code> + <code>RTVLOCTMH</code>. An
         <code>…R</code> suffix (subprocedure-only module, e.g.
         <code>SQL2XLSXR</code>) appears in third-party code and
         tool-generated members — recognize it as a pattern, but it is
-        not required for new members.</li>
-        <li>Related CRUD commands funnel into one shared CPP
+        not required for new members.</p></li>
+        <li><p>Related CRUD commands funnel into one shared CPP
         distinguished by a <code>CONSTANT(*ADD|*CHANGE|…)</code> MODE
         parameter (e.g. <code>TMACRUSR</code>,
-        <code>TMCCDTSK</code>).</li>
+        <code>TMCCDTSK</code>).</p></li>
+        <li><p><strong>Object-role suffixes.</strong> Object names
+        follow a 2+2+3 shape — application, area, object. Where the
+        third element has no entity to describe, because the object is
+        infrastructure rather than application, it names the object&#39;s
+        <strong>role</strong> instead. These are reserved across all
+        repos:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Suffix</th>
+        <th>Object type</th>
+        <th>Role</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>…SRV</code></td>
+        <td><code>*SRVPGM</code></td>
+        <td>Bound service program — the API other programs call</td>
+        </tr>
+        <tr>
+        <td><code>…AGT</code></td>
+        <td><code>*PGM</code></td>
+        <td>Agent — a never-ending job that processes queued work</td>
+        </tr>
+        <tr>
+        <td><code>…REQ</code></td>
+        <td><code>*FILE</code></td>
+        <td>The request table an agent drains</td>
+        </tr>
+        <tr>
+        <td><code>…DTQ</code></td>
+        <td><code>*DTAQ</code></td>
+        <td>Data queue, where one is used as a doorbell</td>
+        </tr>
+        </tbody>
+        </table>
+        <p><code>SVR</code> is <strong>never</strong> used for a service
+        program. <code>SRV</code> and <code>SVR</code> sort adjacent in
+        <code>WRKOBJ</code>, are one transposition apart when typing,
+        and are indistinguishable when spoken aloud. Pick
+        <code>SRV</code> and never write the other.</p>
+        <p>Prefer a role suffix that stays true for the whole life of a
+        row or object. <code>…REQ</code> beats <code>…QUE</code> for the
+        request table because a sent row is still a request that was
+        fulfilled, whereas it is no longer queued — and because
+        <code>QUE</code> reads as <code>*DTAQ</code>/<code>*MSGQ</code>
+        in an object listing.</p></li>
+        </ul>
+        <h3 id="16-agents--the-never-ending-job-pattern">1.6 Agents —
+        the never-ending job pattern</h3>
+        <p>An <strong>agent</strong> (<code>…AGT</code>) is a submitted
+        job that runs indefinitely: it wakes on a timer or a queue, does
+        one unit of work, and goes back to sleep. This is what an AS/400
+        shop has always called a <em>server job</em> or a <em>NEP</em>
+        (never-ending program) — the pattern is old, only the name is
+        new.</p>
+        <p><code>AGT</code> is the right name for it because the term
+        already belongs to this platform: <code>STRAGTSRV</code> /
+        <code>ENDAGTSRV</code> and the <code>CMDAGT</code> menu are
+        IBM&#39;s own Electronic Service Agent. &quot;Service Agent&quot; there is a
+        compound proper noun for an IBM facility, not a composition of
+        the <code>SRV</code> and <code>AGT</code> suffixes, so there is
+        no conceptual collision with a <code>…SRV</code> service
+        program. The alternatives lose: <code>MON</code> implies passive
+        watching or dispatch only, when the job actually acts;
+        <code>DMN</code> is Unix vocabulary and misreads as
+        &quot;domain&quot;.</p>
+        <p>A subsystem built this way is a <strong>family of
+        four</strong>, named together:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Member</th>
+        <th>Type</th>
+        <th>Responsibility</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>xxSRV</code></td>
+        <td><code>*SRVPGM</code></td>
+        <td>Validates and enqueues. What applications bind to.</td>
+        </tr>
+        <tr>
+        <td><code>xxREQ</code></td>
+        <td><code>*FILE</code></td>
+        <td>The request rows. System of record.</td>
+        </tr>
+        <tr>
+        <td><code>xxAGT</code></td>
+        <td><code>*PGM</code></td>
+        <td>Drains ready rows, dispatches, housekeeping, breaker.</td>
+        </tr>
+        <tr>
+        <td><code>xx&lt;verb&gt;</code></td>
+        <td><code>*PGM</code></td>
+        <td>Performs one unit of work, records its disposition.</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>Rules that keep the family honest:</p>
+        <ul>
+        <li><p><strong>The agent and the worker are separate programs —
+        never one program with a mode parameter.</strong> A bare
+        <code>CALL</code> on a merged program starts a second
+        never-ending job draining the same queue, which is lock
+        contention at best and duplicate work at worst. The job log
+        stops distinguishing the all-day daemon from a single unit of
+        work. And the two have genuinely different lifecycles: the agent
+        holds file opens and state across thousands of iterations, while
+        the worker opens, works, and ends. Merging them means
+        conditional initialization inside a NEP, which is where the
+        subtle bugs live.</p></li>
+        <li><p><strong>The worker writes the row&#39;s final status; the
+        agent never does.</strong> The agent reads return codes only for
+        its own arithmetic. Two writers to one status column works fine
+        until a unit of work takes longer than expected.</p></li>
+        <li><p><strong>The agent claims the row before dispatch; the
+        worker takes a lock.</strong> The agent moves the row out of the
+        ready status and stamps a <em>claim timestamp</em> before it
+        calls or submits the worker. It has to: <code>SBMJOB</code>
+        returns as soon as the job is queued, so a row left in ready
+        status is re-selected and submitted again on the agent&#39;s very
+        next pass.</p>
+        <p>The worker then <strong>fetches the row by key <em>and
+        expected status</em>, with a lock, and holds that lock for the
+        whole unit of work.</strong> Put the status in the predicate
+        rather than testing it after the read — a row in the wrong
+        status is simply not found, so there is no lock to release and
+        no branch to get wrong. Not found is a silent no-op: no error,
+        no escape, just a diagnostic in the job log. The lock — not the
+        predicate by itself — is what serializes two workers, keeps a
+        human from re-flagging mid-flight, and lets an accidental double
+        dispatch resolve itself.</p>
+        <ul>
+        <li>Name the claimed status for what is true of it. A submitted
+        row can sit on a job queue for a long time, so <em>queued</em>
+        is honest where <em>running</em> or <em>sending</em> would not
+        be.</li>
+        <li><strong>The worker stamps its own qualified job
+        name</strong> when it accepts the row — not the agent, which
+        would have to dig the job id out of <code>SBMJOB</code>&#39;s
+        completion message. Leaving the column empty until a worker
+        actually starts is the more useful design anyway: it lets the
+        sweep tell &quot;never started&quot; (dead job queue, held subsystem) from
+        &quot;started and died,&quot; which recover differently.</li>
+        <li><strong>The worker registers a termination handler</strong>,
+        sets a flag while it holds a locked row, and has the handler
+        record the failed status and release. An ILE cancel handler
+        (<code>CEERTX</code>) or RPG <code>ON-EXIT</code> covers
+        unhandled exceptions, function checks, and
+        <code>ENDJOB</code>/<code>ENDSBS *CNTRLD</code>. This is the
+        primary recovery path: the outcome is recorded by the job that
+        knows what happened, seconds after it happens, instead of being
+        inferred later by another program.
+        <ul>
+        <li>It does <strong>not</strong> run for
+        <code>ENDJOB *IMMED</code>, system failure, or abnormal
+        IPL.</li>
+        <li>The handler usually cannot know whether an external side
+        effect already succeeded, so word its disposition as <em>the job
+        ended abnormally</em> — not <em>the work was not done</em>. Only
+        the first is true.</li>
+        </ul></li>
+        <li><strong>The sweep is a backstop, not the recovery
+        path.</strong> With a termination handler in place it exists for
+        the cases where no program was alive to record anything: a
+        worker that never started, and one killed outright. It reads
+        without locks — reasoning about rows, not changing them — and
+        thresholds on the claim timestamp, which covers the legitimate
+        gap between claim and pickup.</li>
+        <li><strong>Recover by returning the row to the ready status,
+        not by re-dispatching it.</strong> The agent picks it up again
+        through the normal path, so the sweep never duplicates dispatch
+        logic; the trigger clears the claim fields on the way through;
+        and it throttles itself, because a recovered row is immediately
+        re-claimed with a fresh timestamp and cannot re-qualify until
+        the threshold passes again. Re-dispatching in place leaves the
+        original timestamp untouched and re-qualifies the same rows
+        every tick, each one adding another worker to the queue it is
+        already waiting on.</li>
+        <li><strong>Recovery is only free where nothing was done
+        yet.</strong> The lock serializes concurrent workers; it says
+        nothing about a sequential one. A worker that completed an
+        external side effect and died before recording it leaves a row
+        that looks identical to one never started — recovering it does
+        the work twice. Use the worker-stamped job name to tell them
+        apart: absent means nothing started; present means the outcome
+        is unknowable and the decision belongs to whatever
+        low-stakes/high-stakes split the subsystem already has.</li>
+        <li><strong>Every side effect of a status change belongs in the
+        table&#39;s trigger, not in the programs.</strong> Programs set the
+        status; the trigger does the rest, keyed on a status
+        <em>change</em> (compare <code>OLD</code> to <code>NEW</code>,
+        and let an unchanged status fall through so the worker can stamp
+        its own job name). Statuses that re-arm a row clear the outcome
+        fields — a retried request must not carry the previous attempt&#39;s
+        error text — while statuses that record an outcome leave them
+        alone. Done in the programs instead, the fields are only as
+        honest as the last one to touch the row, and say nothing about
+        the green-screen path where someone re-runs work by typing over
+        the status. In the trigger, no path can forget, including paths
+        that do not exist yet.</li>
+        <li><strong>A processed timestamp, set by the trigger only on
+        the terminal statuses</strong>, and cleared when a row is
+        re-armed. Null for in-flight rows and non-null for finished
+        ones, it makes &quot;not yet processed&quot; a property of the data rather
+        than a list of status codes each query has to know, and the
+        retention pass selects on it without status logic.</li>
+        <li><strong>Time in-flight rows by
+        <code>audit_timestamp</code></strong>, not by their created
+        timestamp. A row&#39;s age since <em>creation</em> says nothing
+        about how long it has been claimed: after an agent outage, every
+        row it then claims would look instantly stale and a recovery
+        sweep would start fighting the agent that just claimed them. The
+        mandated <code>audit_timestamp</code> moves on any update, so
+        for a claimed row it means &quot;nothing has touched this since,&quot;
+        which is the actual question — and it costs no extra
+        column.</li>
+        <li><strong>Age unprocessed rows separately from processed ones,
+        and never delete them silently.</strong> Retention on finished
+        rows is routine; a row that grows old while still in flight is
+        evidence of a bug or an outage, and deleting it destroys the
+        only record that the work never happened. Move it to the failed
+        status with a disposition saying it expired unprocessed, alert
+        out of band, and let it age out through the normal retention
+        path.</li>
+        <li><strong>Do not pre-load the worker&#39;s job name at claim
+        time</strong>, even where it is technically available (an inline
+        path knows its own job; a submitted one can recover the job id
+        from <code>SBMJOB</code>&#39;s <code>CPC1221</code>). The column
+        earns its place by meaning &quot;a worker picked this row up.&quot; Fill
+        it at claim time and every row has a name from the moment it is
+        claimed, the never-started and died-midway cases become
+        indistinguishable, and recovery is back to guessing. The empty
+        column is carrying information.</li>
+        <li><strong>The agent must release its own claim lock before
+        dispatching.</strong> On an inline path the worker runs in the
+        <em>same job</em> and requests the same record through its own
+        open, which is a lock conflict rather than a free pass. This
+        works in isolation and fails when the two programs are first
+        wired together, so prove it early.</li>
+        </ul></li>
+        <li><p><strong>Decide what recovering an orphaned row means
+        before writing the sweep.</strong> There is always a window
+        where the worker finished its unit of work but died before
+        recording the outcome, so requeueing risks doing the work twice
+        while failing the row risks not doing it at all. Choose per the
+        cost of each — and where the subsystem already distinguishes
+        low-stakes from high-stakes work, let that existing split decide
+        rather than inventing a second one.</p></li>
+        <li><p><strong>Shut down by flag, not by cancel.</strong> A
+        run/stop indicator in a data area or control record, tested at
+        the top of each pass, ends the job cleanly between units of work
+        rather than mid-unit.</p></li>
+        <li><p><strong>Whatever the agent talks to</strong> — a command,
+        an API, an external transport — <strong>appears in exactly one
+        program</strong>, so replacing it touches one object.</p></li>
+        <li><p><strong>Count failures for the circuit breaker where
+        every path is visible.</strong> An agent that both calls a
+        worker inline and submits it for some rows sees return codes
+        only on the inline path. Counting recent failures during the
+        housekeeping pass catches both, and also catches submitted jobs
+        that died without writing back.</p></li>
         </ul>
         <hr />
         <h2 id="2-rpgle--sqlrpgle">2. RPGLE / SQLRPGLE</h2>
@@ -773,12 +1039,37 @@ end-proc;</code></pre>
 <span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>) RCDFMT r<span class="st">&#39; || tblNam;</span></span></code></pre></div>
         <ul>
         <li><strong>Long descriptive names</strong> with
-        <code>FOR COLUMN</code> short (≤10) system names.</li>
+        <code>FOR COLUMN</code> short (≤10) system names, both
+        lowercase.</li>
+        <li><strong>Avoid SQL reserved words as column names, even where
+        they compile.</strong> Db2 enforces the <a href="https://www.ibm.com/docs/en/i/7.6.0?topic=words-reserved">reserved
+        word list</a> <em>by context</em>, so a column named
+        <code>SEQUENCE</code> or <code>POSITION</code> is accepted today
+        — the word has no meaning in that position, so the parser allows
+        it. Do not rely on that. IBM reserves the right to add to the
+        list at any time, including in PTFs against a GA release, and
+        has done so in ways that broke working code. A name that
+        compiles this year is not a name that compiles next year.</li>
+        <li><strong>The defence is a domain prefix, not the
+        list.</strong> You cannot keep up with the list, so make the
+        question moot: name every column for what it belongs to —
+        <code>libl_position</code>, <code>merge_sequence</code>,
+        <code>build_status</code>, <code>environment_type</code>. IBM
+        will never reserve those. This is the same move IBM itself makes
+        in <code>QSYS2.LIBRARY_LIST_INFO</code>, whose column is
+        <code>ordinal_position</code> rather than <code>position</code>.
+        Note that <em>compound</em> is not by itself sufficient —
+        <code>SYSTEM_USER</code> and <code>CURRENT_DATE</code> are
+        reserved — it is the domain prefix that makes a collision
+        implausible. Prefer this to a delimited identifier, which merely
+        postpones the problem into every statement that reads the
+        column.</li>
         <li>Identity <code>BIGINT</code> primary key named
         <code>&lt;entity&gt;_id</code>.</li>
         <li><code>NOT NULL DEFAULT</code> on business columns;
-        <code>CHECK</code> constraints where the domain is
-        enumerable.</li>
+        <code>CHECK</code> constraints where the domain is enumerable.
+        Enumerated values are <strong>numeric, not alpha</strong> — see
+        section 9.</li>
         <li><strong>Audit columns</strong>, all
         <code>IMPLICITLY HIDDEN</code>: <code>audit_timestamp</code>
         (row change timestamp), <code>audit_job_number/user/name</code>,
@@ -1007,6 +1298,45 @@ end-proc;</code></pre>
         <code>RUNTSKTM</code> and <code>TMOBJWRK</code>&#39;s sort carry
         matching &quot;keep in sync&quot; comments. Do the same for any new
         coupled logic.</li>
+        <li><strong>Coded values are numeric, not mnemonic.</strong>
+        This governs <em>codes</em> — values where a character stands in
+        for a word the reader has to know: status, option, scope,
+        selector. It has nothing to say about values that are already
+        words, such as IBM-style special values (<code>*LIBL</code>,
+        <code>*MERGE</code>) or text labels (<code>STEP07</code>); those
+        are names and stay as they are. Codes store digits. A single
+        letter is ambiguous the moment someone other than its author
+        reads it: <code>C</code> is Continue, Confirmed, Cancel, … A
+        digit makes no false promise, so the reader goes to the column
+        text or the panel for the meaning instead of guessing wrong.
+        <ul>
+        <li>Number from 1 in the natural progression of the thing, and
+        reserve <strong>9 for the error or terminal state</strong>,
+        leaving room for states added later.</li>
+        <li>Where the values are nested scopes rather than distinct
+        states, number them in widening order so the ordering itself
+        carries meaning.</li>
+        <li>Keep the column <code>CHAR(1)</code> holding a digit — it is
+        a coded value, not arithmetic — and spell every value out in
+        <code>LABEL ON COLUMN … TEXT IS</code> so the decode travels
+        with the table.</li>
+        <li>Write that legend as <code>value=Description</code>,
+        description in <strong>sentence case</strong>, values separated
+        by <strong>comma + space</strong>:
+        <code>Status: 1=Running, 2=Complete, 9=Error</code>. Column
+        <code>TEXT</code> caps at <strong>50 characters</strong> —
+        abbreviate the descriptions to fit and keep the authoritative
+        decode in the design document; do not let the legend run past
+        the cap and truncate mid-word, which is how IBM&#39;s own
+        <code>QADSPPGM</code> legends ended up unreadable.</li>
+        <li>No <code>UPPER()</code> normalization for these columns in
+        the <code>&lt;table&gt;T1</code> trigger; it is dead code once
+        the domain is numeric.</li>
+        <li>The readable form belongs at the <strong>command
+        layer</strong>, spelled out in full:
+        <code>SPCVAL((*STDIP 1) (*DEVIP 2) (*ALL 3))</code>. The user
+        types the special value, never the digit.</li>
+        </ul></li>
         </ul>
         <hr />
         <h2 id="10-legacy-and-scratch-code">10. Legacy and scratch
