@@ -30,8 +30,10 @@ Canonical home of the Godsend Consulting IBM i coding standards.
   conversion.
 - [sync-standards.ps1](sync-standards.ps1) — copies the canonical file into
   every sibling IBM i repo (any directory beside this one containing
-  `QRPGLESRC`, `QCLSRC`, or `QSQLSRC`), so each repo carries an identical
-  copy that travels with the code. `-Check` reports drift without copying.
+  `QRPGLESRC`, `QCLSRC`, or `QSQLSRC` **and** a `.git`), so each repo carries
+  an identical copy that travels with the code. Directories with source but no
+  `.git` — reference-only checkouts such as `RBXREF` — are reported as `SKIP`
+  and left alone. `-Check` reports drift without copying.
 
 ## Workflow
 
@@ -42,8 +44,8 @@ Canonical home of the Godsend Consulting IBM i coding standards.
 ## Wiring a new IBM i project
 
 1. Run `./sync-standards.ps1` (the new repo is picked up automatically once
-   its source directories exist), or copy `CODING-STANDARDS.md` to the repo
-   root.
+   its source directories exist and it has been `git init`ed — until then it
+   reports as `SKIP`), or copy `CODING-STANDARDS.md` to the repo root.
 2. In the project's `CLAUDE.md`, import the local copy so Claude Code loads
    it every session:
 
