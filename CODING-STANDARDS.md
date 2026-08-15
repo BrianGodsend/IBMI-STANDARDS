@@ -137,6 +137,99 @@ them on the IBM i (see `QRPGLESRC/BLDOBJ.SQLRPGLE` header for the full reference
   pattern, but it is not required for new members.
 - Related CRUD commands funnel into one shared CPP distinguished by a
   `CONSTANT(*ADD|*CHANGE|…)` MODE parameter (e.g. `TMACRUSR`, `TMCCDTSK`).
+- **Symbol namespaces — use the full object name, never a truncation.**
+  A member that publishes names into other members — any `…H` copybook, and
+  the `…P` implementation copybook that goes with it — prefixes **every**
+  constant, template, and procedure it publishes with its own full name.
+
+  **The namespace exists to prevent collisions, and that is a requirement, not
+  a preference.** Every name a member publishes lands in the symbol table of
+  every program that pulls it in, alongside the names from every other member
+  pulled into the same program. Without a namespace those names compete, and
+  the failure is a compile error at best and the wrong procedure at worst.
+  That a prefix also tells a reader where a name came from is a large bonus —
+  but it is the bonus, not the reason. Do not weigh the bonus against the cost
+  and conclude a namespace is optional; the requirement is not negotiable.
+
+  | Kind | Form | Example |
+  | --- | --- | --- |
+  | Constant | `@FULLNAME_SCREAMING_SNAKE` | `@GUXLINF_ATR_MAX` |
+  | Template | `fullname_lowercase_t` | `guxlinf_infatr_t` |
+  | Procedure | `fullname_camelCase` | `guxlinf_getSheetName` |
+
+  The namespace is the object name **in full**. An older IP convention dropped
+  the two-character application id and namespaced on the remainder — `GUXLINF`
+  publishing `xlinf_*` — and that is no longer used anywhere. Do not
+  reintroduce it, and never mix the two within one member: `@GUXLINF_ATR_MAX`
+  sitting beside `xlinf_infatr_t` is the specific defect this rule exists to
+  prevent. The full name is what a reader greps for and what `WRKOBJ` shows;
+  a truncation is a second name for the same thing.
+
+  This applies to a `/copy` copybook exactly as it does to a bound service
+  program — a copy member's names carry the same collision exposure as a
+  `*SRVPGM`'s exports, which is why `GUSQCPYP` namespaces its procedures
+  despite being copied rather than bound.
+
+  **A copybook shared by only one closed family of programs is not exempt.**
+  The argument for exempting one is that nothing outside the family will ever
+  pull it in, so nothing can collide — but that premise is a claim about the
+  future, and the include graph is what actually decides it. Copy members
+  include each other, sometimes mutually behind their guards, so a member
+  three includes away can acquire the whole set without anyone intending it.
+  Check before believing the premise, and expect it to have already failed.
+  `TMXXXWRKH` is the worked example: it serves the `WRK*TM` panel family, yet
+  `RTVLOCTM` — a retrieve CPP, not a panel program — receives every one of its
+  names through `RTVLOCTMH`, which `TMXXXWRKH` in turn includes.
+
+  Two things keep their own names rather than taking the copybook's:
+
+  - **External-file templates**, which are namespaced by the table they
+    mirror — `dcl-ds tmusr_t extname('TMUSR')`. Two copybooks may declare the
+    same one behind an `/IF NOT DEFINED` guard so both can be pulled in.
+  - **Names owned by IBM or a third party** — the C types that arrive with
+    `/copy QSYSINC/QRPGLESRC,IFS` (`size_t`, `mode_t`, `pid_t`), IBM API
+    structure names, and third-party members, which keep their original
+    spelling so they still match the documentation.
+
+  Constants are namespaced by **what they describe**, which is not always the
+  member that declares them. Three cases, all correct:
+
+  - **Owned by the publishing member** — `@GUXLINF_ATR_MAX`. Takes the
+    member's full name, as above.
+  - **Owned by another object** — `@WRKOBJTM_PNLID` belongs to the `WRKOBJTM`
+    panel group (see section 6), `@QUIM_*` to UIM. Takes that object's name,
+    which is what keeps the panel-group constants matching their `:VARRCD`
+    and `:LISTDEF` names.
+  - **Owned by a concept rather than an object** — `@SQLCODE_NODATA`,
+    `@OPTNBR_*` for list option numbers, `@QUALOBJ_*` for qualified object
+    names. There is no object to name, so a stable category prefix serves.
+
+  The third case is a **fallback that has to be justified, not a free choice**.
+  Use it only when no object owns the concept; if one does, its name wins. The
+  risk being accepted is that nothing stops a second member declaring its own
+  `@OPTNBR_*`, and two copy members pulled into one program would compete.
+  That surfaces as a duplicate-definition compile error where the collision
+  happens rather than as wrong behaviour at run time, which is what makes it
+  tolerable — but only while the set of programs that can see the constant
+  stays small.
+
+  **So category prefixes must not appear in a general-use copybook.** A member
+  written to be pulled in broadly — the API wrapper copybooks (`QAPIH`,
+  `QILEH`, `QUIMH`), a library-wide utility header, anything a new program is
+  expected to `/copy` as a matter of course — declares **only** constants in
+  its own namespace. Two reasons: its reach is exactly what makes a category
+  name likely to collide, and every name it declares is imposed on every
+  consumer whether that consumer wants it or not. A category prefix is only
+  defensible where the consumer set is bounded and known, as in a copybook
+  serving one application family. Test it by asking who can see the constant:
+  if the answer is "anything that might be written later," take the member's
+  namespace instead.
+
+  So the rule is that a namespace is the full name of whatever owns the
+  symbol — not that every symbol in a file carries that file's name.
+
+  Local subprocedures inside a single program are not published and take the
+  plain `<verb><Object>` form of section 2.5.
 - **Object-role suffixes.** Object names follow a 2+2+3 shape — application,
   area, object. Where the third element has no entity to describe, because the
   object is infrastructure rather than application, it names the object's
@@ -379,6 +472,10 @@ ctl-opt actgrp(*CALLER);
 - A copybook contains, in order: nested `/copy` of its dependencies, named
   constants, data-structure templates, then prototypes. Terminate each group with
   a separator rule.
+- Everything a copybook publishes carries the copybook's **full** name as its
+  namespace — `@GUSQCPY_*`, `gusqcpy_*_t`, `gusqcpy_*` — including the `…P`
+  member's procedure bodies. See section 1.5 for the rule and its two
+  exceptions.
 - Shared IBM API prototypes live in the `QAPIH` (QUS*/QMH* APIs), `QILEH` (ILE
   CEE/QSN), and `QUIMH` (UIM) copybooks — extend those rather than redeclaring
   APIs inline.
@@ -392,18 +489,21 @@ ctl-opt actgrp(*CALLER);
 - **Constants:** SCREAMING_SNAKE_CASE prefixed with `@` (C-style), grouped by
   topic: `dcl-c @QUIM_FNCKEY_ENTER 1;`, `dcl-c @SQLCODE_NODATA 100;`
 - **Templates:** all-lowercase name with a `_t` suffix — "My Template
-  Variable" becomes `mytemplatevariable_t` — declared `template qualified inz`:
+  Variable" becomes `mytemplatevariable_t` — declared `template qualified inz`,
+  and namespaced with the publishing member's full name (section 1.5):
 
   ```rpgle
-  dcl-ds usrlste_t   template qualified inz;
+  dcl-ds tmxxxwrk_usrlste_t   template qualified inz;
     opt            Int(5);
     usrPrf         Char(10);
   end-ds;
   ```
 
-  Instances: `dcl-ds usrLstE likeds(usrlste_t) inz(*LIKEDS);`
+  Instances drop the namespace, since they are local:
+  `dcl-ds usrLstE likeds(tmxxxwrk_usrlste_t) inz(*LIKEDS);`
 - **External-file templates:** one per table, used for `like()` typing and fetch
-  buffers:
+  buffers. These are namespaced by the table, not by the copybook, so two
+  copybooks may declare the same one behind an `/IF NOT DEFINED` guard:
 
   ```rpgle
   dcl-ds tmusr_t  extname('TMUSR') inz(*EXTDFT) qualified template;
@@ -435,7 +535,9 @@ ctl-opt actgrp(*CALLER);
   (set `*inLR`, close handles) and `*inzsr` (one-time init, cursor DECLAREs).
   All real logic goes in **subprocedures** (`dcl-proc`).
 - Name subroutines — and subprocedures — `<verb><Object>` in camelCase:
-  `getItemHeader`, `loadList`, `sndStsMsg`, `exitPgm`.
+  `getItemHeader`, `loadList`, `sndStsMsg`, `exitPgm`. A subprocedure that is
+  published to other members through a copybook takes the namespace of
+  section 1.5 in front of that name — `tmxxxwrk_sndStsMsg`.
 - Every procedure carries a `///` doc block (ILEDoc, see 2.3): a one-line
   short description, then `@param` and `@return` lines as needed.
 - Subprocedure skeleton:
@@ -924,3 +1026,16 @@ CREATE OR REPLACE TABLE ... (
 - **BSLIB vs RBUTL duplicates:** members shared by both repos are expected to be
   byte-identical (verify with `scripts/refresh-commit.ps1` workflows). When they
   drift, RBUTL is authoritative for TM/RB members; reconcile promptly.
+- **Fresh-line repos diverge on purpose.** The rule above pairs BSLIB with
+  RBUTL and reaches no further. A repo started as a *fresh line* — GCUTL as of
+  08/15/26 — is a new version of the source, not a copy to be kept in step:
+  utilities arrive from the older repos one at a time, each brought up to the
+  current standard as it lands, and everything after that evolves on its own.
+  Divergence from the repo a member came from is the intended direction of
+  travel, so do not report it as drift and do not port a change back. The older
+  repos carry too many live production call points to keep patching in parallel.
+
+  This governs **source members only**. This document is one standard for every
+  Godsend IBM i repo and still travels to all of them: edit the canonical copy
+  in `IBMI-STANDARDS`, run `sync-standards.ps1`, and commit the refreshed copy
+  everywhere it lands, fresh-line repos included.

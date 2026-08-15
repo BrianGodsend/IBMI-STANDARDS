@@ -324,6 +324,141 @@ BS  06/15/26  Updated documentation to acknowledge that default
         distinguished by a <code>CONSTANT(*ADD|*CHANGE|…)</code> MODE
         parameter (e.g. <code>TMACRUSR</code>,
         <code>TMCCDTSK</code>).</p></li>
+        <li><p><strong>Symbol namespaces — use the full object name,
+        never a truncation.</strong> A member that publishes names into
+        other members — any <code>…H</code> copybook, and the
+        <code>…P</code> implementation copybook that goes with it —
+        prefixes <strong>every</strong> constant, template, and
+        procedure it publishes with its own full name.</p>
+        <p><strong>The namespace exists to prevent collisions, and that
+        is a requirement, not a preference.</strong> Every name a member
+        publishes lands in the symbol table of every program that pulls
+        it in, alongside the names from every other member pulled into
+        the same program. Without a namespace those names compete, and
+        the failure is a compile error at best and the wrong procedure
+        at worst. That a prefix also tells a reader where a name came
+        from is a large bonus — but it is the bonus, not the reason. Do
+        not weigh the bonus against the cost and conclude a namespace is
+        optional; the requirement is not negotiable.</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Kind</th>
+        <th>Form</th>
+        <th>Example</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>Constant</td>
+        <td><code>@FULLNAME_SCREAMING_SNAKE</code></td>
+        <td><code>@GUXLINF_ATR_MAX</code></td>
+        </tr>
+        <tr>
+        <td>Template</td>
+        <td><code>fullname_lowercase_t</code></td>
+        <td><code>guxlinf_infatr_t</code></td>
+        </tr>
+        <tr>
+        <td>Procedure</td>
+        <td><code>fullname_camelCase</code></td>
+        <td><code>guxlinf_getSheetName</code></td>
+        </tr>
+        </tbody>
+        </table>
+        <p>The namespace is the object name <strong>in full</strong>. An
+        older IP convention dropped the two-character application id and
+        namespaced on the remainder — <code>GUXLINF</code> publishing
+        <code>xlinf_*</code> — and that is no longer used anywhere. Do
+        not reintroduce it, and never mix the two within one member:
+        <code>@GUXLINF_ATR_MAX</code> sitting beside
+        <code>xlinf_infatr_t</code> is the specific defect this rule
+        exists to prevent. The full name is what a reader greps for and
+        what <code>WRKOBJ</code> shows; a truncation is a second name
+        for the same thing.</p>
+        <p>This applies to a <code>/copy</code> copybook exactly as it
+        does to a bound service program — a copy member&#39;s names carry
+        the same collision exposure as a <code>*SRVPGM</code>&#39;s exports,
+        which is why <code>GUSQCPYP</code> namespaces its procedures
+        despite being copied rather than bound.</p>
+        <p><strong>A copybook shared by only one closed family of
+        programs is not exempt.</strong> The argument for exempting one
+        is that nothing outside the family will ever pull it in, so
+        nothing can collide — but that premise is a claim about the
+        future, and the include graph is what actually decides it. Copy
+        members include each other, sometimes mutually behind their
+        guards, so a member three includes away can acquire the whole
+        set without anyone intending it. Check before believing the
+        premise, and expect it to have already failed.
+        <code>TMXXXWRKH</code> is the worked example: it serves the
+        <code>WRK*TM</code> panel family, yet <code>RTVLOCTM</code> — a
+        retrieve CPP, not a panel program — receives every one of its
+        names through <code>RTVLOCTMH</code>, which
+        <code>TMXXXWRKH</code> in turn includes.</p>
+        <p>Two things keep their own names rather than taking the
+        copybook&#39;s:</p>
+        <ul>
+        <li><strong>External-file templates</strong>, which are
+        namespaced by the table they mirror —
+        <code>dcl-ds tmusr_t extname(&#39;TMUSR&#39;)</code>. Two copybooks may
+        declare the same one behind an <code>/IF NOT DEFINED</code>
+        guard so both can be pulled in.</li>
+        <li><strong>Names owned by IBM or a third party</strong> — the C
+        types that arrive with <code>/copy QSYSINC/QRPGLESRC,IFS</code>
+        (<code>size_t</code>, <code>mode_t</code>, <code>pid_t</code>),
+        IBM API structure names, and third-party members, which keep
+        their original spelling so they still match the
+        documentation.</li>
+        </ul>
+        <p>Constants are namespaced by <strong>what they
+        describe</strong>, which is not always the member that declares
+        them. Three cases, all correct:</p>
+        <ul>
+        <li><strong>Owned by the publishing member</strong> —
+        <code>@GUXLINF_ATR_MAX</code>. Takes the member&#39;s full name, as
+        above.</li>
+        <li><strong>Owned by another object</strong> —
+        <code>@WRKOBJTM_PNLID</code> belongs to the
+        <code>WRKOBJTM</code> panel group (see section 6),
+        <code>@QUIM_*</code> to UIM. Takes that object&#39;s name, which is
+        what keeps the panel-group constants matching their
+        <code>:VARRCD</code> and <code>:LISTDEF</code> names.</li>
+        <li><strong>Owned by a concept rather than an object</strong> —
+        <code>@SQLCODE_NODATA</code>, <code>@OPTNBR_*</code> for list
+        option numbers, <code>@QUALOBJ_*</code> for qualified object
+        names. There is no object to name, so a stable category prefix
+        serves.</li>
+        </ul>
+        <p>The third case is a <strong>fallback that has to be
+        justified, not a free choice</strong>. Use it only when no
+        object owns the concept; if one does, its name wins. The risk
+        being accepted is that nothing stops a second member declaring
+        its own <code>@OPTNBR_*</code>, and two copy members pulled into
+        one program would compete. That surfaces as a
+        duplicate-definition compile error where the collision happens
+        rather than as wrong behaviour at run time, which is what makes
+        it tolerable — but only while the set of programs that can see
+        the constant stays small.</p>
+        <p><strong>So category prefixes must not appear in a general-use
+        copybook.</strong> A member written to be pulled in broadly —
+        the API wrapper copybooks (<code>QAPIH</code>,
+        <code>QILEH</code>, <code>QUIMH</code>), a library-wide utility
+        header, anything a new program is expected to <code>/copy</code>
+        as a matter of course — declares <strong>only</strong> constants
+        in its own namespace. Two reasons: its reach is exactly what
+        makes a category name likely to collide, and every name it
+        declares is imposed on every consumer whether that consumer
+        wants it or not. A category prefix is only defensible where the
+        consumer set is bounded and known, as in a copybook serving one
+        application family. Test it by asking who can see the constant:
+        if the answer is &quot;anything that might be written later,&quot; take
+        the member&#39;s namespace instead.</p>
+        <p>So the rule is that a namespace is the full name of whatever
+        owns the symbol — not that every symbol in a file carries that
+        file&#39;s name.</p>
+        <p>Local subprocedures inside a single program are not published
+        and take the plain <code>&lt;verb&gt;&lt;Object&gt;</code> form
+        of section 2.5.</p></li>
         <li><p><strong>Object-role suffixes.</strong> Object names
         follow a 2+2+3 shape — application, area, object. Where the
         third element has no entity to describe, because the object is
@@ -664,6 +799,12 @@ ctl-opt actgrp(*CALLER);
         of its dependencies, named constants, data-structure templates,
         then prototypes. Terminate each group with a separator
         rule.</p></li>
+        <li><p>Everything a copybook publishes carries the copybook&#39;s
+        <strong>full</strong> name as its namespace —
+        <code>@GUSQCPY_*</code>, <code>gusqcpy_*_t</code>,
+        <code>gusqcpy_*</code> — including the <code>…P</code> member&#39;s
+        procedure bodies. See section 1.5 for the rule and its two
+        exceptions.</p></li>
         <li><p>Shared IBM API prototypes live in the <code>QAPIH</code>
         (QUS*/QMH* APIs), <code>QILEH</code> (ILE CEE/QSN), and
         <code>QUIMH</code> (UIM) copybooks — extend those rather than
@@ -685,15 +826,19 @@ ctl-opt actgrp(*CALLER);
         <li><p><strong>Templates:</strong> all-lowercase name with a
         <code>_t</code> suffix — &quot;My Template Variable&quot; becomes
         <code>mytemplatevariable_t</code> — declared
-        <code>template qualified inz</code>:</p>
-        <pre class="rpgle"><code>dcl-ds usrlste_t   template qualified inz;
+        <code>template qualified inz</code>, and namespaced with the
+        publishing member&#39;s full name (section 1.5):</p>
+        <pre class="rpgle"><code>dcl-ds tmxxxwrk_usrlste_t   template qualified inz;
   opt            Int(5);
   usrPrf         Char(10);
 end-ds;</code></pre>
-        <p>Instances:
-        <code>dcl-ds usrLstE likeds(usrlste_t) inz(*LIKEDS);</code></p></li>
+        <p>Instances drop the namespace, since they are local:
+        <code>dcl-ds usrLstE likeds(tmxxxwrk_usrlste_t) inz(*LIKEDS);</code></p></li>
         <li><p><strong>External-file templates:</strong> one per table,
-        used for <code>like()</code> typing and fetch buffers:</p>
+        used for <code>like()</code> typing and fetch buffers. These are
+        namespaced by the table, not by the copybook, so two copybooks
+        may declare the same one behind an <code>/IF NOT DEFINED</code>
+        guard:</p>
         <pre class="rpgle"><code>dcl-ds tmusr_t  extname(&#39;TMUSR&#39;) inz(*EXTDFT) qualified template;
 end-ds;</code></pre></li>
         <li><p>Type fields with
@@ -739,7 +884,10 @@ end-ds;</code></pre></li>
         <li><p>Name subroutines — and subprocedures —
         <code>&lt;verb&gt;&lt;Object&gt;</code> in camelCase:
         <code>getItemHeader</code>, <code>loadList</code>,
-        <code>sndStsMsg</code>, <code>exitPgm</code>.</p></li>
+        <code>sndStsMsg</code>, <code>exitPgm</code>. A subprocedure
+        that is published to other members through a copybook takes the
+        namespace of section 1.5 in front of that name —
+        <code>tmxxxwrk_sndStsMsg</code>.</p></li>
         <li><p>Every procedure carries a <code>///</code> doc block
         (ILEDoc, see 2.3): a one-line short description, then
         <code>@param</code> and <code>@return</code> lines as
@@ -1342,25 +1490,42 @@ end-proc;</code></pre>
         <h2 id="10-legacy-and-scratch-code">10. Legacy and scratch
         code</h2>
         <ul>
-        <li><strong>Scratch:</strong> <code>JUNK*</code> members are
+        <li><p><strong>Scratch:</strong> <code>JUNK*</code> members are
         experiments. Git-ignores them going forward; never reference or
-        promote them, and don&#39;t cite them as precedent.</li>
-        <li><strong>Third-party:</strong> members with external
+        promote them, and don&#39;t cite them as precedent.</p></li>
+        <li><p><strong>Third-party:</strong> members with external
         authorship headers (e.g. Carsten Flensburg&#39;s
         <code>CPYMSGD*</code>, Giuseppe Costagliola&#39;s
         <code>SQL2XLSX*</code>, Scott Klement&#39;s YAJL/JDBCR4 material;
         <code>BLDOBJ</code> is a branched fork of Klement&#39;s BUILD tool)
         keep their original style and attribution. Fix bugs; don&#39;t
-        restyle.</li>
-        <li><strong>Legacy fixed-form:</strong> don&#39;t expand fixed-form
-        code. Small fix = match the existing style locally; real
-        enhancement = convert to <code>**FREE</code> first (add a
-        MODIFICATIONS entry for the conversion).</li>
-        <li><strong>BSLIB vs RBUTL duplicates:</strong> members shared
-        by both repos are expected to be byte-identical (verify with
-        <code>scripts/refresh-commit.ps1</code> workflows). When they
-        drift, RBUTL is authoritative for TM/RB members; reconcile
-        promptly.</li>
+        restyle.</p></li>
+        <li><p><strong>Legacy fixed-form:</strong> don&#39;t expand
+        fixed-form code. Small fix = match the existing style locally;
+        real enhancement = convert to <code>**FREE</code> first (add a
+        MODIFICATIONS entry for the conversion).</p></li>
+        <li><p><strong>BSLIB vs RBUTL duplicates:</strong> members
+        shared by both repos are expected to be byte-identical (verify
+        with <code>scripts/refresh-commit.ps1</code> workflows). When
+        they drift, RBUTL is authoritative for TM/RB members; reconcile
+        promptly.</p></li>
+        <li><p><strong>Fresh-line repos diverge on purpose.</strong> The
+        rule above pairs BSLIB with RBUTL and reaches no further. A repo
+        started as a <em>fresh line</em> — GCUTL as of 08/15/26 — is a
+        new version of the source, not a copy to be kept in step:
+        utilities arrive from the older repos one at a time, each
+        brought up to the current standard as it lands, and everything
+        after that evolves on its own. Divergence from the repo a member
+        came from is the intended direction of travel, so do not report
+        it as drift and do not port a change back. The older repos carry
+        too many live production call points to keep patching in
+        parallel.</p>
+        <p>This governs <strong>source members only</strong>. This
+        document is one standard for every Godsend IBM i repo and still
+        travels to all of them: edit the canonical copy in
+        <code>IBMI-STANDARDS</code>, run
+        <code>sync-standards.ps1</code>, and commit the refreshed copy
+        everywhere it lands, fresh-line repos included.</p></li>
         </ul>
     </article>
 
