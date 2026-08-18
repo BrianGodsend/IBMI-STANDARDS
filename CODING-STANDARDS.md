@@ -672,20 +672,34 @@ ctl-opt actgrp(*CALLER);
   `bytPrv` before each call, then test `bytAvl`.
 - Use `callp(e)` + `%error()` for tolerated command failures; escalate with
   `snd-msg *ESCAPE %msg(...) %target('*PGMBDY': 1);`.
-- **`%msg` takes the message file as a NAME, never as the 20-byte API form.**
-  Name the file from a constant rather than a literal, and pick the right
-  constant — `QAPIH` publishes two that look interchangeable and are not:
+- **"Qualified" and "fully qualified" are two DIFFERENT layouts, and the
+  component order is reversed between them.** The terms differ by one word and
+  are used in different contexts, which is the whole difficulty:
+
+  | Term | Bytes | Layout | Where it appears |
+  | --- | --- | --- | --- |
+  | **fully qualified** | up to 21 | `LIB/NAME` — library first, slash, name | what a user *types*; what `%msg` accepts |
+  | **qualified** | 20 | `NAME` in 1–10, `LIB` in 11–20 — name first, no slash | what a `QUAL` parameter *delivers to the CPP*; what the `QMH*` APIs take |
+
+  So typing `MSGF(MSGLIB/MSGF)` hands the CPP `'MSGF      MSGLIB    '`. The
+  library leads on the way in and the name leads on the way out. This is the same
+  inversion that makes the `PGMXRF` convention work (§5): the two `QUAL`
+  constants are written *CPP then command*, so the compiled reference arrives
+  with the CPP in the object field and the command name in the library field.
+
+- **`%msg` takes the message file as a name — plain or FULLY qualified, never the
+  20-byte form.** It accepts `MSGF`, `MSGLIB/MSGF` and `*LIBL/MSGF`, so a
+  variable holding one needs room for 21 characters. Name the file from a
+  constant rather than a literal, and pick the right constant — `QAPIH` publishes
+  two that look interchangeable and are not:
 
   | Constant | Value | For |
   | --- | --- | --- |
   | `@QAPI_QCPF_MSGF_NAME` | `'QCPFMSG   '` | `%msg` — a 10-byte name, trailing blanks ignored |
-  | `@QAPI_QCPF_MSGF` | `'QCPFMSG   *LIBL     '` | `QMHSNDPM` and friends — name in 1–10, library in 11–20 |
+  | `@QAPI_QCPF_MSGF` | `'QCPFMSG   *LIBL     '` | `QMHSNDPM` and friends — the 20-byte qualified form |
 
-  `%msg` accepts `MSGF`, `MSGLIB/MSGF` and `*LIBL/MSGF` — **slash**-qualified, so
-  a variable holding the qualified form needs room for 21 characters. It does
-  **not** accept the API's positional 20-byte form, so passing
-  `@QAPI_QCPF_MSGF` to `%msg` is wrong even though it compiles and looks
-  deliberate.
+  Passing `@QAPI_QCPF_MSGF` to `%msg` is wrong even though it compiles and looks
+  deliberate: `%msg` would read the whole 20 bytes as one name.
 - Status messages go through a small `sndStsMsg` procedure (CPDA0FF / *STATUS);
   clear with a blank message when done.
 
@@ -790,7 +804,7 @@ ctl-opt actgrp(*CALLER);
 
   Two things the column rules do not govern, so do not "correct" them:
 
-  - **A command name longer than 10 characters** — a qualified name such as
+  - **A command name longer than 10 characters** — a fully qualified name such as
     `HAWKEYE/DSPFILSETUP` — pushes its keywords right of the nominal column. The
     field cannot hold it; nothing is wrong.
   - **Large literals — SQL statements, built command strings — break the column
