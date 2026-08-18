@@ -1111,11 +1111,11 @@ CREATE OR REPLACE TABLE ... (
     `LIBL(*SAME QGPL)` and `LIBL(*SAME *SAME)` are both accepted. `SNGVAL`
     ("single value") is the one that means **this value may only appear alone**,
     which is what `*SAME`, `*NONE`, `*ALL` and their like almost always want.
-  - **A list parameter arrives as a 2-byte binary count followed by the
-    elements, each at its FULL declared length.** Fixed-length `*CHAR`, `*NAME`
-    and decimal elements are padded to `LEN()`, so the stride is constant and the
-    structure maps directly — in RPG as a `dim()` array behind the count, in CL
-    as `%BIN` plus `%SST` or a `STG(*DEFINED)` overlay:
+  - **A list of BASE-DATA-TYPE elements arrives as a 2-byte binary count
+    followed by the elements, each at its FULL declared length.** Fixed-length
+    `*CHAR`, `*NAME` and decimal elements are padded to `LEN()`, so the stride is
+    constant and the structure maps directly — in RPG as a `dim()` array behind
+    the count, in CL as `%BIN` plus `%SST` or a `STG(*DEFINED)` overlay:
 
     ```rpgle
     dcl-ds xxx_libl_t  template qualified inz;
@@ -1124,8 +1124,39 @@ CREATE OR REPLACE TABLE ... (
     end-ds;
     ```
 
-    A `VARY` element does not lay out this way — each carries its own length —
-    so do not assume a constant stride for one.
+    A `VARY` element does not lay out this way — each carries its own length — so
+    do not assume a constant stride for one.
+  - **`MAX()` over `ELEM` or `QUAL` is a DIFFERENT structure. Do not reach for a
+    `dim()` array.** The elements are not contiguous; the parameter opens with a
+    count and then an **offset table**, and each entry carries its own element
+    count before its components:
+
+    | Offset | Content |
+    | --- | --- |
+    | 1–2 | number of entries passed (2-byte binary) |
+    | 3 … | one **2-byte offset** per entry, relative to the start of the parameter |
+    | *per entry, at its offset* | 2-byte count of elements supplied, then the components at their declared lengths |
+
+    `QCLSRC/INF2XLSX.CLLE` is the worked reference — `PARM KWD(ATR) TYPE(EATR)
+    MAX(50)` with `ELEM` lengths 50 and 256. It walks the offset table with a
+    based pointer, advancing `%OFS(&ATROFSPTR)` by 2 per entry and setting the
+    entry pointer to `%OFS(&ATRPTR) + &ATROFS`. The declared sizes confirm the
+    layout: entry = 2 + 50 + 256 = 308; 50 offsets × 2 = 100, plus 50 × 308 =
+    15,400, giving the `LEN(15502)` = 2 + 15,500 on the receiving variable.
+
+    **The offset table is the authority on where an entry is — never compute
+    it.** The entries have been observed loaded **back to front**: the first
+    offset points at the *last* entry in storage, so walking the offsets forward
+    walks backwards through the array. That is an observation rather than
+    documented behaviour, which is exactly the point — the arrangement is not
+    something to depend on in either direction, and reading the offsets is what
+    makes it not matter. Stride arithmetic would land on the wrong entry even
+    with every length correct.
+
+    **Confirm the layout before writing against it.** The above is verified for
+    `ELEM`; a `QUAL` inside a list is not, and IBM documents these structures per
+    parameter type rather than as one rule. The widths in particular are easy to
+    get wrong — 2 bytes, not the 4 the shape suggests.
   - **The CPP must bound every loop by the COUNT**, never by the declared
     dimension. The command materialises the elements it was
     given, not `MAX()` of them, so the array past the count is not blank and is
