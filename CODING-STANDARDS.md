@@ -1111,8 +1111,23 @@ CREATE OR REPLACE TABLE ... (
     `LIBL(*SAME QGPL)` and `LIBL(*SAME *SAME)` are both accepted. `SNGVAL`
     ("single value") is the one that means **this value may only appear alone**,
     which is what `*SAME`, `*NONE`, `*ALL` and their like almost always want.
-  - **A CPP reading a list parameter must bound every loop by the COUNT**, never
-    by the declared dimension. The command materialises the elements it was
+  - **A list parameter arrives as a 2-byte binary count followed by the
+    elements, each at its FULL declared length.** Fixed-length `*CHAR`, `*NAME`
+    and decimal elements are padded to `LEN()`, so the stride is constant and the
+    structure maps directly — in RPG as a `dim()` array behind the count, in CL
+    as `%BIN` plus `%SST` or a `STG(*DEFINED)` overlay:
+
+    ```rpgle
+    dcl-ds xxx_libl_t  template qualified inz;
+      count          Int(5);
+      library        Char(10) dim(250);
+    end-ds;
+    ```
+
+    A `VARY` element does not lay out this way — each carries its own length —
+    so do not assume a constant stride for one.
+  - **The CPP must bound every loop by the COUNT**, never by the declared
+    dimension. The command materialises the elements it was
     given, not `MAX()` of them, so the array past the count is not blank and is
     not reliably even this parameter. Probed with one `*SAME` in each of two
     lists followed by a `MODE` constant:
@@ -1126,6 +1141,9 @@ CREATE OR REPLACE TABLE ... (
     `MRGENV` element 2 returned `*RSTD` — the value of the **`MODE` parameter
     that follows it**. Reading past the count reads adjacent parameter data,
     which looks like a plausible name and would be written to the table as one.
+    **What lies past the count is the call stack**, so this is not a tidy-up: it
+    is reading storage that belongs to something else, and the value it returns
+    changes with the caller.
   - **`RSTD(*YES)` restricts which values are accepted, not how many**, so it is
     no substitute for `SNGVAL` — `MAX()` governs the count independently.
   - **`CONSTANT` requires `MAX(1)`** — `CPD6228`. A list parameter cannot be
