@@ -98,21 +98,82 @@ them on the IBM i (see `QRPGLESRC/BLDOBJ.SQLRPGLE` header for the full reference
 - Always end with `<BLDOBJ EOF/>` so scanning stops.
 - Keep directives correct when copying a member — that *is* its build script.
 
+**Member text lives in the source.** Source edited off-platform round-trips
+through the IFS, and a source physical file member's **text description does not
+survive that trip**. The only place it can be kept is the member itself, so every
+member carries its own:
+
+| Member type | Where the text goes |
+| --- | --- |
+| `.CMD` | `TEXT('…')` on the `CMD` statement |
+| CL (`.CLLE`, `.CLP`) | `TEXT('…')` on `DCLPRCOPT` |
+| Everything else | `*> <BLDOBJ TEXT="…"/>` |
+
+So altering the source is what preserves the source. This applies even to
+members that are never built — a reference-only layout still has member text
+worth keeping, and a `TEXT` directive carries no create command, so it does not
+make the member buildable.
+
 ### 1.4 Layout
 
-- **Line width:** target ≤ 80 characters everywhere. Hard limits:
-  - `**FREE` RPG: code starts in column 1; the server source files give 100 data
-    columns, so 100 is the hard maximum — but stay ≤ 80 for readability (RBUTL
-    practice is ~76).
-  - Hybrid RPG (no `**FREE`): fixed-form specs are, well, fixed — their columns
-    aren't a style choice. The line-length rule governs the free-form lines,
-    which must fit **columns 8–80**: the compiler does not read free-form code
-    past column 80, so a line extending beyond it may cause compiler errors.
-    80 is a hard limit for `/FREE` lines.
-  - CL, CMD, SQL: keep within 80.
-  - PNLGRP: 134 is the hard maximum (the source file permits it); prefer ≤ 80
-    for readability. A `:HELP` title that would exceed 80 stays on one line
-    (see §6) rather than wrapping or being abbreviated.
+- **Line width.** The hard maximum is the source file's **`SRCDTA` length** —
+  the source line itself — and a longer line is **truncated silently**:
+
+  | Source file | Line (`SRCDTA`) | Record length |
+  | --- | --- | --- |
+  | `QRPGLESRC` | **100** | 112 |
+  | `QPNLSRC` | **134** | 146 |
+  | `QTXTSRC` | **132** | 144 |
+  | Everything else — `QCLSRC`, `QCMDSRC`, `QSQLSRC`, `QDDSSRC`, `QREXSRC`, `QMNUSRC`, … | **80** | 92 |
+
+  **Measure against the `SRCDTA` column, never the record length.** A source
+  physical file record carries a 12-byte prefix — a 6-byte sequence number and a
+  6-byte date — that is not part of your line. Quoting the record length as a
+  line limit hands you 12 characters that do not exist, and the overflow is
+  discovered by truncation. That mistake is exactly how the `XFENV.SQLT` lines
+  below got through review at 81 and 83 characters in an 80-column file.
+
+  RBUTL practice is ~76, and these are a limit rather than a budget to spend.
+
+  **Nothing warns you when you exceed it.** The line is cut when the member is
+  written or transferred, and the loss surfaces later as a compile failure — or
+  worse, as code that still looks right with a character missing. The dangerous
+  case is a truncated string literal: lose the closing quote and the parser runs
+  on into whatever follows, so the error is reported nowhere near the damage.
+  This has actually happened here (`XFENV.SQLT`, two `LABEL ON COLUMN` lines at
+  81 and 83 characters in an 80-wide file, both cut to exactly 80). Any tool that
+  rewrites source in bulk will do this to every over-length line at once.
+
+  **An over-length line is not the only cause of truncation, and the symptom is
+  identical.** A build or source-manipulation tool that stages members through a
+  work file — typically `QTEMP/QSQLSRC` or `QTEMP/QSQLTEMP` — truncates to
+  *that* file's record length, whatever your lines measure. If the work file was
+  created earlier by something else, at the wrong width, it persists for the life
+  of the job and silently cuts every member that passes through it.
+
+  Diagnose in this order:
+
+  1. **Measure the longest line in the member.** If nothing exceeds the limit in
+     §1.4, the member is not the problem and no amount of reformatting will fix
+     it. Verified `XFBLD.SQLT`, whose longest line was 79 in an 80-column file,
+     while the build still failed.
+  2. **Delete the QTEMP work files and let the system recreate them** —
+     `DLTF QTEMP/QSQLSRC`, and `QTEMP/QSQLTEMP` with it. Recreated on demand,
+     they come back at the correct width.
+
+  The failure surfaces from wherever the truncated text lands, which is rarely
+  where the truncation happened. A compound `CREATE OR REPLACE` built as dynamic
+  SQL goes to the SQL precompiler, which generates C and compiles it — so a cut
+  line is reported as a **C compile error**, naming neither your member nor the
+  work file. Balanced quotes plus a C-level error is the signature: the source is
+  fine and something between it and the compiler is not.
+
+  - **Hybrid RPG** (no `**FREE`): fixed-form specs are, well, fixed — their
+    columns aren't a style choice. Free-form lines in a hybrid member must fit
+    **columns 8–80** whatever the record length, because the compiler does not
+    read free-form code past column 80.
+  - **PNLGRP:** a `:HELP` title that would exceed 80 stays on one line (see §6)
+    rather than wrapping or being abbreviated — that is what the 134 is for.
 - **Section separators:** a full-width comment rule between major sections and a
   shorter/dashed rule between minor groups:
   - RPG: `// ****...****` (major), `// ----...----` (minor)
@@ -648,9 +709,77 @@ ctl-opt actgrp(*CALLER);
 
 - Keyword form always — `DCL VAR(&X) TYPE(*CHAR) LEN(10)`, never positional
   (except `CMD`/`PARM` positional prompts where conventional).
-- Classic SEU columns: labels start column 2 on their own line; commands start
-  column 14; keyword continuations break with `+` and align under the first
-  keyword. Stay within 80 columns.
+- **The layout is what `F4=Prompt` produces.** That is the whole rule, and
+  everything below follows from it: prompting emits keywords in **command
+  definition order**, aligns the columns, and wraps at keyword boundaries. When
+  in doubt about a statement's shape, prompt it and keep what comes back.
+
+  The one thing prompting does not do is **indent** — SEU has no concept of
+  block level, so the nesting in the table below is the house addition. (A VS
+  Code formatter appears to apply the same rules *with* indentation, but driving
+  it would mean a round-trip syntax check per line, which is far too slow to
+  use in bulk.)
+
+- **Columns follow standard CL prompting.** The command name occupies a 10-wide
+  field followed by one blank, so the keyword column is always the command
+  column **+ 11**:
+
+  | | Command | Keywords | Wrapped keywords |
+  | --- | ---: | ---: | ---: |
+  | Top level | **14** | **25** | **27** |
+  | Inside one control block | 16 | 27 | 29 |
+  | Inside two | 18 | 29 | 31 |
+  | …each level | +2 | +2 | +2 |
+
+  **A subroutine is a control block.** `SUBR`/`ENDSUBR` sit at column 14 and the
+  body starts at 16 — which is a good reason to prefer `SUBR` over wrapping work
+  in a `DO`, since it costs no extra level.
+
+  - **Labels** start in column 2 on their own line, at any depth.
+  - **`DCL` with `STG(*DEFINED)`** is indented 2 under the variable it overlays,
+    shifting the line and its continuations right by 2 like any other level.
+  - **Comments start in column 1**, not the command column, and then follow the
+    indentation level like anything else: column 1 at top level, 3 inside a
+    subroutine, 5 inside a block within it. Continuations align under the
+    comment text.
+  - Stay within the 80-column `SRCDTA` limit (§1.4) at every level; deeper
+    nesting spends the same budget.
+
+- **Wrap on a keyword boundary.** Given
+  `MYCMD KWD1(xxx) KWD2(yyy) KWD3(zzz)`, break so the continuation *starts* with
+  a keyword rather than splitting one across lines:
+
+  ```text
+             MYCMD      KWD1(xxx) KWD2(yyy) +
+                          KWD3(zzz)
+  ```
+
+  Two things the column rules do not govern, so do not "correct" them:
+
+  - **A command name longer than 10 characters** — a qualified name such as
+    `HAWKEYE/DSPFILSETUP` — pushes its keywords right of the nominal column. The
+    field cannot hold it; nothing is wrong.
+  - **Large literals — SQL statements, built command strings — break the column
+    rules on purpose, so the literal stays readable.** The command itself follows
+    the normal columns; the *content* is laid out as what it is:
+
+    ```text
+                   CHGVAR     VAR(&SQL) VALUE('+
+    DELETE +
+      FROM qtemp.' *CAT &OUTFILE1 *TCAT ' a +
+      WHERE a.tudlib <> ''' *CAT &JC_LIB *CAT ''' +
+                                ')
+    ```
+
+    The `CHGVAR` sits at its proper column, the SQL starts in column 1 and is
+    indented by SQL rules (§4.6), and the closing `')` returns to the
+    continuation column. `RUNSQL SQL('` takes the same shape.
+
+    **Prefer this to concatenating a statement across CL continuations.** Wrapping
+    SQL at CL keyword columns produces text that is legal and nearly unreadable —
+    the statement's own structure disappears, and a reviewer cannot see the
+    clauses. Readability of the literal outranks column discipline here, which is
+    why the exception exists rather than being tolerated.
 - Commands UPPERCASE; comments sentence case.
 - **Block form for conditionals:** wrap `IF`/`ELSE`/`WHEN` bodies in
   `DO … ENDDO` even when the body is a single statement, so a block can grow
@@ -730,10 +859,51 @@ Every program monitors globally and funnels to one handler:
 - Mainline delegates with `CALLSUBR`; `SUBR ... ENDSUBR` blocks sit after the
   STDERR handler, each preceded by a one-line comment. Use `RTNSUBR` for early
   exit. Standard names: `INITPGM`, `SNDSTSMSG`, plus task-specific ones.
+- **`MONMSG` cannot follow `CALLSUBR`.** A monitor placed after a `CALLSUBR`
+  does not catch what happened inside the subroutine — it attaches to the wrong
+  statement. So a caller cannot trap an escape thrown by a subroutine it called.
+
+  Where the caller must react rather than let the escape reach the STDERR
+  handler, **monitor each statement inside the subroutine and return a code**:
+
+  ```text
+             CALLSUBR   SUBR(BLDONE) RTNVAL(&RC)
+             IF         COND(&RC *EQ -1) THEN(GOTO CMDLBL(NEXTONE))
+  ```
+
+  with the subroutine ending `RTNSUBR RTNVAL(-1)` on the failure path. The
+  return variable must be a **4-byte signed integer** — `TYPE(*INT) LEN(4)`.
+
+  Reset the variable before the first call in a loop. After a failed iteration it
+  still holds -1, and a subroutine that succeeds without an explicit
+  `RTNVAL` will not necessarily clear it.
+
+  Use this only for conditions the caller can act on — typically a property of
+  the data being processed, where the next item may still succeed. A genuine
+  error still escapes to the STDERR handler; converting those to return codes
+  discards the message that says what went wrong.
 - Optional parameters: `IF COND(%PARMS *GE n *AND %ADDR(&VAR) *NE *NULL)`.
 - Work files live in `QTEMP`; inline SQL uses `RUNSQL ... COMMIT(*NONE)`;
   file repositioning uses `OVRDBF ... POSITION(*RRN &N) SECURE(*YES)` followed by
   `DLTOVR` — always scope and remove overrides.
+- **Create an outfile explicitly, and remove its size limit.** Do not let the
+  command that fills it create it as a side effect:
+
+  ```text
+             CRTDUPOBJ  OBJ(QADSPPGM) FROMLIB(QSYS) OBJTYPE(*FILE) +
+                          TOLIB(QTEMP) NEWOBJ(XFPGMREF)
+             CHGPF      FILE(QTEMP/XFPGMREF) SIZE(*NOMAX)
+  ```
+
+  `CRTDUPOBJ` of the IBM-supplied template (`QADSPPGM`, `QADSPOBJ`, …) gives the
+  correct record format, and `CHGPF SIZE(*NOMAX)` removes the member size limit
+  the template carries.
+
+  **The `CHGPF` is not optional.** The inherited limit is generous enough that
+  development-sized data never reaches it, so omitting it fails only once the
+  program is pointed at real volume — and it fails as a member-full condition on
+  a `QTEMP` file, which explains nothing about the program that caused it. A
+  limit that only bites in production is worse than one that bites immediately.
 
 ---
 
@@ -868,6 +1038,38 @@ CREATE OR REPLACE TABLE ... (
 - Alias every table; qualify every column reference.
 - `--` for inline comments inside SQL bodies; `/* */` for the member header.
 
+### 4.7 NULL handling
+
+- **Use `COALESCE`, not `IFNULL`.** Db2 documents them as equivalent for the
+  two-argument case, and for a scratch query either is fine. In production
+  queries `IFNULL` has been observed to send the optimizer off into a bad plan
+  on complex statements — not on large *data*, but on structurally complex ones
+  (deep CTEs, recursion, lateral joins). No mechanism is claimed here; the point
+  is that the two are interchangeable in meaning, so there is nothing to weigh
+  against standardizing on the one that has never caused trouble. `COALESCE` is
+  also the SQL-standard spelling and takes more than two arguments, so a
+  fallback chain does not have to be rewritten when a third source appears.
+
+- **Assume every column from an IBM i Service is nullable unless documented
+  otherwise.** The services return `NULL` rather than blanks for absent text —
+  `TEXT_DESCRIPTION`, `OBJTEXT` and their like — which collides with the
+  `NOT NULL DEFAULT` convention of section 4.3. Coalesce at the point the value
+  enters a table.
+
+- **Test for null and blank together** when a value is "missing or empty",
+  because a service may express the same idea either way:
+
+  ```sql
+  CASE WHEN COALESCE(TRIM(a.text), '') <> '' THEN a.text
+       ELSE COALESCE(b.text, '') END
+  ```
+
+- Weigh the blast radius, not the row. A `NOT NULL` violation fails the whole
+  statement, and where that statement is one step of a build that escapes on
+  error, a single unguarded row takes down the entire run — on data nobody
+  controls. That asymmetry is why the guard goes in by default rather than
+  after the first failure.
+
 ---
 
 ## 5. Commands (QCMDSRC)
@@ -902,6 +1104,29 @@ CREATE OR REPLACE TABLE ... (
 
   The CPP receives it as a 20-byte qualified name (`pxPgmXrf` / `&PGMXRF`).
 
+  **This parameter is what makes command usage cross-referenceable, and it is
+  not optional.** No compiler records "this program used command X" — command
+  invocation leaves no reference behind. `PGM(*YES)` on a qualified name does:
+  the compiler records it as a **program reference**, and because the two
+  constants are *CPP first, command second*, the reference arrives with the CPP
+  in the object field and **the command name in the library field**. A cross
+  reference build detects that pairing and turns it into a command reference.
+
+  Omit the parameter and the command becomes invisible to the cross reference —
+  "what uses this command" answers nothing, and nobody can tell whether it is
+  safe to change. Get the two constants the wrong way round and the pairing does
+  not match, with the same result and no error to say so.
+
+  **There is no recovering this after the fact.** Command invocation leaves no
+  compiled reference of any kind, so nothing can be derived later — establishing
+  usage would mean parsing source, which is not a thing anyone is going to do.
+  The parameter at build time is the only record that will ever exist.
+
+  And the failure is in the dangerous direction: a command with no callers in the
+  cross reference looks *unused*, which is indistinguishable from one that is
+  used everywhere by programs the tool could not see. This convention is the only
+  thing standing between that and a deletion.
+
 ---
 
 ## 6. Panel groups (QPNLSRC)
@@ -922,8 +1147,50 @@ CREATE OR REPLACE TABLE ... (
      `<Prompt> (<KWD>) - Help`
   4. `'<CMD>/COMMAND/EXAMPLES'` — numbered examples in `:XMP.` blocks with a
      prose explanation per example
-  5. `'<CMD>/ERROR/MESSAGES'` — `:DL COMPACT.` list, message text pulled live
-     via `&msg(MSGID,MSGF,*LIBL,nosub).`
+  5. `'<CMD>/ERROR/MESSAGES'` — message text pulled live via
+     `&msg(MSGID,MSGF,*LIBL,nosub).`, one `:DL COMPACT.` list per message
+     *type*, each introduced by a highlighted paragraph rather than a list term:
+
+     ```text
+     :P.:HP3.*ESCAPE &msg(CPX0006,QCPFMSG).:EHP3.
+     :DL COMPACT.
+     :DT.ENV0001
+     :DD.&msg(ENV0001,XFMSG,*LIBL,nosub).
+     :EDL.
+     ```
+
+- **Let the tags do the formatting.** UIM renders text according to the tag that
+  contains it — lists, definition terms, parameter values and keywords all carry
+  their own appearance. **Tag the text correctly and the highlighting takes care
+  of itself.**
+
+  `:HPn.` is for **headings**, plus the occasional term or special reference
+  inside running prose. Reaching for it to make tagged content *look* right is a
+  sign the wrong tag was used — and it is **not valid inside `:PV.`, `:PK.` or
+  `:DT.`** at all, because those take a bare term and already render it.
+
+  The two forms that are idiomatic here, and the only ones needed in practice:
+
+  ```text
+  :P.:HP2.Example 1: Simple Command Example:EHP2.
+  :P.:HP3.*ESCAPE &msg(CPX0006,QCPFMSG).:EHP3.
+  ```
+
+  Getting the invalid nesting wrong compiles nowhere, and it is easy to write by
+  analogy from HTML or Markdown, where nesting emphasis inside anything is fine:
+
+  | Want | Write | Not |
+  | --- | --- | --- |
+  | A variable value | `:PT.:PV.environment-name:EPV.` | `:PV.:HP2.…:EHP2.:EPV.` |
+  | A special value | `:PT.:PK.*ALL:EPK.` | `:PT.:PV.*ALL:EPV.` |
+  | The **default** value | `:PT.:PK DEF.*YES:EPK.` | — |
+  | A message-group heading | `:P.:HP3.*ESCAPE …:EHP3.` | `:DT.:HP4.…:EHP4.` |
+
+  `:PV.` is a *variable* — something the user substitutes, like
+  `environment-name`. `:PK.` is a *keyword* — a literal special value such as
+  `*ALL`. Only `:PK.` takes the `DEF` attribute, which underlines the value to
+  mark it as the parameter default; `:PV.` has no equivalent, so a default that
+  is a variable cannot be marked and does not need to be.
 - Work-with (inquiry) panels declare, in separate banner-labeled sections:
   classes (`cls<type><len>`, e.g. `clsname10`, `clsyesno` with `:TL.` truth
   labels), variables (lowercase, matching the RPG DS subfields), `:VARRCD`s
@@ -964,6 +1231,29 @@ CREATE OR REPLACE TABLE ... (
   `DEP*`, `EXC*`, `UIM*`).
 - Programs send message IDs, not hardcoded text, wherever a message exists;
   status messages use `CPDA0FF`.
+- **Keep a `*STATUS` message to 76 characters assembled.** That is the text plus
+  the *declared width* of every replacement value, not the width of what a
+  particular caller happens to pass. Longer messages are truncated, and possibly
+  not shown at all — either way the tail is lost, and the tail is usually the
+  part that says what the program is doing.
+
+  Measure it when the message is written: literal text with the `&n` tokens
+  removed, plus each value's `FMT` length. `'Building cross reference &1.  &2'`
+  with `(*CHAR 10) (*CHAR 30)` is 28 + 10 + 30 = 68.
+
+- **`MSGDTA` must supply exactly the bytes the `FMT` declares.** A short
+  `MSGDTA` leaves later replacement values reading whatever follows in storage,
+  which shows as stray characters rather than as an error. Concatenating a
+  10-byte variable with a shorter expression is the easy way to get this wrong:
+
+  ```text
+             CHGVAR     VAR(&STSTXT) VALUE('Scanning' *BCAT &LIB)
+             SNDPGMMSG  MSGID(XRF0007) MSGF(XFMSG) MSGDTA(&ENV *CAT +
+                          &STSTXT) TOPGMQ(*EXT) MSGTYPE(*STATUS)
+  ```
+
+  `&STSTXT` is declared at the `FMT` width, so the total is right whatever the
+  text inside it happens to be.
 - Escapes propagate (FWDMSGH pattern / `%target('*PGMBDY': 1)`) so the original
   failure reaches the user.
 
@@ -1016,13 +1306,74 @@ CREATE OR REPLACE TABLE ... (
 
 - **Scratch:** `JUNK*` members are experiments. Git-ignores them going forward;
   never reference or promote them, and don't cite them as precedent.
-- **Third-party:** members with external authorship headers (e.g. Carsten
+- **Third-party:** members with external authorship headers — Carsten
   Flensburg's `CPYMSGD*`, Giuseppe Costagliola's `SQL2XLSX*`, Scott Klement's
-  YAJL/JDBCR4 material; `BLDOBJ` is a branched fork of Klement's BUILD tool)
-  keep their original style and attribution. Fix bugs; don't restyle.
+  YAJL/JDBCR4 material — keep their original style and attribution. Fix bugs;
+  don't restyle.
+
+  The reason is practical, not ceremonial: their style is the upstream author's,
+  so restyling makes the next version harder to take up and makes a local defect
+  harder to tell from an upstream one. **Where that reason has expired, so has
+  the exemption.**
+
+- **Forks that have diverged are house code with an attribution.** A member
+  branched from someone else's work and then rewritten over years is no longer
+  tracking an upstream. Nobody is going to merge a new release into it, so
+  nothing is being protected by holding it to the original author's conventions
+  — the exemption just leaves a permanent inconsistency in the middle of the
+  library.
+
+  `BLDOBJ` is the worked example. It began as a branch of Klement's BUILD tool
+  in 2019 and has drifted a long way since. **The `@author` line stays** — the
+  origin is a fact and the credit is owed — but house standards apply to the
+  code. The test is not "was this written elsewhere" but "is there still an
+  upstream we intend to follow." Keep the attribution, drop the exemption.
 - **Legacy fixed-form:** don't expand fixed-form code. Small fix = match the
   existing style locally; real enhancement = convert to `**FREE` first (add a
   MODIFICATIONS entry for the conversion).
+
+- **Embedded 5250 display attributes become a single space.** Old source can
+  carry EBCDIC **x'20'–x'3F'** — the 5250 field attribute bytes. They are there
+  because the comment or heading was laid out on a green screen, where an
+  attribute byte turned highlighting or colour on and off. Converted off the
+  platform they surface as Unicode C1 controls, mostly `U+0080`–`U+009F`.
+
+  **Replace each with exactly one space.** An attribute byte occupies one display
+  position on a 5250 — it is not zero-width — so one space is what preserves the
+  column alignment the original author was looking at. That is the whole
+  justification, and it is why the two obvious alternatives are both wrong:
+
+  - **Leaving them** means the next tool to read the member decides for you. One
+    that cannot decode the byte writes `U+FFFD` in its place, which is silent
+    corruption that survives review because it still looks like a character.
+  - **Deleting them** closes up the line. `NOTE:` + attribute + `WHEN` becomes
+    `NOTE:WHEN`, and in CL it can be worse than cosmetic — an attribute sitting
+    before a `+` continuation is holding the blank that separates it from the
+    preceding keyword, so removing it changes what the compiler reads.
+
+  Byte-count matters as much as appearance here: source is fixed-width
+  (see §1.4), so a substitution that is not one-for-one shifts everything after
+  it.
+
+  **They do not all land in the C1 range — match on the whole set.** EBCDIC
+  x'20'–x'3F' converts to a scatter of Unicode code points, not a contiguous
+  block: most become C1 controls (`U+0080`–`U+009F`), but x'26' becomes
+  `U+0017`, x'2F' becomes `U+0007`, x'3F' becomes `U+001A`, and several more
+  land in C0. A pattern written against `U+0080`–`U+009F` alone looks like it
+  works and quietly leaves the C0 ones behind. Match **C0 except tab/LF/CR, all
+  of C1, and `U+FFFD`**:
+
+  ```text
+  [\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u0080-\u009F\uFFFD]
+  ```
+
+  x'25' is the one to leave alone — it converts to `U+000A`, a real line
+  ending.
+
+  **Do not widen this to "any non-ASCII".** A handful of members genuinely
+  contain extended characters — a few across a thousand-plus — and those are
+  content, not artefacts. The rule is scoped to control code points precisely so
+  a sweep cannot eat them.
 - **BSLIB vs RBUTL duplicates:** members shared by both repos are expected to be
   byte-identical (verify with `scripts/refresh-commit.ps1` workflows). When they
   drift, RBUTL is authoritative for TM/RB members; reconcile promptly.
