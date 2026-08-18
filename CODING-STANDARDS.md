@@ -698,6 +698,13 @@ ctl-opt actgrp(*CALLER);
   it — and that somebody will not stop to re-check operator precedence first.
   Parenthesizing always costs nothing and removes the trap.
 
+  **The fragility is also how the unprotected form keeps creeping in.** Nothing
+  pushes back on it: it compiles, it runs, and it is right. Every other bad
+  habit eventually meets a compile error or a failing test, so it gets trained
+  out; this one never does, and spreads unopposed. That is why the rule is
+  absolute rather than a preference — the parentheses have to come from the
+  standard, because they will never come from the feedback.
+
   There is also **no `NOT IN` operator**: `needle not in %list(…)` does not
   compile. The negation goes in front of the parenthesized test.
 - Indent 2 spaces per level. Continuation lines indent 4 spaces; when breaking a

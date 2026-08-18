@@ -1104,6 +1104,14 @@ if not (needle in %list(&#39;stack1&#39;: &#39;stack2&#39;));</code></pre>
         it — and that somebody will not stop to re-check operator
         precedence first. Parenthesizing always costs nothing and
         removes the trap.</p>
+        <p><strong>The fragility is also how the unprotected form keeps
+        creeping in.</strong> Nothing pushes back on it: it compiles, it
+        runs, and it is right. Every other bad habit eventually meets a
+        compile error or a failing test, so it gets trained out; this
+        one never does, and spreads unopposed. That is why the rule is
+        absolute rather than a preference — the parentheses have to come
+        from the standard, because they will never come from the
+        feedback.</p>
         <p>There is also <strong>no <code>NOT IN</code>
         operator</strong>: <code>needle not in %list(…)</code> does not
         compile. The negation goes in front of the parenthesized
