@@ -1095,6 +1095,11 @@ CREATE OR REPLACE TABLE ... (
   - Selection lists via `CHOICE(*PGM) CHOICEPGM(<…CHC program>)`.
   - Shared-CPP commands pass their mode as
     `PARM KWD(MODE) TYPE(*CHAR) CONSTANT('*ADD')`.
+  - **`CONSTANT` requires `MAX(1)`** — `CPD6228`. A list parameter cannot be
+    locked with it. Where a shared-CPP command has no use for a list parameter
+    but must still pass it, lock it with `RSTD(*YES)` and a single `SPCVAL`
+    instead: the value becomes the only one the command will accept, which is
+    the same effect.
 
 **`VARY(*YES *INT2)` is for long text, and it is a cost to justify.** A varying
 parameter arrives as a 2-byte length followed by the data. RPG receives that as a
