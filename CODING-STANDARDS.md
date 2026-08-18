@@ -134,13 +134,22 @@ members that are never built — a reference-only layout still has member text
 worth keeping, and a `TEXT` directive carries no create command, so it does not
 make the member buildable.
 
-**Put it immediately after the `@@`.** The header order in §1.1 already places
-the directives there, but on a source-only member the reason is worth stating:
-`@@` is the marker everyone navigates to, because appending a `MODIFICATIONS`
-entry means finding it and working back. A `TEXT` directive sitting on the line
-after it is seen by anyone who touches the member. The same directive above the
-include guard, or anywhere else in the header, is documentation nobody scrolls
-to.
+**Put it immediately after the `@@`.** Two reasons, and the second is the
+general one:
+
+- `@@` is the marker everyone navigates to, because appending a `MODIFICATIONS`
+  entry means finding it and working back. A directive on the line after it is
+  seen by anyone who touches the member; the same directive above the include
+  guard, or anywhere else in the header, is documentation nobody scrolls to.
+- It is **one location for every member type**. A buildable member already
+  carries its create commands there, so putting the text directive in the same
+  place means source-only and source-to-object members read alike — you look
+  after the `@@` and find whatever that member has, without first working out
+  which kind it is.
+
+**Text at the top is better than no text at all.** A member carrying the
+directive somewhere else in the header is not broken and is not worth a sweep;
+move it down when you are in the member for another reason.
 
 ### 1.4 Layout
 
