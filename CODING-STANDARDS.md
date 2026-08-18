@@ -134,6 +134,14 @@ members that are never built — a reference-only layout still has member text
 worth keeping, and a `TEXT` directive carries no create command, so it does not
 make the member buildable.
 
+**Put it immediately after the `@@`.** The header order in §1.1 already places
+the directives there, but on a source-only member the reason is worth stating:
+`@@` is the marker everyone navigates to, because appending a `MODIFICATIONS`
+entry means finding it and working back. A `TEXT` directive sitting on the line
+after it is seen by anyone who touches the member. The same directive above the
+include guard, or anywhere else in the header, is documentation nobody scrolls
+to.
+
 ### 1.4 Layout
 
 - **Line width.** The hard maximum is the source file's **`SRCDTA` length** —
