@@ -63,8 +63,25 @@ BS  06/15/26  Updated documentation to acknowledge that default
 - Entries are chronological, oldest first; **append new entries at the bottom**,
   immediately before the `@@` terminator line.
 - Continuation lines align under the description, indented one extra space.
-- A change spanning several days may show the extra date(s) on the continuation
-  line(s), aligned under the first date.
+- **A change spanning more than one day carries a date RANGE**: the start date in
+  the date column of the first line, the end date in the same columns on the
+  **second** line, with the initials column left blank. Only two dates are ever
+  shown, and only when the work actually crossed a day — a same-day change has no
+  second date. Where the description needs no second line, the end date stands
+  alone on one:
+
+  ```text
+  MW  09/07/18  Do not purge POSCL if the filegroup or blockout is not
+                 populated for some reason.
+  MW  06/21/19  Do not enforce Louise Paris edit.
+  BS  11/22/19  Add question to allow blockout to be
+      12/22/19   split by style if the buyer has been
+                 configured to allow this feature.
+  MW  06/21/20  Some change 2-day change text here.
+      06/22/20
+  MW  07/21/20  The last change
+  @@
+  ```
 - One entry may describe several changes made together; start each on its own
   continuation line.
 - The `@@` line terminates the log. Never remove it.
