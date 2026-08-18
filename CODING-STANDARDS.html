@@ -2309,6 +2309,34 @@ MODE   = *RSTD</code></pre>
         across a thousand-plus — and those are content, not artefacts.
         The rule is scoped to control code points precisely so a sweep
         cannot eat them.</p></li>
+        <li><p><strong>Write new source in ASCII, and treat anything
+        outside it as needing a reason.</strong> Source reaches the
+        system through the IFS and is translated to EBCDIC on the way
+        in. A character with no equivalent in the target CCSID is
+        replaced with the substitution character, <strong>x&#39;3F&#39;</strong>
+        — silently, with no warning and no way to recover what it
+        was.</p>
+        <p>Most non-ASCII in source is a <em>choice</em> rather than a
+        requirement, and the choice is free to make differently: an
+        em-dash where a hyphen reads the same, <code>≫</code> where
+        <code>&gt;&gt;</code> does. Use the ASCII form. <strong>The test
+        is whether an ASCII alternative conveys the same thing, not
+        whether one exists.</strong></p>
+        <p>Occasionally it does not — a visual marker or a simulated
+        bullet that no ASCII character stands in for. Those are content
+        and stay, as above. Verify one survives the round trip on the
+        system rather than assuming it will.</p>
+        <p><strong>x&#39;3F&#39; hides inside the display-attribute
+        sweep.</strong> It falls within x&#39;20&#39;–x&#39;3F&#39;, so the rule above
+        replaces it with a space along with the genuine attribute bytes
+        — erasing the evidence that a character was lost in translation,
+        and leaving the two indistinguishable afterwards. Check a member
+        for substitution characters <em>before</em> sweeping attributes,
+        not after.</p>
+        <p>This is worth a check rather than a habit, since nothing
+        surfaces it: a byte scan for anything above 127 across the
+        source directories catches it before the member ever reaches the
+        system.</p></li>
         <li><p><strong>The standard applies to each repository on its
         own merit.</strong> It travels to every Godsend IBM i repo, but
         says nothing about the relationship <em>between</em> them.

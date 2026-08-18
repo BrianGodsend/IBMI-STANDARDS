@@ -1574,6 +1574,30 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   contain extended characters — a few across a thousand-plus — and those are
   content, not artefacts. The rule is scoped to control code points precisely so
   a sweep cannot eat them.
+- **Write new source in ASCII, and treat anything outside it as needing a
+  reason.** Source reaches the system through the IFS and is translated to
+  EBCDIC on the way in. A character with no equivalent in the target CCSID is
+  replaced with the substitution character, **x'3F'** — silently, with no
+  warning and no way to recover what it was.
+
+  Most non-ASCII in source is a *choice* rather than a requirement, and the
+  choice is free to make differently: an em-dash where a hyphen reads the same,
+  `≫` where `>>` does. Use the ASCII form. **The test is whether an ASCII
+  alternative conveys the same thing, not whether one exists.**
+
+  Occasionally it does not — a visual marker or a simulated bullet that no
+  ASCII character stands in for. Those are content and stay, as above. Verify
+  one survives the round trip on the system rather than assuming it will.
+
+  **x'3F' hides inside the display-attribute sweep.** It falls within
+  x'20'–x'3F', so the rule above replaces it with a space along with the
+  genuine attribute bytes — erasing the evidence that a character was lost in
+  translation, and leaving the two indistinguishable afterwards. Check a member
+  for substitution characters *before* sweeping attributes, not after.
+
+  This is worth a check rather than a habit, since nothing surfaces it: a byte
+  scan for anything above 127 across the source directories catches it before
+  the member ever reaches the system.
 - **The standard applies to each repository on its own merit.** It travels to
   every Godsend IBM i repo, but says nothing about the relationship *between*
   them. Nothing here requires two repos to hold identical members, and
