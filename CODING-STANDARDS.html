@@ -211,22 +211,44 @@ BS  06/15/26  Updated documentation to acknowledge that default
                all restrictions that can be set for a location.
 @@</code></pre>
         <ul>
-        <li><code>XX  MM/DD/YY  description</code> — contributor
+        <li><p><code>XX  MM/DD/YY  description</code> — contributor
         initials, US date, sentence-case description ending in a
-        period.</li>
-        <li>Entries are chronological, oldest first; <strong>append new
-        entries at the bottom</strong>, immediately before the
-        <code>@@</code> terminator line.</li>
-        <li>Continuation lines align under the description, indented one
-        extra space.</li>
-        <li>A change spanning several days may show the extra date(s) on
-        the continuation line(s), aligned under the first date.</li>
-        <li>One entry may describe several changes made together; start
-        each on its own continuation line.</li>
-        <li>The <code>@@</code> line terminates the log. Never remove
-        it.</li>
-        <li><code>@TODO</code> lines may follow the log (before the
-        build directives) to record known future work.</li>
+        period.</p></li>
+        <li><p>Entries are chronological, oldest first; <strong>append
+        new entries at the bottom</strong>, immediately before the
+        <code>@@</code> terminator line.</p></li>
+        <li><p>Continuation lines align under the description, indented
+        one extra space.</p></li>
+        <li><p><strong>A change spanning more than one day carries a
+        date RANGE</strong>: the start date in the date column of the
+        first line, the end date in the same columns on the
+        <strong>second</strong> line, with the initials column left
+        blank. Only two dates are ever shown, and only when the work
+        actually crossed a day — a same-day change has no second date.
+        Where the description needs no second line, the end date stands
+        alone on one:</p>
+        <pre class="text"><code>MW  09/07/18  Do not purge POSCL if the filegroup or blockout is not
+               populated for some reason.
+MW  06/21/19  Do not enforce Louise Paris edit.
+BS  11/22/19  Add question to allow blockout to be
+    12/22/19   split by style if the buyer has been
+               configured to allow this feature.
+MW  06/21/20  Some change 2-day change text here.
+    06/22/20
+MW  07/21/20  The last change
+@@</code></pre></li>
+        <li><p>One entry may describe several changes made together;
+        start each on its own continuation line.</p></li>
+        <li><p>The <code>@@</code> line terminates the log. Never remove
+        it.</p></li>
+        <li><p><code>@todo</code> lines may follow the log (before the
+        build directives) to record known future work. <strong>One
+        <code>@todo</code> per item</strong> — two things to do are two
+        lines, not one line with two sentences, so that each can be
+        read, counted and struck off on its own.
+        <strong>Lowercase</strong>, like every other ILEDoc command
+        (§2.3): <code>@todo</code>, never <code>@TODO</code> or
+        <code>@ToDo</code>.</p></li>
         </ul>
         <h3 id="13-bldobj-build-directives">1.3 BLDOBJ build
         directives</h3>
@@ -257,30 +279,142 @@ BS  06/15/26  Updated documentation to acknowledge that default
         <li><p>Keep directives correct when copying a member — that
         <em>is</em> its build script.</p></li>
         </ul>
+        <p><strong>Member text lives in the source.</strong> Source
+        edited off-platform round-trips through the IFS, and a source
+        physical file member&#39;s <strong>text description does not survive
+        that trip</strong>. The only place it can be kept is the member
+        itself, so every member carries its own:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Member type</th>
+        <th>Where the text goes</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>.CMD</code></td>
+        <td><code>TEXT(&#39;…&#39;)</code> on the <code>CMD</code>
+        statement</td>
+        </tr>
+        <tr>
+        <td>CL (<code>.CLLE</code>, <code>.CLP</code>)</td>
+        <td><code>TEXT(&#39;…&#39;)</code> on <code>DCLPRCOPT</code></td>
+        </tr>
+        <tr>
+        <td>Everything else</td>
+        <td><code>*&gt; &lt;BLDOBJ TEXT=&quot;…&quot;/&gt;</code></td>
+        </tr>
+        </tbody>
+        </table>
+        <p>So altering the source is what preserves the source. This
+        applies even to members that are never built — a reference-only
+        layout still has member text worth keeping, and a
+        <code>TEXT</code> directive carries no create command, so it
+        does not make the member buildable.</p>
         <h3 id="14-layout">1.4 Layout</h3>
         <ul>
-        <li><strong>Line width:</strong> target ≤ 80 characters
-        everywhere. Hard limits:
+        <li><p><strong>Line width.</strong> The hard maximum is the
+        source file&#39;s <strong><code>SRCDTA</code> length</strong> — the
+        source line itself — and a longer line is <strong>truncated
+        silently</strong>:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Source file</th>
+        <th>Line (<code>SRCDTA</code>)</th>
+        <th>Record length</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>QRPGLESRC</code></td>
+        <td><strong>100</strong></td>
+        <td>112</td>
+        </tr>
+        <tr>
+        <td><code>QPNLSRC</code></td>
+        <td><strong>134</strong></td>
+        <td>146</td>
+        </tr>
+        <tr>
+        <td><code>QTXTSRC</code></td>
+        <td><strong>132</strong></td>
+        <td>144</td>
+        </tr>
+        <tr>
+        <td>Everything else — <code>QCLSRC</code>, <code>QCMDSRC</code>,
+        <code>QSQLSRC</code>, <code>QDDSSRC</code>,
+        <code>QREXSRC</code>, <code>QMNUSRC</code>, …</td>
+        <td><strong>80</strong></td>
+        <td>92</td>
+        </tr>
+        </tbody>
+        </table>
+        <p><strong>Measure against the <code>SRCDTA</code> column, never
+        the record length.</strong> A source physical file record
+        carries a 12-byte prefix — a 6-byte sequence number and a 6-byte
+        date — that is not part of your line. Quoting the record length
+        as a line limit hands you 12 characters that do not exist, and
+        the overflow is discovered by truncation. That mistake is
+        exactly how the <code>XFENV.SQLT</code> lines below got through
+        review at 81 and 83 characters in an 80-column file.</p>
+        <p>RBUTL practice is ~76, and these are a limit rather than a
+        budget to spend.</p>
+        <p><strong>Nothing warns you when you exceed it.</strong> The
+        line is cut when the member is written or transferred, and the
+        loss surfaces later as a compile failure — or worse, as code
+        that still looks right with a character missing. The dangerous
+        case is a truncated string literal: lose the closing quote and
+        the parser runs on into whatever follows, so the error is
+        reported nowhere near the damage. This has actually happened
+        here (<code>XFENV.SQLT</code>, two <code>LABEL ON COLUMN</code>
+        lines at 81 and 83 characters in an 80-wide file, both cut to
+        exactly 80). Any tool that rewrites source in bulk will do this
+        to every over-length line at once.</p>
+        <p><strong>An over-length line is not the only cause of
+        truncation, and the symptom is identical.</strong> A build or
+        source-manipulation tool that stages members through a work file
+        — typically <code>QTEMP/QSQLSRC</code> or
+        <code>QTEMP/QSQLTEMP</code> — truncates to <em>that</em> file&#39;s
+        record length, whatever your lines measure. If the work file was
+        created earlier by something else, at the wrong width, it
+        persists for the life of the job and silently cuts every member
+        that passes through it.</p>
+        <p>Diagnose in this order:</p>
+        <ol type="1">
+        <li><strong>Measure the longest line in the member.</strong> If
+        nothing exceeds the limit in §1.4, the member is not the problem
+        and no amount of reformatting will fix it. Verified
+        <code>XFBLD.SQLT</code>, whose longest line was 79 in an
+        80-column file, while the build still failed.</li>
+        <li><strong>Delete the QTEMP work files and let the system
+        recreate them</strong> — <code>DLTF QTEMP/QSQLSRC</code>, and
+        <code>QTEMP/QSQLTEMP</code> with it. Recreated on demand, they
+        come back at the correct width.</li>
+        </ol>
+        <p>The failure surfaces from wherever the truncated text lands,
+        which is rarely where the truncation happened. A compound
+        <code>CREATE OR REPLACE</code> built as dynamic SQL goes to the
+        SQL precompiler, which generates C and compiles it — so a cut
+        line is reported as a <strong>C compile error</strong>, naming
+        neither your member nor the work file. Balanced quotes plus a
+        C-level error is the signature: the source is fine and something
+        between it and the compiler is not.</p>
         <ul>
-        <li><code>**FREE</code> RPG: code starts in column 1; the server
-        source files give 100 data columns, so 100 is the hard maximum —
-        but stay ≤ 80 for readability (RBUTL practice is ~76).</li>
-        <li>Hybrid RPG (no <code>**FREE</code>): fixed-form specs are,
-        well, fixed — their columns aren&#39;t a style choice. The
-        line-length rule governs the free-form lines, which must fit
-        <strong>columns 8–80</strong>: the compiler does not read
-        free-form code past column 80, so a line extending beyond it may
-        cause compiler errors. 80 is a hard limit for <code>/FREE</code>
-        lines.</li>
-        <li>CL, CMD, SQL: keep within 80.</li>
-        <li>PNLGRP: 134 is the hard maximum (the source file permits
-        it); prefer ≤ 80 for readability. A <code>:HELP</code> title
-        that would exceed 80 stays on one line (see §6) rather than
-        wrapping or being abbreviated.</li>
+        <li><strong>Hybrid RPG</strong> (no <code>**FREE</code>):
+        fixed-form specs are, well, fixed — their columns aren&#39;t a style
+        choice. Free-form lines in a hybrid member must fit
+        <strong>columns 8–80</strong> whatever the record length,
+        because the compiler does not read free-form code past column
+        80.</li>
+        <li><strong>PNLGRP:</strong> a <code>:HELP</code> title that
+        would exceed 80 stays on one line (see §6) rather than wrapping
+        or being abbreviated — that is what the 134 is for.</li>
         </ul></li>
-        <li><strong>Section separators:</strong> a full-width comment
+        <li><p><strong>Section separators:</strong> a full-width comment
         rule between major sections and a shorter/dashed rule between
-        minor groups:
+        minor groups:</p>
         <ul>
         <li>RPG: <code>// ****...****</code> (major),
         <code>// ----...----</code> (minor)</li>
@@ -289,9 +423,9 @@ BS  06/15/26  Updated documentation to acknowledge that default
         <code>.* Title</code> + <code>.* -----</code> underline per
         section</li>
         </ul></li>
-        <li><strong>Blocks read top-down:</strong> mainline first, error
-        handling next, subroutines/ procedures last, each introduced by
-        a one-line comment saying what it does.</li>
+        <li><p><strong>Blocks read top-down:</strong> mainline first,
+        error handling next, subroutines/ procedures last, each
+        introduced by a one-line comment saying what it does.</p></li>
         </ul>
         <h3 id="15-naming-and-member-families">1.5 Naming and member
         families</h3>
@@ -934,18 +1068,100 @@ end-proc;</code></pre>
         <h3 id="26-error-handling-and-messages">2.6 Error handling and
         messages</h3>
         <ul>
-        <li>Call APIs through the
+        <li><p>Call APIs through the
         <code>qapi_*</code>/<code>quim_*</code>/<code>qile_*</code>
         wrappers with an <code>errc0100</code> structure
         (<code>likeds(qapi_errc0100_t)</code>);
         <code>reset errc0100;</code> and set <code>bytPrv</code> before
-        each call, then test <code>bytAvl</code>.</li>
-        <li>Use <code>callp(e)</code> + <code>%error()</code> for
+        each call, then test <code>bytAvl</code>.</p></li>
+        <li><p>Use <code>callp(e)</code> + <code>%error()</code> for
         tolerated command failures; escalate with
-        <code>snd-msg *ESCAPE %msg(...) %target(&#39;*PGMBDY&#39;: 1);</code>.</li>
-        <li>Status messages go through a small <code>sndStsMsg</code>
+        <code>snd-msg *ESCAPE %msg(...) %target(&#39;*PGMBDY&#39;: 1);</code>.</p></li>
+        <li><p><strong>&quot;Qualified&quot; and &quot;fully qualified&quot; are two
+        DIFFERENT layouts, and the component order is reversed between
+        them.</strong> The terms differ by one word and are used in
+        different contexts, which is the whole difficulty:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Term</th>
+        <th>Bytes</th>
+        <th>Layout</th>
+        <th>Where it appears</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><strong>fully qualified</strong></td>
+        <td>up to 21</td>
+        <td><code>LIB/NAME</code> — library first, slash, name</td>
+        <td>what a user <em>types</em>; what <code>%msg</code>
+        accepts</td>
+        </tr>
+        <tr>
+        <td><strong>qualified</strong></td>
+        <td>20</td>
+        <td><code>NAME</code> in 1–10, <code>LIB</code> in 11–20 — name
+        first, no slash</td>
+        <td>what a <code>QUAL</code> parameter <em>delivers to the
+        CPP</em>; what the <code>QMH*</code> APIs take</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>So typing <code>MSGF(MSGLIB/MSGF)</code> hands the CPP
+        <code>&#39;MSGF      MSGLIB    &#39;</code>. The library leads on the
+        way in and the name leads on the way out. This is the same
+        inversion that makes the <code>PGMXRF</code> convention work
+        (§5): the two <code>QUAL</code> constants are written <em>CPP
+        then command</em>, so the compiled reference arrives with the
+        CPP in the object field and the command name in the library
+        field.</p>
+        <p><strong>This is not a battle worth fighting on the word
+        alone.</strong> &quot;Qualified&quot; is too overloaded across IBM&#39;s own
+        documentation, the API reference and the command reference for
+        the adjective to carry the meaning by itself, and no house
+        convention will change that. So do not depend on it: when the
+        layout matters, <strong>name it</strong> — say &quot;20-byte&quot;, or
+        write <code>LIB/NAME</code>, or say &quot;as the CPP receives it&quot;.
+        Context is what disambiguates, so supply the context.</p></li>
+        <li><p><strong><code>%msg</code> takes the message file as a
+        name — plain or FULLY qualified, never the 20-byte
+        form.</strong> It accepts <code>MSGF</code>,
+        <code>MSGLIB/MSGF</code> and <code>*LIBL/MSGF</code>, so a
+        variable holding one needs room for 21 characters. Name the file
+        from a constant rather than a literal, and pick the right
+        constant — <code>QAPIH</code> publishes two that look
+        interchangeable and are not:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Constant</th>
+        <th>Value</th>
+        <th>For</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>@QAPI_QCPF_MSGF_NAME</code></td>
+        <td><code>&#39;QCPFMSG   &#39;</code></td>
+        <td><code>%msg</code> — a 10-byte name, trailing blanks
+        ignored</td>
+        </tr>
+        <tr>
+        <td><code>@QAPI_QCPF_MSGF</code></td>
+        <td><code>&#39;QCPFMSG   *LIBL     &#39;</code></td>
+        <td><code>QMHSNDPM</code> and friends — the 20-byte qualified
+        form</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>Passing <code>@QAPI_QCPF_MSGF</code> to <code>%msg</code> is
+        wrong even though it compiles and looks deliberate:
+        <code>%msg</code> would read the whole 20 bytes as one
+        name.</p></li>
+        <li><p>Status messages go through a small <code>sndStsMsg</code>
         procedure (CPDA0FF / *STATUS); clear with a blank message when
-        done.</li>
+        done.</p></li>
         </ul>
         <h3 id="27-embedded-sql">2.7 Embedded SQL</h3>
         <ul>
@@ -999,16 +1215,119 @@ end-proc;</code></pre>
         </ul>
         <h3 id="32-layout">3.2 Layout</h3>
         <ul>
-        <li>Keyword form always —
+        <li><p>Keyword form always —
         <code>DCL VAR(&amp;X) TYPE(*CHAR) LEN(10)</code>, never
         positional (except <code>CMD</code>/<code>PARM</code> positional
-        prompts where conventional).</li>
-        <li>Classic SEU columns: labels start column 2 on their own
-        line; commands start column 14; keyword continuations break with
-        <code>+</code> and align under the first keyword. Stay within 80
-        columns.</li>
-        <li>Commands UPPERCASE; comments sentence case.</li>
-        <li><strong>Block form for conditionals:</strong> wrap
+        prompts where conventional).</p></li>
+        <li><p><strong>The layout is what <code>F4=Prompt</code>
+        produces.</strong> That is the whole rule, and everything below
+        follows from it: prompting emits keywords in <strong>command
+        definition order</strong>, aligns the columns, and wraps at
+        keyword boundaries. When in doubt about a statement&#39;s shape,
+        prompt it and keep what comes back.</p>
+        <p>The one thing prompting does not do is
+        <strong>indent</strong> — SEU has no concept of block level, so
+        the nesting in the table below is the house addition. (A VS Code
+        formatter appears to apply the same rules <em>with</em>
+        indentation, but driving it would mean a round-trip syntax check
+        per line, which is far too slow to use in bulk.)</p></li>
+        <li><p><strong>Columns follow standard CL prompting.</strong>
+        The command name occupies a 10-wide field followed by one blank,
+        so the keyword column is always the command column <strong>+
+        11</strong>:</p>
+        <table>
+        <thead>
+        <tr>
+        <th></th>
+        <th style="text-align: right;">Command</th>
+        <th style="text-align: right;">Keywords</th>
+        <th style="text-align: right;">Wrapped keywords</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>Top level</td>
+        <td style="text-align: right;"><strong>14</strong></td>
+        <td style="text-align: right;"><strong>25</strong></td>
+        <td style="text-align: right;"><strong>27</strong></td>
+        </tr>
+        <tr>
+        <td>Inside one control block</td>
+        <td style="text-align: right;">16</td>
+        <td style="text-align: right;">27</td>
+        <td style="text-align: right;">29</td>
+        </tr>
+        <tr>
+        <td>Inside two</td>
+        <td style="text-align: right;">18</td>
+        <td style="text-align: right;">29</td>
+        <td style="text-align: right;">31</td>
+        </tr>
+        <tr>
+        <td>…each level</td>
+        <td style="text-align: right;">+2</td>
+        <td style="text-align: right;">+2</td>
+        <td style="text-align: right;">+2</td>
+        </tr>
+        </tbody>
+        </table>
+        <p><strong>A subroutine is a control block.</strong>
+        <code>SUBR</code>/<code>ENDSUBR</code> sit at column 14 and the
+        body starts at 16 — which is a good reason to prefer
+        <code>SUBR</code> over wrapping work in a <code>DO</code>, since
+        it costs no extra level.</p>
+        <ul>
+        <li><strong>Labels</strong> start in column 2 on their own line,
+        at any depth.</li>
+        <li><strong><code>DCL</code> with
+        <code>STG(*DEFINED)</code></strong> is indented 2 under the
+        variable it overlays, shifting the line and its continuations
+        right by 2 like any other level.</li>
+        <li><strong>Comments start in column 1</strong>, not the command
+        column, and then follow the indentation level like anything
+        else: column 1 at top level, 3 inside a subroutine, 5 inside a
+        block within it. Continuations align under the comment
+        text.</li>
+        <li>Stay within the 80-column <code>SRCDTA</code> limit (§1.4)
+        at every level; deeper nesting spends the same budget.</li>
+        </ul></li>
+        <li><p><strong>Wrap on a keyword boundary.</strong> Given
+        <code>MYCMD KWD1(xxx) KWD2(yyy) KWD3(zzz)</code>, break so the
+        continuation <em>starts</em> with a keyword rather than
+        splitting one across lines:</p>
+        <pre class="text"><code>           MYCMD      KWD1(xxx) KWD2(yyy) +
+                        KWD3(zzz)</code></pre>
+        <p>Two things the column rules do not govern, so do not
+        &quot;correct&quot; them:</p>
+        <ul>
+        <li><p><strong>A command name longer than 10 characters</strong>
+        — a fully qualified name such as
+        <code>HAWKEYE/DSPFILSETUP</code> — pushes its keywords right of
+        the nominal column. The field cannot hold it; nothing is
+        wrong.</p></li>
+        <li><p><strong>Large literals — SQL statements, built command
+        strings — break the column rules on purpose, so the literal
+        stays readable.</strong> The command itself follows the normal
+        columns; the <em>content</em> is laid out as what it is:</p>
+        <pre class="text"><code>               CHGVAR     VAR(&amp;SQL) VALUE(&#39;+
+DELETE +
+  FROM qtemp.&#39; *CAT &amp;OUTFILE1 *TCAT &#39; a +
+  WHERE a.tudlib &lt;&gt; &#39;&#39;&#39; *CAT &amp;JC_LIB *CAT &#39;&#39;&#39; +
+                            &#39;)</code></pre>
+        <p>The <code>CHGVAR</code> sits at its proper column, the SQL
+        starts in column 1 and is indented by SQL rules (§4.6), and the
+        closing <code>&#39;)</code> returns to the continuation column.
+        <code>RUNSQL SQL(&#39;</code> takes the same shape.</p>
+        <p><strong>Prefer this to concatenating a statement across CL
+        continuations.</strong> Wrapping SQL at CL keyword columns
+        produces text that is legal and nearly unreadable — the
+        statement&#39;s own structure disappears, and a reviewer cannot see
+        the clauses. Readability of the literal outranks column
+        discipline here, which is why the exception exists rather than
+        being tolerated.</p></li>
+        </ul></li>
+        <li><p>Commands UPPERCASE; comments sentence case.</p></li>
+        <li><p><strong>Block form for conditionals:</strong> wrap
         <code>IF</code>/<code>ELSE</code>/<code>WHEN</code> bodies in
         <code>DO … ENDDO</code> even when the body is a single
         statement, so a block can grow later without rewriting the
@@ -1017,7 +1336,7 @@ end-proc;</code></pre>
         (<code>IF COND(&amp;STDERR) THEN(RETURN)</code> — the most
         common one, written verbatim across programs), the occasional
         <code>SELECT</code>/<code>WHEN</code> one-liner, and legacy
-        code.</li>
+        code.</p></li>
         </ul>
         <h3 id="33-declarations">3.3 Declarations</h3>
         <p>Order after
@@ -1089,19 +1408,58 @@ end-proc;</code></pre>
         </ul>
         <h3 id="35-subroutines-and-flow">3.5 Subroutines and flow</h3>
         <ul>
-        <li>Mainline delegates with <code>CALLSUBR</code>;
+        <li><p>Mainline delegates with <code>CALLSUBR</code>;
         <code>SUBR ... ENDSUBR</code> blocks sit after the STDERR
         handler, each preceded by a one-line comment. Use
         <code>RTNSUBR</code> for early exit. Standard names:
         <code>INITPGM</code>, <code>SNDSTSMSG</code>, plus task-specific
-        ones.</li>
-        <li>Optional parameters:
-        <code>IF COND(%PARMS *GE n *AND %ADDR(&amp;VAR) *NE *NULL)</code>.</li>
-        <li>Work files live in <code>QTEMP</code>; inline SQL uses
+        ones.</p></li>
+        <li><p><strong><code>MONMSG</code> cannot follow
+        <code>CALLSUBR</code>.</strong> A monitor placed after a
+        <code>CALLSUBR</code> does not catch what happened inside the
+        subroutine — it attaches to the wrong statement. So a caller
+        cannot trap an escape thrown by a subroutine it called.</p>
+        <p>Where the caller must react rather than let the escape reach
+        the STDERR handler, <strong>monitor each statement inside the
+        subroutine and return a code</strong>:</p>
+        <pre class="text"><code>           CALLSUBR   SUBR(BLDONE) RTNVAL(&amp;RC)
+           IF         COND(&amp;RC *EQ -1) THEN(GOTO CMDLBL(NEXTONE))</code></pre>
+        <p>with the subroutine ending <code>RTNSUBR RTNVAL(-1)</code> on
+        the failure path. The return variable must be a <strong>4-byte
+        signed integer</strong> — <code>TYPE(*INT) LEN(4)</code>.</p>
+        <p>Reset the variable before the first call in a loop. After a
+        failed iteration it still holds -1, and a subroutine that
+        succeeds without an explicit <code>RTNVAL</code> will not
+        necessarily clear it.</p>
+        <p>Use this only for conditions the caller can act on —
+        typically a property of the data being processed, where the next
+        item may still succeed. A genuine error still escapes to the
+        STDERR handler; converting those to return codes discards the
+        message that says what went wrong.</p></li>
+        <li><p>Optional parameters:
+        <code>IF COND(%PARMS *GE n *AND %ADDR(&amp;VAR) *NE *NULL)</code>.</p></li>
+        <li><p>Work files live in <code>QTEMP</code>; inline SQL uses
         <code>RUNSQL ... COMMIT(*NONE)</code>; file repositioning uses
         <code>OVRDBF ... POSITION(*RRN &amp;N) SECURE(*YES)</code>
         followed by <code>DLTOVR</code> — always scope and remove
-        overrides.</li>
+        overrides.</p></li>
+        <li><p><strong>Create an outfile explicitly, and remove its size
+        limit.</strong> Do not let the command that fills it create it
+        as a side effect:</p>
+        <pre class="text"><code>           CRTDUPOBJ  OBJ(QADSPPGM) FROMLIB(QSYS) OBJTYPE(*FILE) +
+                        TOLIB(QTEMP) NEWOBJ(XFPGMREF)
+           CHGPF      FILE(QTEMP/XFPGMREF) SIZE(*NOMAX)</code></pre>
+        <p><code>CRTDUPOBJ</code> of the IBM-supplied template
+        (<code>QADSPPGM</code>, <code>QADSPOBJ</code>, …) gives the
+        correct record format, and <code>CHGPF SIZE(*NOMAX)</code>
+        removes the member size limit the template carries.</p>
+        <p><strong>The <code>CHGPF</code> is not optional.</strong> The
+        inherited limit is generous enough that development-sized data
+        never reaches it, so omitting it fails only once the program is
+        pointed at real volume — and it fails as a member-full condition
+        on a <code>QTEMP</code> file, which explains nothing about the
+        program that caused it. A limit that only bites in production is
+        worse than one that bites immediately.</p></li>
         </ul>
         <hr />
         <h2 id="4-sql-qsqlsrc">4. SQL (QSQLSRC)</h2>
@@ -1144,22 +1502,22 @@ end-proc;</code></pre>
         is resolved at run time (from
         <code>DFTRDBCOL</code>/<code>*CURLIB</code>) instead of being
         hardcoded:</p>
-        <div class="sourceCode" id="cb19"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblNam  <span class="dt">VARCHAR</span>(<span class="dv">10</span>) <span class="kw">DEFAULT</span> <span class="st">&#39;TMTSK&#39;</span>;</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblLib  <span class="dt">VARCHAR</span>(<span class="dv">10</span>);</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblRef  <span class="dt">VARCHAR</span>(<span class="dv">21</span>);</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> sqlStmt <span class="dt">VARCHAR</span>(<span class="dv">5000</span>);</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">--Resolve the DFTRDBCOL/CURRENT SCHEMA/*CURLIB reference</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> bldobj_temp_resolve_dftrdbcol_schema (fld1 <span class="dt">char</span>(<span class="dv">1</span>));</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  GET DIAGNOSTICS CONDITION <span class="dv">1</span> tblLib <span class="op">=</span> DB2_ORDINAL_TOKEN_2;</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblLib <span class="op">=</span> <span class="fu">TRIM</span>(tblLib);</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> sqlStmt <span class="op">=</span> <span class="st">&#39;</span></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="st">      DROP TABLE &#39;</span> <span class="op">||</span> tblLib <span class="op">||</span> <span class="st">&#39;.bldobj_temp_resolve_dftrdbcol_schema&#39;</span>;</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">EXECUTE</span> <span class="kw">IMMEDIATE</span> sqlStmt;</span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblRef <span class="op">=</span> tblLib <span class="op">||</span> <span class="st">&#39;.&#39;</span> <span class="op">||</span> tblNam;</span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="op">..</span>.</span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span>;</span></code></pre></div>
+        <div class="sourceCode" id="cb24"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblNam  <span class="dt">VARCHAR</span>(<span class="dv">10</span>) <span class="kw">DEFAULT</span> <span class="st">&#39;TMTSK&#39;</span>;</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblLib  <span class="dt">VARCHAR</span>(<span class="dv">10</span>);</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblRef  <span class="dt">VARCHAR</span>(<span class="dv">21</span>);</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> sqlStmt <span class="dt">VARCHAR</span>(<span class="dv">5000</span>);</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">--Resolve the DFTRDBCOL/CURRENT SCHEMA/*CURLIB reference</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> bldobj_temp_resolve_dftrdbcol_schema (fld1 <span class="dt">char</span>(<span class="dv">1</span>));</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  GET DIAGNOSTICS CONDITION <span class="dv">1</span> tblLib <span class="op">=</span> DB2_ORDINAL_TOKEN_2;</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblLib <span class="op">=</span> <span class="fu">TRIM</span>(tblLib);</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> sqlStmt <span class="op">=</span> <span class="st">&#39;</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="st">      DROP TABLE &#39;</span> <span class="op">||</span> tblLib <span class="op">||</span> <span class="st">&#39;.bldobj_temp_resolve_dftrdbcol_schema&#39;</span>;</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">EXECUTE</span> <span class="kw">IMMEDIATE</span> sqlStmt;</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblRef <span class="op">=</span> tblLib <span class="op">||</span> <span class="st">&#39;.&#39;</span> <span class="op">||</span> tblNam;</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>  <span class="op">..</span>.</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span>;</span></code></pre></div>
         <ul>
         <li>Build each statement into <code>sqlStmt</code> and
         <code>EXECUTE IMMEDIATE</code> it.</li>
@@ -1173,18 +1531,18 @@ end-proc;</code></pre>
         <code>MAX(id) + 1</code>.</li>
         </ul>
         <h3 id="43-tables-sqlt">4.3 Tables (<code>.SQLT</code>)</h3>
-        <div class="sourceCode" id="cb20"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> <span class="op">..</span>. (</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    task_id           <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskid      BIGINT</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>       <span class="kw">GENERATED</span> <span class="kw">BY</span> <span class="kw">DEFAULT</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>       <span class="kw">AS</span> IDENTITY (<span class="kw">START</span> <span class="kw">WITH</span> <span class="dv">1</span> <span class="kw">INCREMENT</span> <span class="kw">BY</span> <span class="dv">1</span> <span class="kw">CYCLE</span>)</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>       <span class="kw">PRIMARY</span> <span class="kw">KEY</span></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>   ,task_name         <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskname    <span class="dt">CHAR</span>(<span class="dv">10</span>)</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="kw">UNIQUE</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>   ,task_status       <span class="cf">FOR</span> <span class="kw">COLUMN</span> tsksts     <span class="dt">CHAR</span>(<span class="dv">1</span>)</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="st">&#39;&#39;</span><span class="dv">0</span><span class="st">&#39;&#39;</span></span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>       <span class="kw">CHECK</span>(task_status <span class="kw">BETWEEN</span> <span class="st">&#39;&#39;</span><span class="dv">0</span><span class="st">&#39;&#39;</span> <span class="kw">AND</span> <span class="st">&#39;&#39;</span><span class="dv">9</span><span class="st">&#39;&#39;</span>)</span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>   <span class="op">..</span>.</span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>) RCDFMT r<span class="st">&#39; || tblNam;</span></span></code></pre></div>
+        <div class="sourceCode" id="cb25"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> <span class="op">..</span>. (</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    task_id           <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskid      BIGINT</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>       <span class="kw">GENERATED</span> <span class="kw">BY</span> <span class="kw">DEFAULT</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>       <span class="kw">AS</span> IDENTITY (<span class="kw">START</span> <span class="kw">WITH</span> <span class="dv">1</span> <span class="kw">INCREMENT</span> <span class="kw">BY</span> <span class="dv">1</span> <span class="kw">CYCLE</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>       <span class="kw">PRIMARY</span> <span class="kw">KEY</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>   ,task_name         <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskname    <span class="dt">CHAR</span>(<span class="dv">10</span>)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="kw">UNIQUE</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>   ,task_status       <span class="cf">FOR</span> <span class="kw">COLUMN</span> tsksts     <span class="dt">CHAR</span>(<span class="dv">1</span>)</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="st">&#39;&#39;</span><span class="dv">0</span><span class="st">&#39;&#39;</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>       <span class="kw">CHECK</span>(task_status <span class="kw">BETWEEN</span> <span class="st">&#39;&#39;</span><span class="dv">0</span><span class="st">&#39;&#39;</span> <span class="kw">AND</span> <span class="st">&#39;&#39;</span><span class="dv">9</span><span class="st">&#39;&#39;</span>)</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>   <span class="op">..</span>.</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>) RCDFMT r<span class="st">&#39; || tblNam;</span></span></code></pre></div>
         <ul>
         <li><strong>Long descriptive names</strong> with
         <code>FOR COLUMN</code> short (≤10) system names, both
@@ -1280,6 +1638,40 @@ end-proc;</code></pre>
         <li><code>--</code> for inline comments inside SQL bodies;
         <code>/* */</code> for the member header.</li>
         </ul>
+        <h3 id="47-null-handling">4.7 NULL handling</h3>
+        <ul>
+        <li><p><strong>Use <code>COALESCE</code>, not
+        <code>IFNULL</code>.</strong> Db2 documents them as equivalent
+        for the two-argument case, and for a scratch query either is
+        fine. In production queries <code>IFNULL</code> has been
+        observed to send the optimizer off into a bad plan on complex
+        statements — not on large <em>data</em>, but on structurally
+        complex ones (deep CTEs, recursion, lateral joins). No mechanism
+        is claimed here; the point is that the two are interchangeable
+        in meaning, so there is nothing to weigh against standardizing
+        on the one that has never caused trouble. <code>COALESCE</code>
+        is also the SQL-standard spelling and takes more than two
+        arguments, so a fallback chain does not have to be rewritten
+        when a third source appears.</p></li>
+        <li><p><strong>Assume every column from an IBM i Service is
+        nullable unless documented otherwise.</strong> The services
+        return <code>NULL</code> rather than blanks for absent text —
+        <code>TEXT_DESCRIPTION</code>, <code>OBJTEXT</code> and their
+        like — which collides with the <code>NOT NULL DEFAULT</code>
+        convention of section 4.3. Coalesce at the point the value
+        enters a table.</p></li>
+        <li><p><strong>Test for null and blank together</strong> when a
+        value is &quot;missing or empty&quot;, because a service may express the
+        same idea either way:</p>
+        <div class="sourceCode" id="cb26"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="cf">CASE</span> <span class="cf">WHEN</span> <span class="fu">COALESCE</span>(<span class="fu">TRIM</span>(a.text), <span class="st">&#39;&#39;</span>) <span class="op">&lt;&gt;</span> <span class="st">&#39;&#39;</span> <span class="cf">THEN</span> a.text</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>     <span class="cf">ELSE</span> <span class="fu">COALESCE</span>(b.text, <span class="st">&#39;&#39;</span>) <span class="cf">END</span></span></code></pre></div></li>
+        <li><p>Weigh the blast radius, not the row. A
+        <code>NOT NULL</code> violation fails the whole statement, and
+        where that statement is one step of a build that escapes on
+        error, a single unguarded row takes down the entire run — on
+        data nobody controls. That asymmetry is why the guard goes in by
+        default rather than after the first failure.</p></li>
+        </ul>
         <hr />
         <h2 id="5-commands-qcmdsrc">5. Commands (QCMDSRC)</h2>
         <pre class="text"><code>/*  MODIFICATIONS: +
@@ -1291,65 +1683,364 @@ end-proc;</code></pre>
              CMD        PROMPT(&#39;Add User&#39;) MSGF(TMMSG) HLPID(*CMD) +
                           HLPPNLGRP(ADDUSRTM)</code></pre>
         <ul>
-        <li><p>Every command declares <code>PROMPT</code>,
+        <li>Every command declares <code>PROMPT</code>,
         <code>MSGF(TMMSG)</code> (or product message file),
         <code>HLPID(*CMD)</code>, and
         <code>HLPPNLGRP(&lt;own name&gt;)</code> — help is not
-        optional.</p></li>
-        <li><p><code>PARM</code> conventions:</p>
+        optional.</li>
+        <li><code>PARM</code> conventions:
         <ul>
-        <li><code>EXPR(*YES)</code> on user-enterable parameters.</li>
-        <li>Mixed-case text parameters:
-        <code>TYPE(*CHAR) VARY(*YES *INT2) CASE(*MIXED)</code>.</li>
-        <li>Special values via <code>SPCVAL((*NONE &#39; &#39;))</code> mapping
-        to storable values.</li>
-        <li>Selection lists via
-        <code>CHOICE(*PGM) CHOICEPGM(&lt;…CHC program&gt;)</code>.</li>
-        <li>Shared-CPP commands pass their mode as
-        <code>PARM KWD(MODE) TYPE(*CHAR) CONSTANT(&#39;*ADD&#39;)</code>.</li>
+        <li><p><code>EXPR(*YES)</code> on user-enterable
+        parameters.</p></li>
+        <li><p>Mixed-case text parameters:
+        <code>TYPE(*CHAR) LEN(n) CASE(*MIXED)</code>, <strong>fixed
+        length</strong>. See below before reaching for
+        <code>VARY</code>.</p></li>
+        <li><p>Special values via <code>SPCVAL((*NONE &#39; &#39;))</code>
+        mapping to storable values.</p></li>
+        <li><p>Selection lists via
+        <code>CHOICE(*PGM) CHOICEPGM(&lt;…CHC program&gt;)</code>.</p></li>
+        <li><p>Shared-CPP commands pass their mode as
+        <code>PARM KWD(MODE) TYPE(*CHAR) CONSTANT(&#39;*ADD&#39;)</code>.</p></li>
+        <li><p><strong>A special value that replaces the WHOLE parameter
+        goes in <code>SNGVAL</code>.</strong> <code>VALUES</code> and
+        <code>SPCVAL</code> are <strong>per element</strong>. On a
+        single, base-data-type parameter that is exactly right and
+        <code>SPCVAL</code> is where special values go — the element
+        <em>is</em> the parameter, so <code>SNGVAL</code> has nothing to
+        add. The distinction bites on every <strong>compound</strong>
+        parameter:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Parameter</th>
+        <th>Why it is compound</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>MAX()</code> greater than 1</td>
+        <td>a list of elements</td>
+        </tr>
+        <tr>
+        <td><code>TYPE(ELEM-label)</code></td>
+        <td>a list of parts, one <code>ELEM</code> each</td>
+        </tr>
+        <tr>
+        <td><code>TYPE(QUAL-label)</code></td>
+        <td>a qualified name, one <code>QUAL</code> each</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>On any of those, <code>SPCVAL((*SAME))</code> says <em>each
+        entry may be <code>*SAME</code></em>, so
+        <code>LIBL(*SAME QGPL)</code> and <code>LIBL(*SAME *SAME)</code>
+        are both accepted. <code>SNGVAL</code> (&quot;single value&quot;) is the
+        one that means <strong>this value may only appear
+        alone</strong>, which is what <code>*SAME</code>,
+        <code>*NONE</code>, <code>*ALL</code> and their like almost
+        always want.</p></li>
+        <li><p><strong>A list of BASE-DATA-TYPE elements arrives as a
+        2-byte binary count followed by the elements, each at its FULL
+        declared length.</strong> Fixed-length <code>*CHAR</code>,
+        <code>*NAME</code> and decimal elements are padded to
+        <code>LEN()</code>, so the stride is constant and the structure
+        maps directly — in RPG as a <code>dim()</code> array behind the
+        count, in CL as <code>%BIN</code> plus <code>%SST</code> or a
+        <code>STG(*DEFINED)</code> overlay:</p>
+        <pre class="rpgle"><code>dcl-ds xxx_libl_t  template qualified inz;
+  count          Int(5);
+  library        Char(10) dim(250);
+end-ds;</code></pre>
+        <p>A <code>VARY</code> element does not lay out this way — each
+        carries its own length — so do not assume a constant stride for
+        one.</p></li>
+        <li><p><strong><code>MAX()</code> over <code>ELEM</code> or
+        <code>QUAL</code> is a DIFFERENT structure. Do not reach for a
+        <code>dim()</code> array.</strong> The elements are not
+        contiguous; the parameter opens with a count and then an
+        <strong>offset table</strong>, and each entry carries its own
+        element count before its components:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Offset</th>
+        <th>Content</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>1–2</td>
+        <td>number of entries passed (2-byte binary)</td>
+        </tr>
+        <tr>
+        <td>3 …</td>
+        <td>one <strong>2-byte offset</strong> per entry, relative to
+        the start of the parameter</td>
+        </tr>
+        <tr>
+        <td><em>per entry, at its offset</em></td>
+        <td>2-byte count of elements supplied, then the components at
+        their declared lengths</td>
+        </tr>
+        </tbody>
+        </table>
+        <p><code>QCLSRC/INF2XLSX.CLLE</code> is the worked reference —
+        <code>PARM KWD(ATR) TYPE(EATR) MAX(50)</code> with
+        <code>ELEM</code> lengths 50 and 256. It walks the offset table
+        with a based pointer, advancing
+        <code>%OFS(&amp;ATROFSPTR)</code> by 2 per entry and setting the
+        entry pointer to <code>%OFS(&amp;ATRPTR) + &amp;ATROFS</code>.
+        The declared sizes confirm the layout: entry = 2 + 50 + 256 =
+        308; 50 offsets × 2 = 100, plus 50 × 308 = 15,400, giving the
+        <code>LEN(15502)</code> = 2 + 15,500 on the receiving
+        variable.</p>
+        <p><strong>The offset table is the authority on where an entry
+        is — never compute it.</strong> The entries have been observed
+        loaded <strong>back to front</strong>: the first offset points
+        at the <em>last</em> entry in storage, so walking the offsets
+        forward walks backwards through the array. That is an
+        observation rather than documented behaviour, which is exactly
+        the point — the arrangement is not something to depend on in
+        either direction, and reading the offsets is what makes it not
+        matter. Stride arithmetic would land on the wrong entry even
+        with every length correct.</p>
+        <p><strong>Confirm the layout before writing against
+        it.</strong> The above is verified for <code>ELEM</code>; a
+        <code>QUAL</code> inside a list is not, and IBM documents these
+        structures per parameter type rather than as one rule. The
+        widths in particular are easy to get wrong — 2 bytes, not the 4
+        the shape suggests.</p></li>
+        <li><p><strong>The CPP must bound every loop by the
+        COUNT</strong>, never by the declared dimension. The command
+        materialises the elements it was given, not <code>MAX()</code>
+        of them, so the array past the count is not blank and is not
+        reliably even this parameter. Probed with one <code>*SAME</code>
+        in each of two lists followed by a <code>MODE</code>
+        constant:</p>
+        <pre class="text"><code>LIBL   n=00001 [1]=*SAME [2]= &lt;attr&gt;*SAME
+MRGENV n=00001 [1]=*SAME [2]=*RSTD
+MODE   = *RSTD</code></pre>
+        <p><code>MRGENV</code> element 2 returned <code>*RSTD</code> —
+        the value of the <strong><code>MODE</code> parameter that
+        follows it</strong>. Reading past the count reads adjacent
+        parameter data, which looks like a plausible name and would be
+        written to the table as one. <strong>What lies past the count is
+        the call stack</strong>, so this is not a tidy-up: it is reading
+        storage that belongs to something else, and the value it returns
+        changes with the caller.</p></li>
+        <li><p><strong><code>RSTD(*YES)</code> restricts which values
+        are accepted, not how many</strong>, so it is no substitute for
+        <code>SNGVAL</code> — <code>MAX()</code> governs the count
+        independently.</p></li>
+        <li><p><strong><code>CONSTANT</code> requires
+        <code>MAX(1)</code></strong> — <code>CPD6228</code>. A list
+        parameter cannot be locked with it, so a shared-CPP command that
+        must pass a list parameter it has no use for declares it with
+        <code>SNGVAL</code> and a <code>DFT</code> instead.</p></li>
         </ul></li>
+        </ul>
+        <p><strong><code>VARY(*YES *INT2)</code> is for long text, and
+        it is a cost to justify.</strong> A varying parameter arrives as
+        a 2-byte length followed by the data. RPG receives that as a
+        <code>Varchar</code> and nothing more is needed. <strong>CL has
+        no varying type</strong>, so a CL CPP must take the parameter
+        apart by hand — a base variable plus two
+        <code>STG(*DEFINED)</code> overlays, and an <code>%SST</code> to
+        extract:</p>
+        <pre class="text"><code>             DCL        VAR(&amp;RCPV) TYPE(*CHAR) LEN(10242)
+               DCL        VAR(&amp;RCPL) TYPE(*INT) STG(*DEFINED) LEN(2) +
+                            DEFVAR(&amp;RCPV 1)
+               DCL        VAR(&amp;RCPD) TYPE(*CHAR) STG(*DEFINED) +
+                            LEN(10240) DEFVAR(&amp;RCPV 3)
+   ...
+             CHGVAR     VAR(&amp;RCP) VALUE(%SST(&amp;RCPD 1 &amp;RCPL))</code></pre>
+        <p>Three declarations per parameter, and most CPPs are CL.
+        So:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Field</th>
+        <th>Form</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>Tens of bytes — a description, a name, a subject</td>
+        <td>fixed <code>TYPE(*CHAR) LEN(n) CASE(*MIXED)</code></td>
+        </tr>
+        <tr>
+        <td>Hundreds of bytes or more — a note body, a recipient list,
+        an SQL statement</td>
+        <td>add <code>VARY(*YES *INT2)</code></td>
+        </tr>
+        <tr>
+        <td>Any length, where the CPP is <strong>RPG</strong> and the
+        value maps to a <code>VARCHAR</code> column typed with
+        <code>like()</code></td>
+        <td>add <code>VARY(*YES *INT2)</code> — one shape from command
+        to table</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>The test is whether the CPP genuinely benefits from being
+        <strong>told</strong> the length. At 50 bytes it does not:
+        <code>%TRIMR</code> is free and the buffer is trivial, so the
+        overlays buy nothing. At 5,000 or 10,000 they buy something
+        real.</p>
+        <p><strong>Existing <code>VARY</code> parameters stay as they
+        are — not violations, and not tracked for revision.</strong> The
+        cumbersomeness is its own filter: nobody writes three overlay
+        declarations per parameter by accident, so where
+        <code>VARY</code> is already in place someone had a reason.
+        Changing it would land on a working CPP for no behavioural gain.
+        This rule governs new parameters.</p>
+        <p>This rule was rewritten 08/17/26. It previously read
+        <code>VARY(*YES *INT2)</code> flatly for every mixed-case text
+        parameter, generalized from four commands — three of which share
+        one <strong>RPG</strong> CPP (<code>TMACRUSR</code>, 50-byte
+        parameters against <code>VARCHAR(50)</code> columns), while the
+        fourth (<code>SNDXLSX</code>, 10240/5000/255) is CL and pays
+        nine <code>DCL</code>s to receive three parameters. Meanwhile a
+        dozen other commands already used fixed <code>*CHAR</code> with
+        <code>CASE(*MIXED)</code>. The stated rule was the minority
+        practice.</p>
+        <ul>
         <li><p>Every command ends with the hidden cross-reference
         parameter:</p>
         <pre class="text"><code>             PARM       KWD(PGMXRF) TYPE(QPGMXRF) PGM(*YES)
  QPGMXRF:    QUAL       TYPE(*NAME) LEN(10) CONSTANT(&lt;CPP name&gt;)
              QUAL       TYPE(*NAME) LEN(10) CONSTANT(&lt;command name&gt;)</code></pre>
         <p>The CPP receives it as a 20-byte qualified name
-        (<code>pxPgmXrf</code> / <code>&amp;PGMXRF</code>).</p></li>
+        (<code>pxPgmXrf</code> / <code>&amp;PGMXRF</code>).</p>
+        <p><strong>This parameter is what makes command usage
+        cross-referenceable, and it is not optional.</strong> No
+        compiler records &quot;this program used command X&quot; — command
+        invocation leaves no reference behind. <code>PGM(*YES)</code> on
+        a qualified name does: the compiler records it as a
+        <strong>program reference</strong>, and because the two
+        constants are <em>CPP first, command second</em>, the reference
+        arrives with the CPP in the object field and <strong>the command
+        name in the library field</strong>. A cross reference build
+        detects that pairing and turns it into a command reference.</p>
+        <p>Omit the parameter and the command becomes invisible to the
+        cross reference — &quot;what uses this command&quot; answers nothing, and
+        nobody can tell whether it is safe to change. Get the two
+        constants the wrong way round and the pairing does not match,
+        with the same result and no error to say so.</p>
+        <p><strong>There is no recovering this after the fact.</strong>
+        Command invocation leaves no compiled reference of any kind, so
+        nothing can be derived later — establishing usage would mean
+        parsing source, which is not a thing anyone is going to do. The
+        parameter at build time is the only record that will ever
+        exist.</p>
+        <p>And the failure is in the dangerous direction: a command with
+        no callers in the cross reference looks <em>unused</em>, which
+        is indistinguishable from one that is used everywhere by
+        programs the tool could not see. This convention is the only
+        thing standing between that and a deletion.</p></li>
         </ul>
         <hr />
         <h2 id="6-panel-groups-qpnlsrc">6. Panel groups (QPNLSRC)</h2>
         <ul>
-        <li>Header: <code>.*</code> purpose comment,
+        <li><p>Header: <code>.*</code> purpose comment,
         <code>MODIFICATIONS:</code> log, <code>.*&gt;</code> BLDOBJ
-        directives.</li>
-        <li>Open with <code>:PNLGRP ENBGUI=YES.</code> and
-        <code>:COPYR.(c) Copyright Godsend Consulting, &lt;years&gt;</code>.</li>
-        <li><strong>Reuse shared help:</strong>
+        directives.</p></li>
+        <li><p>Open with <code>:PNLGRP ENBGUI=YES.</code> and
+        <code>:COPYR.(c) Copyright Godsend Consulting, &lt;years&gt;</code>.</p></li>
+        <li><p><strong>Reuse shared help:</strong>
         <code>:IMPORT NAME=&#39;*&#39; PNLGRP=&#39;TMHLP&#39;.</code> and
         <code>:IMHELP</code> the shared modules
         (<code>TMHLP/&lt;PARM&gt;/REQ</code>) instead of retyping
-        parameter help.</li>
-        <li><strong><code>:HELP</code> titles stay on one line:</strong>
-        the descriptive text that follows <code>:HELP NAME=&#39;…&#39;.</code>
-        cannot wrap to the next line, and must not be abbreviated to fit
-        — let the line run long (up to the 134 hard limit) rather than
-        shorten the wording.</li>
-        <li>Command-help members define this fixed set of help IDs, in
-        order:
+        parameter help.</p></li>
+        <li><p><strong><code>:HELP</code> titles stay on one
+        line:</strong> the descriptive text that follows
+        <code>:HELP NAME=&#39;…&#39;.</code> cannot wrap to the next line, and
+        must not be abbreviated to fit — let the line run long (up to
+        the 134 hard limit) rather than shorten the wording.</p></li>
+        <li><p>Command-help members define this fixed set of help IDs,
+        in order:</p>
         <ol type="1">
-        <li><code>&#39;&lt;CMD&gt;/ALL&#39;</code> — aggregate of all sections
-        (for full-command help)</li>
-        <li><code>&#39;&lt;CMD&gt;&#39;</code> — extended description</li>
-        <li><code>&#39;&lt;CMD&gt;/&lt;PARM&gt;&#39;</code> — one per parameter,
-        titled <code>&lt;Prompt&gt; (&lt;KWD&gt;) - Help</code></li>
-        <li><code>&#39;&lt;CMD&gt;/COMMAND/EXAMPLES&#39;</code> — numbered
+        <li><p><code>&#39;&lt;CMD&gt;/ALL&#39;</code> — aggregate of all
+        sections (for full-command help)</p></li>
+        <li><p><code>&#39;&lt;CMD&gt;&#39;</code> — extended
+        description</p></li>
+        <li><p><code>&#39;&lt;CMD&gt;/&lt;PARM&gt;&#39;</code> — one per
+        parameter, titled
+        <code>&lt;Prompt&gt; (&lt;KWD&gt;) - Help</code></p></li>
+        <li><p><code>&#39;&lt;CMD&gt;/COMMAND/EXAMPLES&#39;</code> — numbered
         examples in <code>:XMP.</code> blocks with a prose explanation
-        per example</li>
-        <li><code>&#39;&lt;CMD&gt;/ERROR/MESSAGES&#39;</code> —
-        <code>:DL COMPACT.</code> list, message text pulled live via
-        <code>&amp;msg(MSGID,MSGF,*LIBL,nosub).</code></li>
+        per example</p></li>
+        <li><p><code>&#39;&lt;CMD&gt;/ERROR/MESSAGES&#39;</code> — message text
+        pulled live via <code>&amp;msg(MSGID,MSGF,*LIBL,nosub).</code>,
+        one <code>:DL COMPACT.</code> list per message <em>type</em>,
+        each introduced by a highlighted paragraph rather than a list
+        term:</p>
+        <pre class="text"><code>:P.:HP3.*ESCAPE &amp;msg(CPX0006,QCPFMSG).:EHP3.
+:DL COMPACT.
+:DT.ENV0001
+:DD.&amp;msg(ENV0001,XFMSG,*LIBL,nosub).
+:EDL.</code></pre></li>
         </ol></li>
-        <li>Work-with (inquiry) panels declare, in separate
+        <li><p><strong>Let the tags do the formatting.</strong> UIM
+        renders text according to the tag that contains it — lists,
+        definition terms, parameter values and keywords all carry their
+        own appearance. <strong>Tag the text correctly and the
+        highlighting takes care of itself.</strong></p>
+        <p><code>:HPn.</code> is for <strong>headings</strong>, plus the
+        occasional term or special reference inside running prose.
+        Reaching for it to make tagged content <em>look</em> right is a
+        sign the wrong tag was used — and it is <strong>not valid inside
+        <code>:PV.</code>, <code>:PK.</code> or
+        <code>:DT.</code></strong> at all, because those take a bare
+        term and already render it.</p>
+        <p>The two forms that are idiomatic here, and the only ones
+        needed in practice:</p>
+        <pre class="text"><code>:P.:HP2.Example 1: Simple Command Example:EHP2.
+:P.:HP3.*ESCAPE &amp;msg(CPX0006,QCPFMSG).:EHP3.</code></pre>
+        <p>Getting the invalid nesting wrong compiles nowhere, and it is
+        easy to write by analogy from HTML or Markdown, where nesting
+        emphasis inside anything is fine:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Want</th>
+        <th>Write</th>
+        <th>Not</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>A variable value</td>
+        <td><code>:PT.:PV.environment-name:EPV.</code></td>
+        <td><code>:PV.:HP2.…:EHP2.:EPV.</code></td>
+        </tr>
+        <tr>
+        <td>A special value</td>
+        <td><code>:PT.:PK.*ALL:EPK.</code></td>
+        <td><code>:PT.:PV.*ALL:EPV.</code></td>
+        </tr>
+        <tr>
+        <td>The <strong>default</strong> value</td>
+        <td><code>:PT.:PK DEF.*YES:EPK.</code></td>
+        <td>—</td>
+        </tr>
+        <tr>
+        <td>A message-group heading</td>
+        <td><code>:P.:HP3.*ESCAPE …:EHP3.</code></td>
+        <td><code>:DT.:HP4.…:EHP4.</code></td>
+        </tr>
+        </tbody>
+        </table>
+        <p><code>:PV.</code> is a <em>variable</em> — something the user
+        substitutes, like <code>environment-name</code>.
+        <code>:PK.</code> is a <em>keyword</em> — a literal special
+        value such as <code>*ALL</code>. Only <code>:PK.</code> takes
+        the <code>DEF</code> attribute, which underlines the value to
+        mark it as the parameter default; <code>:PV.</code> has no
+        equivalent, so a default that is a variable cannot be marked and
+        does not need to be.</p></li>
+        <li><p>Work-with (inquiry) panels declare, in separate
         banner-labeled sections: classes
         (<code>cls&lt;type&gt;&lt;len&gt;</code>, e.g.
         <code>clsname10</code>, <code>clsyesno</code> with
@@ -1361,7 +2052,7 @@ end-proc;</code></pre>
         conditions, and key lists — the names must match the
         <code>@…_PNLID</code> / <code>@…_VARRCD</code> /
         <code>@…_LSTNAM</code> constants in the RPG <code>…H</code>
-        copybook.</li>
+        copybook.</p></li>
         </ul>
         <hr />
         <h2 id="7-display-files-qddssrc">7. Display files (QDDSSRC)</h2>
@@ -1417,16 +2108,43 @@ end-proc;</code></pre>
         <hr />
         <h2 id="8-messages">8. Messages</h2>
         <ul>
-        <li>Product messages live in one message file
+        <li><p>Product messages live in one message file
         (<code>TMMSG</code>), built from
         <code>QREXSRC/TMMSG.REXX</code>; IDs are grouped by prefix
         (<code>TSK*</code>, <code>OBJ*</code>, <code>LOC*</code>,
-        <code>DEP*</code>, <code>EXC*</code>, <code>UIM*</code>).</li>
-        <li>Programs send message IDs, not hardcoded text, wherever a
-        message exists; status messages use <code>CPDA0FF</code>.</li>
-        <li>Escapes propagate (FWDMSGH pattern /
+        <code>DEP*</code>, <code>EXC*</code>,
+        <code>UIM*</code>).</p></li>
+        <li><p>Programs send message IDs, not hardcoded text, wherever a
+        message exists; status messages use
+        <code>CPDA0FF</code>.</p></li>
+        <li><p><strong>Keep a <code>*STATUS</code> message to 76
+        characters assembled.</strong> That is the text plus the
+        <em>declared width</em> of every replacement value, not the
+        width of what a particular caller happens to pass. Longer
+        messages are truncated, and possibly not shown at all — either
+        way the tail is lost, and the tail is usually the part that says
+        what the program is doing.</p>
+        <p>Measure it when the message is written: literal text with the
+        <code>&amp;n</code> tokens removed, plus each value&#39;s
+        <code>FMT</code> length.
+        <code>&#39;Building cross reference &amp;1.  &amp;2&#39;</code> with
+        <code>(*CHAR 10) (*CHAR 30)</code> is 28 + 10 + 30 =
+        68.</p></li>
+        <li><p><strong><code>MSGDTA</code> must supply exactly the bytes
+        the <code>FMT</code> declares.</strong> A short
+        <code>MSGDTA</code> leaves later replacement values reading
+        whatever follows in storage, which shows as stray characters
+        rather than as an error. Concatenating a 10-byte variable with a
+        shorter expression is the easy way to get this wrong:</p>
+        <pre class="text"><code>           CHGVAR     VAR(&amp;STSTXT) VALUE(&#39;Scanning&#39; *BCAT &amp;LIB)
+           SNDPGMMSG  MSGID(XRF0007) MSGF(XFMSG) MSGDTA(&amp;ENV *CAT +
+                        &amp;STSTXT) TOPGMQ(*EXT) MSGTYPE(*STATUS)</code></pre>
+        <p><code>&amp;STSTXT</code> is declared at the <code>FMT</code>
+        width, so the total is right whatever the text inside it happens
+        to be.</p></li>
+        <li><p>Escapes propagate (FWDMSGH pattern /
         <code>%target(&#39;*PGMBDY&#39;: 1)</code>) so the original failure
-        reaches the user.</li>
+        reaches the user.</p></li>
         </ul>
         <hr />
         <h2 id="9-cross-cutting-rules">9. Cross-cutting rules</h2>
@@ -1494,16 +2212,82 @@ end-proc;</code></pre>
         experiments. Git-ignores them going forward; never reference or
         promote them, and don&#39;t cite them as precedent.</p></li>
         <li><p><strong>Third-party:</strong> members with external
-        authorship headers (e.g. Carsten Flensburg&#39;s
-        <code>CPYMSGD*</code>, Giuseppe Costagliola&#39;s
-        <code>SQL2XLSX*</code>, Scott Klement&#39;s YAJL/JDBCR4 material;
-        <code>BLDOBJ</code> is a branched fork of Klement&#39;s BUILD tool)
-        keep their original style and attribution. Fix bugs; don&#39;t
-        restyle.</p></li>
+        authorship headers — Carsten Flensburg&#39;s <code>CPYMSGD*</code>,
+        Giuseppe Costagliola&#39;s <code>SQL2XLSX*</code>, Scott Klement&#39;s
+        YAJL/JDBCR4 material — keep their original style and
+        attribution. Fix bugs; don&#39;t restyle.</p>
+        <p>The reason is practical, not ceremonial: their style is the
+        upstream author&#39;s, so restyling makes the next version harder to
+        take up and makes a local defect harder to tell from an upstream
+        one. <strong>Where that reason has expired, so has the
+        exemption.</strong></p></li>
+        <li><p><strong>Forks that have diverged are house code with an
+        attribution.</strong> A member branched from someone else&#39;s work
+        and then rewritten over years is no longer tracking an upstream.
+        Nobody is going to merge a new release into it, so nothing is
+        being protected by holding it to the original author&#39;s
+        conventions — the exemption just leaves a permanent
+        inconsistency in the middle of the library.</p>
+        <p><code>BLDOBJ</code> is the worked example. It began as a
+        branch of Klement&#39;s BUILD tool in 2019 and has drifted a long
+        way since. <strong>The <code>@author</code> line stays</strong>
+        — the origin is a fact and the credit is owed — but house
+        standards apply to the code. The test is not &quot;was this written
+        elsewhere&quot; but &quot;is there still an upstream we intend to follow.&quot;
+        Keep the attribution, drop the exemption.</p></li>
         <li><p><strong>Legacy fixed-form:</strong> don&#39;t expand
         fixed-form code. Small fix = match the existing style locally;
         real enhancement = convert to <code>**FREE</code> first (add a
         MODIFICATIONS entry for the conversion).</p></li>
+        <li><p><strong>Embedded 5250 display attributes become a single
+        space.</strong> Old source can carry EBCDIC
+        <strong>x&#39;20&#39;–x&#39;3F&#39;</strong> — the 5250 field attribute bytes.
+        They are there because the comment or heading was laid out on a
+        green screen, where an attribute byte turned highlighting or
+        colour on and off. Converted off the platform they surface as
+        Unicode C1 controls, mostly
+        <code>U+0080</code>–<code>U+009F</code>.</p>
+        <p><strong>Replace each with exactly one space.</strong> An
+        attribute byte occupies one display position on a 5250 — it is
+        not zero-width — so one space is what preserves the column
+        alignment the original author was looking at. That is the whole
+        justification, and it is why the two obvious alternatives are
+        both wrong:</p>
+        <ul>
+        <li><strong>Leaving them</strong> means the next tool to read
+        the member decides for you. One that cannot decode the byte
+        writes <code>U+FFFD</code> in its place, which is silent
+        corruption that survives review because it still looks like a
+        character.</li>
+        <li><strong>Deleting them</strong> closes up the line.
+        <code>NOTE:</code> + attribute + <code>WHEN</code> becomes
+        <code>NOTE:WHEN</code>, and in CL it can be worse than cosmetic
+        — an attribute sitting before a <code>+</code> continuation is
+        holding the blank that separates it from the preceding keyword,
+        so removing it changes what the compiler reads.</li>
+        </ul>
+        <p>Byte-count matters as much as appearance here: source is
+        fixed-width (see §1.4), so a substitution that is not
+        one-for-one shifts everything after it.</p>
+        <p><strong>They do not all land in the C1 range — match on the
+        whole set.</strong> EBCDIC x&#39;20&#39;–x&#39;3F&#39; converts to a scatter of
+        Unicode code points, not a contiguous block: most become C1
+        controls (<code>U+0080</code>–<code>U+009F</code>), but x&#39;26&#39;
+        becomes <code>U+0017</code>, x&#39;2F&#39; becomes <code>U+0007</code>,
+        x&#39;3F&#39; becomes <code>U+001A</code>, and several more land in C0.
+        A pattern written against
+        <code>U+0080</code>–<code>U+009F</code> alone looks like it
+        works and quietly leaves the C0 ones behind. Match <strong>C0
+        except tab/LF/CR, all of C1, and
+        <code>U+FFFD</code></strong>:</p>
+        <pre class="text"><code>[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u0080-\u009F\uFFFD]</code></pre>
+        <p>x&#39;25&#39; is the one to leave alone — it converts to
+        <code>U+000A</code>, a real line ending.</p>
+        <p><strong>Do not widen this to &quot;any non-ASCII&quot;.</strong> A
+        handful of members genuinely contain extended characters — a few
+        across a thousand-plus — and those are content, not artefacts.
+        The rule is scoped to control code points precisely so a sweep
+        cannot eat them.</p></li>
         <li><p><strong>BSLIB vs RBUTL duplicates:</strong> members
         shared by both repos are expected to be byte-identical (verify
         with <code>scripts/refresh-commit.ps1</code> workflows). When
