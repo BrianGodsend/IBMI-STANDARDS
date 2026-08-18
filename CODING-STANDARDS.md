@@ -1557,19 +1557,18 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   contain extended characters — a few across a thousand-plus — and those are
   content, not artefacts. The rule is scoped to control code points precisely so
   a sweep cannot eat them.
-- **BSLIB vs RBUTL duplicates:** members shared by both repos are expected to be
-  byte-identical (verify with `scripts/refresh-commit.ps1` workflows). When they
-  drift, RBUTL is authoritative for TM/RB members; reconcile promptly.
-- **Fresh-line repos diverge on purpose.** The rule above pairs BSLIB with
-  RBUTL and reaches no further. A repo started as a *fresh line* — GCUTL as of
-  08/15/26 — is a new version of the source, not a copy to be kept in step:
-  utilities arrive from the older repos one at a time, each brought up to the
-  current standard as it lands, and everything after that evolves on its own.
-  Divergence from the repo a member came from is the intended direction of
-  travel, so do not report it as drift and do not port a change back. The older
-  repos carry too many live production call points to keep patching in parallel.
+- **The standard applies to each repository on its own merit.** It travels to
+  every Godsend IBM i repo, but says nothing about the relationship *between*
+  them. Nothing here requires two repos to hold identical members, and
+  divergence between them is not a standards violation — a developer library
+  drifts from a curated one as a matter of course, work gets tested and
+  abandoned, and other hands change production. Where a change is made because
+  of a standard and belongs in more than one repo, **apply it in each repo
+  separately, judged against that repo's own code**. Never reconcile one repo by
+  copying from another on the strength of this document.
 
-  This governs **source members only**. This document is one standard for every
-  Godsend IBM i repo and still travels to all of them: edit the canonical copy
-  in `IBMI-STANDARDS`, run `sync-standards.ps1`, and commit the refreshed copy
-  everywhere it lands, fresh-line repos included.
+  What *is* kept identical is this document. Edit the canonical copy in
+  `IBMI-STANDARDS`, run `sync-standards.ps1`, and commit the refreshed copy
+  everywhere it lands. How a particular pair of repositories relate — which is
+  authoritative for what, what is being migrated where — is that project's
+  business and belongs in that project's own documentation.

@@ -2288,28 +2288,25 @@ MODE   = *RSTD</code></pre>
         across a thousand-plus — and those are content, not artefacts.
         The rule is scoped to control code points precisely so a sweep
         cannot eat them.</p></li>
-        <li><p><strong>BSLIB vs RBUTL duplicates:</strong> members
-        shared by both repos are expected to be byte-identical (verify
-        with <code>scripts/refresh-commit.ps1</code> workflows). When
-        they drift, RBUTL is authoritative for TM/RB members; reconcile
-        promptly.</p></li>
-        <li><p><strong>Fresh-line repos diverge on purpose.</strong> The
-        rule above pairs BSLIB with RBUTL and reaches no further. A repo
-        started as a <em>fresh line</em> — GCUTL as of 08/15/26 — is a
-        new version of the source, not a copy to be kept in step:
-        utilities arrive from the older repos one at a time, each
-        brought up to the current standard as it lands, and everything
-        after that evolves on its own. Divergence from the repo a member
-        came from is the intended direction of travel, so do not report
-        it as drift and do not port a change back. The older repos carry
-        too many live production call points to keep patching in
-        parallel.</p>
-        <p>This governs <strong>source members only</strong>. This
-        document is one standard for every Godsend IBM i repo and still
-        travels to all of them: edit the canonical copy in
-        <code>IBMI-STANDARDS</code>, run
+        <li><p><strong>The standard applies to each repository on its
+        own merit.</strong> It travels to every Godsend IBM i repo, but
+        says nothing about the relationship <em>between</em> them.
+        Nothing here requires two repos to hold identical members, and
+        divergence between them is not a standards violation — a
+        developer library drifts from a curated one as a matter of
+        course, work gets tested and abandoned, and other hands change
+        production. Where a change is made because of a standard and
+        belongs in more than one repo, <strong>apply it in each repo
+        separately, judged against that repo&#39;s own code</strong>. Never
+        reconcile one repo by copying from another on the strength of
+        this document.</p>
+        <p>What <em>is</em> kept identical is this document. Edit the
+        canonical copy in <code>IBMI-STANDARDS</code>, run
         <code>sync-standards.ps1</code>, and commit the refreshed copy
-        everywhere it lands, fresh-line repos included.</p></li>
+        everywhere it lands. How a particular pair of repositories
+        relate — which is authoritative for what, what is being migrated
+        where — is that project&#39;s business and belongs in that project&#39;s
+        own documentation.</p></li>
         </ul>
     </article>
 
