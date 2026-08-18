@@ -68,8 +68,11 @@ BS  06/15/26  Updated documentation to acknowledge that default
 - One entry may describe several changes made together; start each on its own
   continuation line.
 - The `@@` line terminates the log. Never remove it.
-- `@TODO` lines may follow the log (before the build directives) to record known
-  future work.
+- `@todo` lines may follow the log (before the build directives) to record known
+  future work. **One `@todo` per item** — two things to do are two lines, not one
+  line with two sentences, so that each can be read, counted and struck off on
+  its own. **Lowercase**, like every other ILEDoc command (§2.3): `@todo`, never
+  `@TODO` or `@ToDo`.
 
 ### 1.3 BLDOBJ build directives
 
