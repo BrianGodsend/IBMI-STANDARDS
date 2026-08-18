@@ -1124,6 +1124,12 @@ The test is whether the CPP genuinely benefits from being **told** the length. A
 50 bytes it does not: `%TRIMR` is free and the buffer is trivial, so the overlays
 buy nothing. At 5,000 or 10,000 they buy something real.
 
+**Existing `VARY` parameters stay as they are — not violations, and not tracked
+for revision.** The cumbersomeness is its own filter: nobody writes three overlay
+declarations per parameter by accident, so where `VARY` is already in place
+someone had a reason. Changing it would land on a working CPP for no behavioural
+gain. This rule governs new parameters.
+
 This rule was rewritten 08/17/26. It previously read `VARY(*YES *INT2)` flatly for
 every mixed-case text parameter, generalized from four commands — three of which
 share one **RPG** CPP (`TMACRUSR`, 50-byte parameters against `VARCHAR(50)`
