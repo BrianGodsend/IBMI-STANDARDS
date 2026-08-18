@@ -672,6 +672,20 @@ ctl-opt actgrp(*CALLER);
   `bytPrv` before each call, then test `bytAvl`.
 - Use `callp(e)` + `%error()` for tolerated command failures; escalate with
   `snd-msg *ESCAPE %msg(...) %target('*PGMBDY': 1);`.
+- **`%msg` takes the message file as a NAME, never as the 20-byte API form.**
+  Name the file from a constant rather than a literal, and pick the right
+  constant — `QAPIH` publishes two that look interchangeable and are not:
+
+  | Constant | Value | For |
+  | --- | --- | --- |
+  | `@QAPI_QCPF_MSGF_NAME` | `'QCPFMSG   '` | `%msg` — a 10-byte name, trailing blanks ignored |
+  | `@QAPI_QCPF_MSGF` | `'QCPFMSG   *LIBL     '` | `QMHSNDPM` and friends — name in 1–10, library in 11–20 |
+
+  `%msg` accepts `MSGF`, `MSGLIB/MSGF` and `*LIBL/MSGF` — **slash**-qualified, so
+  a variable holding the qualified form needs room for 21 characters. It does
+  **not** accept the API's positional 20-byte form, so passing
+  `@QAPI_QCPF_MSGF` to `%msg` is wrong even though it compiles and looks
+  deliberate.
 - Status messages go through a small `sndStsMsg` procedure (CPDA0FF / *STATUS);
   clear with a blank message when done.
 
