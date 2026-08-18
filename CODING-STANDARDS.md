@@ -1095,11 +1095,42 @@ CREATE OR REPLACE TABLE ... (
   - Selection lists via `CHOICE(*PGM) CHOICEPGM(<…CHC program>)`.
   - Shared-CPP commands pass their mode as
     `PARM KWD(MODE) TYPE(*CHAR) CONSTANT('*ADD')`.
+  - **A special value that replaces the WHOLE parameter goes in `SNGVAL`.**
+    `VALUES` and `SPCVAL` are **per element**. On a single, base-data-type
+    parameter that is exactly right and `SPCVAL` is where special values go —
+    the element *is* the parameter, so `SNGVAL` has nothing to add. The
+    distinction bites on every **compound** parameter:
+
+    | Parameter | Why it is compound |
+    | --- | --- |
+    | `MAX()` greater than 1 | a list of elements |
+    | `TYPE(ELEM-label)` | a list of parts, one `ELEM` each |
+    | `TYPE(QUAL-label)` | a qualified name, one `QUAL` each |
+
+    On any of those, `SPCVAL((*SAME))` says *each entry may be `*SAME`*, so
+    `LIBL(*SAME QGPL)` and `LIBL(*SAME *SAME)` are both accepted. `SNGVAL`
+    ("single value") is the one that means **this value may only appear alone**,
+    which is what `*SAME`, `*NONE`, `*ALL` and their like almost always want.
+  - **A CPP reading a list parameter must bound every loop by the COUNT**, never
+    by the declared dimension. The command materialises the elements it was
+    given, not `MAX()` of them, so the array past the count is not blank and is
+    not reliably even this parameter. Probed with one `*SAME` in each of two
+    lists followed by a `MODE` constant:
+
+    ```text
+    LIBL   n=00001 [1]=*SAME [2]= <attr>*SAME
+    MRGENV n=00001 [1]=*SAME [2]=*RSTD
+    MODE   = *RSTD
+    ```
+
+    `MRGENV` element 2 returned `*RSTD` — the value of the **`MODE` parameter
+    that follows it**. Reading past the count reads adjacent parameter data,
+    which looks like a plausible name and would be written to the table as one.
+  - **`RSTD(*YES)` restricts which values are accepted, not how many**, so it is
+    no substitute for `SNGVAL` — `MAX()` governs the count independently.
   - **`CONSTANT` requires `MAX(1)`** — `CPD6228`. A list parameter cannot be
-    locked with it. Where a shared-CPP command has no use for a list parameter
-    but must still pass it, lock it with `RSTD(*YES)` and a single `SPCVAL`
-    instead: the value becomes the only one the command will accept, which is
-    the same effect.
+    locked with it, so a shared-CPP command that must pass a list parameter it
+    has no use for declares it with `SNGVAL` and a `DFT` instead.
 
 **`VARY(*YES *INT2)` is for long text, and it is a cost to justify.** A varying
 parameter arrives as a 2-byte length followed by the data. RPG receives that as a
