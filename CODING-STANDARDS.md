@@ -687,6 +687,13 @@ ctl-opt actgrp(*CALLER);
   constants are written *CPP then command*, so the compiled reference arrives
   with the CPP in the object field and the command name in the library field.
 
+  **This is not a battle worth fighting on the word alone.** "Qualified" is too
+  overloaded across IBM's own documentation, the API reference and the command
+  reference for the adjective to carry the meaning by itself, and no house
+  convention will change that. So do not depend on it: when the layout matters,
+  **name it** — say "20-byte", or write `LIB/NAME`, or say "as the CPP receives
+  it". Context is what disambiguates, so supply the context.
+
 - **`%msg` takes the message file as a name — plain or FULLY qualified, never the
   20-byte form.** It accepts `MSGF`, `MSGLIB/MSGF` and `*LIBL/MSGF`, so a
   variable holding one needs room for 21 characters. Name the file from a
