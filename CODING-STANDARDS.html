@@ -1076,9 +1076,38 @@ end-proc;</code></pre>
         Test them with:</p>
         <pre class="rpgle"><code>if %parms() &gt;= %parmnum(topEnt) and %addr(topEnt) &lt;&gt; *NULL;</code></pre></li>
         <li><p>Prefer modern expression forms:
-        <code>if x in %list(a: b: c);</code>,
-        <code>%char(%date(): *ISO0)</code>,
-        <code>snd-msg</code>.</p></li>
+        <code>%char(%date(): *ISO0)</code>, <code>snd-msg</code>, and
+        the <code>IN</code> operator — which has one rule attached to
+        it.</p></li>
+        <li><p><strong>ALWAYS parenthesize an <code>in %list(...)</code>
+        test.</strong> Write it</p>
+        <pre class="rpgle"><code>if (needle in %list(&#39;stack1&#39;: &#39;stack2&#39;));
+if not (needle in %list(&#39;stack1&#39;: &#39;stack2&#39;));</code></pre>
+        <p>A bare <code>if needle in %list(…)</code> on its own
+        <strong>evaluates correctly</strong> — IBM gets that case right
+        and there is nothing to fix in existing code that reads this
+        way. The rule is not about the statement as written; it is about
+        the statement as it will be edited.</p>
+        <p><strong><code>not</code> binds tighter than
+        <code>in</code>.</strong> Put a <code>not</code> in front of an
+        unparenthesized test and it negates the <strong>needle</strong>,
+        then searches the list for <em>that</em> — it does not negate
+        the result of the search. The comparison still runs, still
+        returns something, and the program carries on with the wrong
+        answer. No compile error, nothing to see in the source. The same
+        exposure applies once the condition grows an <code>and</code> or
+        an <code>or</code>.</p>
+        <p>So the parentheses are insurance against the edit, not a fix
+        for the expression. <code>if needle in %list(…)</code> is
+        correct today and becomes silently wrong the moment somebody
+        adds a <code>not</code> in front or joins another condition to
+        it — and that somebody will not stop to re-check operator
+        precedence first. Parenthesizing always costs nothing and
+        removes the trap.</p>
+        <p>There is also <strong>no <code>NOT IN</code>
+        operator</strong>: <code>needle not in %list(…)</code> does not
+        compile. The negation goes in front of the parenthesized
+        test.</p></li>
         <li><p>Indent 2 spaces per level. Continuation lines indent 4
         spaces; when breaking a parameter list, lead continuation lines
         with the <code>:</code> separator:</p>
@@ -1523,22 +1552,22 @@ DELETE +
         is resolved at run time (from
         <code>DFTRDBCOL</code>/<code>*CURLIB</code>) instead of being
         hardcoded:</p>
-        <div class="sourceCode" id="cb24"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblNam  <span class="dt">VARCHAR</span>(<span class="dv">10</span>) <span class="kw">DEFAULT</span> <span class="st">&#39;TMTSK&#39;</span>;</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblLib  <span class="dt">VARCHAR</span>(<span class="dv">10</span>);</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblRef  <span class="dt">VARCHAR</span>(<span class="dv">21</span>);</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> sqlStmt <span class="dt">VARCHAR</span>(<span class="dv">5000</span>);</span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">--Resolve the DFTRDBCOL/CURRENT SCHEMA/*CURLIB reference</span></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> bldobj_temp_resolve_dftrdbcol_schema (fld1 <span class="dt">char</span>(<span class="dv">1</span>));</span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  GET DIAGNOSTICS CONDITION <span class="dv">1</span> tblLib <span class="op">=</span> DB2_ORDINAL_TOKEN_2;</span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblLib <span class="op">=</span> <span class="fu">TRIM</span>(tblLib);</span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> sqlStmt <span class="op">=</span> <span class="st">&#39;</span></span>
-<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="st">      DROP TABLE &#39;</span> <span class="op">||</span> tblLib <span class="op">||</span> <span class="st">&#39;.bldobj_temp_resolve_dftrdbcol_schema&#39;</span>;</span>
-<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">EXECUTE</span> <span class="kw">IMMEDIATE</span> sqlStmt;</span>
-<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblRef <span class="op">=</span> tblLib <span class="op">||</span> <span class="st">&#39;.&#39;</span> <span class="op">||</span> tblNam;</span>
-<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>  <span class="op">..</span>.</span>
-<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span>;</span></code></pre></div>
+        <div class="sourceCode" id="cb25"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblNam  <span class="dt">VARCHAR</span>(<span class="dv">10</span>) <span class="kw">DEFAULT</span> <span class="st">&#39;TMTSK&#39;</span>;</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblLib  <span class="dt">VARCHAR</span>(<span class="dv">10</span>);</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblRef  <span class="dt">VARCHAR</span>(<span class="dv">21</span>);</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> sqlStmt <span class="dt">VARCHAR</span>(<span class="dv">5000</span>);</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">--Resolve the DFTRDBCOL/CURRENT SCHEMA/*CURLIB reference</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> bldobj_temp_resolve_dftrdbcol_schema (fld1 <span class="dt">char</span>(<span class="dv">1</span>));</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  GET DIAGNOSTICS CONDITION <span class="dv">1</span> tblLib <span class="op">=</span> DB2_ORDINAL_TOKEN_2;</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblLib <span class="op">=</span> <span class="fu">TRIM</span>(tblLib);</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> sqlStmt <span class="op">=</span> <span class="st">&#39;</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a><span class="st">      DROP TABLE &#39;</span> <span class="op">||</span> tblLib <span class="op">||</span> <span class="st">&#39;.bldobj_temp_resolve_dftrdbcol_schema&#39;</span>;</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">EXECUTE</span> <span class="kw">IMMEDIATE</span> sqlStmt;</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblRef <span class="op">=</span> tblLib <span class="op">||</span> <span class="st">&#39;.&#39;</span> <span class="op">||</span> tblNam;</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>  <span class="op">..</span>.</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span>;</span></code></pre></div>
         <ul>
         <li>Build each statement into <code>sqlStmt</code> and
         <code>EXECUTE IMMEDIATE</code> it.</li>
@@ -1552,18 +1581,18 @@ DELETE +
         <code>MAX(id) + 1</code>.</li>
         </ul>
         <h3 id="43-tables-sqlt">4.3 Tables (<code>.SQLT</code>)</h3>
-        <div class="sourceCode" id="cb25"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> <span class="op">..</span>. (</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    task_id           <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskid      BIGINT</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>       <span class="kw">GENERATED</span> <span class="kw">BY</span> <span class="kw">DEFAULT</span></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>       <span class="kw">AS</span> IDENTITY (<span class="kw">START</span> <span class="kw">WITH</span> <span class="dv">1</span> <span class="kw">INCREMENT</span> <span class="kw">BY</span> <span class="dv">1</span> <span class="kw">CYCLE</span>)</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>       <span class="kw">PRIMARY</span> <span class="kw">KEY</span></span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>   ,task_name         <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskname    <span class="dt">CHAR</span>(<span class="dv">10</span>)</span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="kw">UNIQUE</span></span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>   ,task_status       <span class="cf">FOR</span> <span class="kw">COLUMN</span> tsksts     <span class="dt">CHAR</span>(<span class="dv">1</span>)</span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="st">&#39;&#39;</span><span class="dv">0</span><span class="st">&#39;&#39;</span></span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>       <span class="kw">CHECK</span>(task_status <span class="kw">BETWEEN</span> <span class="st">&#39;&#39;</span><span class="dv">0</span><span class="st">&#39;&#39;</span> <span class="kw">AND</span> <span class="st">&#39;&#39;</span><span class="dv">9</span><span class="st">&#39;&#39;</span>)</span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>   <span class="op">..</span>.</span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>) RCDFMT r<span class="st">&#39; || tblNam;</span></span></code></pre></div>
+        <div class="sourceCode" id="cb26"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> <span class="op">..</span>. (</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    task_id           <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskid      BIGINT</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>       <span class="kw">GENERATED</span> <span class="kw">BY</span> <span class="kw">DEFAULT</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>       <span class="kw">AS</span> IDENTITY (<span class="kw">START</span> <span class="kw">WITH</span> <span class="dv">1</span> <span class="kw">INCREMENT</span> <span class="kw">BY</span> <span class="dv">1</span> <span class="kw">CYCLE</span>)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>       <span class="kw">PRIMARY</span> <span class="kw">KEY</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>   ,task_name         <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskname    <span class="dt">CHAR</span>(<span class="dv">10</span>)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="kw">UNIQUE</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>   ,task_status       <span class="cf">FOR</span> <span class="kw">COLUMN</span> tsksts     <span class="dt">CHAR</span>(<span class="dv">1</span>)</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="st">&#39;&#39;</span><span class="dv">0</span><span class="st">&#39;&#39;</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>       <span class="kw">CHECK</span>(task_status <span class="kw">BETWEEN</span> <span class="st">&#39;&#39;</span><span class="dv">0</span><span class="st">&#39;&#39;</span> <span class="kw">AND</span> <span class="st">&#39;&#39;</span><span class="dv">9</span><span class="st">&#39;&#39;</span>)</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>   <span class="op">..</span>.</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>) RCDFMT r<span class="st">&#39; || tblNam;</span></span></code></pre></div>
         <ul>
         <li><strong>Long descriptive names</strong> with
         <code>FOR COLUMN</code> short (≤10) system names, both
@@ -1684,8 +1713,8 @@ DELETE +
         <li><p><strong>Test for null and blank together</strong> when a
         value is &quot;missing or empty&quot;, because a service may express the
         same idea either way:</p>
-        <div class="sourceCode" id="cb26"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="cf">CASE</span> <span class="cf">WHEN</span> <span class="fu">COALESCE</span>(<span class="fu">TRIM</span>(a.text), <span class="st">&#39;&#39;</span>) <span class="op">&lt;&gt;</span> <span class="st">&#39;&#39;</span> <span class="cf">THEN</span> a.text</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>     <span class="cf">ELSE</span> <span class="fu">COALESCE</span>(b.text, <span class="st">&#39;&#39;</span>) <span class="cf">END</span></span></code></pre></div></li>
+        <div class="sourceCode" id="cb27"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="cf">CASE</span> <span class="cf">WHEN</span> <span class="fu">COALESCE</span>(<span class="fu">TRIM</span>(a.text), <span class="st">&#39;&#39;</span>) <span class="op">&lt;&gt;</span> <span class="st">&#39;&#39;</span> <span class="cf">THEN</span> a.text</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>     <span class="cf">ELSE</span> <span class="fu">COALESCE</span>(b.text, <span class="st">&#39;&#39;</span>) <span class="cf">END</span></span></code></pre></div></li>
         <li><p>Weigh the blast radius, not the row. A
         <code>NOT NULL</code> violation fails the whole statement, and
         where that statement is one step of a build that escapes on

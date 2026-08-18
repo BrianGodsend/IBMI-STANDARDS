@@ -671,8 +671,35 @@ ctl-opt actgrp(*CALLER);
   if %parms() >= %parmnum(topEnt) and %addr(topEnt) <> *NULL;
   ```
 
-- Prefer modern expression forms: `if x in %list(a: b: c);`, `%char(%date():
-  *ISO0)`, `snd-msg`.
+- Prefer modern expression forms: `%char(%date(): *ISO0)`, `snd-msg`, and the
+  `IN` operator — which has one rule attached to it.
+- **ALWAYS parenthesize an `in %list(...)` test.** Write it
+
+  ```rpgle
+  if (needle in %list('stack1': 'stack2'));
+  if not (needle in %list('stack1': 'stack2'));
+  ```
+
+  A bare `if needle in %list(…)` on its own **evaluates correctly** — IBM gets
+  that case right and there is nothing to fix in existing code that reads this
+  way. The rule is not about the statement as written; it is about the statement
+  as it will be edited.
+
+  **`not` binds tighter than `in`.** Put a `not` in front of an unparenthesized
+  test and it negates the **needle**, then searches the list for *that* — it does
+  not negate the result of the search. The comparison still runs, still returns
+  something, and the program carries on with the wrong answer. No compile error,
+  nothing to see in the source. The same exposure applies once the condition
+  grows an `and` or an `or`.
+
+  So the parentheses are insurance against the edit, not a fix for the
+  expression. `if needle in %list(…)` is correct today and becomes silently
+  wrong the moment somebody adds a `not` in front or joins another condition to
+  it — and that somebody will not stop to re-check operator precedence first.
+  Parenthesizing always costs nothing and removes the trap.
+
+  There is also **no `NOT IN` operator**: `needle not in %list(…)` does not
+  compile. The negation goes in front of the parenthesized test.
 - Indent 2 spaces per level. Continuation lines indent 4 spaces; when breaking a
   parameter list, lead continuation lines with the `:` separator:
 
