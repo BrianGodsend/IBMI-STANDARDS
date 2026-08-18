@@ -705,6 +705,28 @@ ctl-opt actgrp(*CALLER);
   absolute rather than a preference — the parentheses have to come from the
   standard, because they will never come from the feedback.
 
+  **Balance the siblings.** Once one operand of an `and`/`or` is parenthesized,
+  parenthesize the others so the alternatives read as parallel:
+
+  ```rpgle
+  when (srcType in %list(@SRCTYPE_RPGLE: @SRCTYPE_SQLRPGLE))
+      or (%scan('RPG': srcType) > 0);
+
+  if (objType = @OBJTYPE_FILE)
+      and (%subst(objName: 1: 3) in %list('PRT': 'WRK': 'WSN'));
+  ```
+
+  The parentheses arrive for the `in %list()`, but leaving the other side bare
+  makes the two sides look like different kinds of thing when they are the same
+  kind of thing. This applies to **expressions** — a comparison, a BIF result
+  being tested. A bare indicator or boolean variable is already atomic and gains
+  nothing: write `when isNative and (inBldDir in %list(…))`, not
+  `when (isNative) and (…)`.
+
+  **Do not read this as C-style `if (condition)`.** The parentheses go around
+  each operand, never around the whole condition — that is a different language's
+  convention and RPG has no use for it.
+
   There is also **no `NOT IN` operator**: `needle not in %list(…)` does not
   compile. The negation goes in front of the parenthesized test.
 - Indent 2 spaces per level. Continuation lines indent 4 spaces; when breaking a
