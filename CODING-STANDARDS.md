@@ -1089,11 +1089,48 @@ CREATE OR REPLACE TABLE ... (
   `HLPID(*CMD)`, and `HLPPNLGRP(<own name>)` — help is not optional.
 - `PARM` conventions:
   - `EXPR(*YES)` on user-enterable parameters.
-  - Mixed-case text parameters: `TYPE(*CHAR) VARY(*YES *INT2) CASE(*MIXED)`.
+  - Mixed-case text parameters: `TYPE(*CHAR) LEN(n) CASE(*MIXED)`, **fixed
+    length**. See below before reaching for `VARY`.
   - Special values via `SPCVAL((*NONE ' '))` mapping to storable values.
   - Selection lists via `CHOICE(*PGM) CHOICEPGM(<…CHC program>)`.
   - Shared-CPP commands pass their mode as
     `PARM KWD(MODE) TYPE(*CHAR) CONSTANT('*ADD')`.
+
+**`VARY(*YES *INT2)` is for long text, and it is a cost to justify.** A varying
+parameter arrives as a 2-byte length followed by the data. RPG receives that as a
+`Varchar` and nothing more is needed. **CL has no varying type**, so a CL CPP must
+take the parameter apart by hand — a base variable plus two `STG(*DEFINED)`
+overlays, and an `%SST` to extract:
+
+```text
+             DCL        VAR(&RCPV) TYPE(*CHAR) LEN(10242)
+               DCL        VAR(&RCPL) TYPE(*INT) STG(*DEFINED) LEN(2) +
+                            DEFVAR(&RCPV 1)
+               DCL        VAR(&RCPD) TYPE(*CHAR) STG(*DEFINED) +
+                            LEN(10240) DEFVAR(&RCPV 3)
+   ...
+             CHGVAR     VAR(&RCP) VALUE(%SST(&RCPD 1 &RCPL))
+```
+
+Three declarations per parameter, and most CPPs are CL. So:
+
+| Field | Form |
+| --- | --- |
+| Tens of bytes — a description, a name, a subject | fixed `TYPE(*CHAR) LEN(n) CASE(*MIXED)` |
+| Hundreds of bytes or more — a note body, a recipient list, an SQL statement | add `VARY(*YES *INT2)` |
+| Any length, where the CPP is **RPG** and the value maps to a `VARCHAR` column typed with `like()` | add `VARY(*YES *INT2)` — one shape from command to table |
+
+The test is whether the CPP genuinely benefits from being **told** the length. At
+50 bytes it does not: `%TRIMR` is free and the buffer is trivial, so the overlays
+buy nothing. At 5,000 or 10,000 they buy something real.
+
+This rule was rewritten 08/17/26. It previously read `VARY(*YES *INT2)` flatly for
+every mixed-case text parameter, generalized from four commands — three of which
+share one **RPG** CPP (`TMACRUSR`, 50-byte parameters against `VARCHAR(50)`
+columns), while the fourth (`SNDXLSX`, 10240/5000/255) is CL and pays nine `DCL`s
+to receive three parameters. Meanwhile a dozen other commands already used fixed
+`*CHAR` with `CASE(*MIXED)`. The stated rule was the minority practice.
+
 - Every command ends with the hidden cross-reference parameter:
 
   ```text
