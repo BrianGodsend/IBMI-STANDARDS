@@ -1540,6 +1540,16 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   (`header`, `detail`, `csrrcd`, `cmdlin`), `:LISTDEF`s (`dtllist` with
   `EMPHASIS` columns), conditions, and key lists — the names must match the
   `@…_PNLID` / `@…_VARRCD` / `@…_LSTNAM` constants in the RPG `…H` copybook.
+- **`MAXWIDTH` sizes the column, not the data** — it must cover the *wider* of
+  the value and the column heading. A `CHAR(10)` name under a heading reading
+  `Environment` needs `MAXWIDTH=11`, because the heading is the wider of the
+  two. Sizing it from the data alone is the easy mistake, and it is caught by
+  `CRTPNLGRP` rather than at run time, so it costs a compile rather than a
+  defect.
+- **A heading containing a space is rendered on more than one line**, so
+  `MAXHEAD` on the `:LIST` has to allow for it. `From Environment` and
+  `To Environment` draw as two lines each and need `MAXHEAD=2`; single-word
+  headings like `Environment` and `Description` fit in one.
 
 ---
 

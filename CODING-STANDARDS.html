@@ -2226,6 +2226,21 @@ MODE   = *RSTD</code></pre>
         <code>@…_PNLID</code> / <code>@…_VARRCD</code> /
         <code>@…_LSTNAM</code> constants in the RPG <code>…H</code>
         copybook.</p></li>
+        <li><p><strong><code>MAXWIDTH</code> sizes the column, not the
+        data</strong> — it must cover the <em>wider</em> of the value
+        and the column heading. A <code>CHAR(10)</code> name under a
+        heading reading <code>Environment</code> needs
+        <code>MAXWIDTH=11</code>, because the heading is the wider of
+        the two. Sizing it from the data alone is the easy mistake, and
+        it is caught by <code>CRTPNLGRP</code> rather than at run time,
+        so it costs a compile rather than a defect.</p></li>
+        <li><p><strong>A heading containing a space is rendered on more
+        than one line</strong>, so <code>MAXHEAD</code> on the
+        <code>:LIST</code> has to allow for it.
+        <code>From Environment</code> and <code>To Environment</code>
+        draw as two lines each and need <code>MAXHEAD=2</code>;
+        single-word headings like <code>Environment</code> and
+        <code>Description</code> fit in one.</p></li>
         </ul>
         <hr />
         <h2 id="7-display-files-qddssrc">7. Display files (QDDSSRC)</h2>
