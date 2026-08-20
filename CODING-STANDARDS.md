@@ -151,6 +151,29 @@ general one:
 directive somewhere else in the header is not broken and is not worth a sweep;
 move it down when you are in the member for another reason.
 
+**In RPG, the directives live INSIDE the ILEDoc block** — after the `@@`, with
+the closing `///` after them:
+
+```rpgle
+///
+//  Purpose of the member ...
+//
+//  MODIFICATIONS:
+//  BS  08/20/26  Created.
+//  @@
+//  *>  <BLDOBJ CRTDFT/>
+//  *>  <BLDOBJ EOF/>
+///
+```
+
+This follows from the rule above rather than adding to it: the point of putting
+the directive after the `@@` is that whoever appends a `MODIFICATIONS` entry sees
+it, and a closing `///` between the two separates them for no reason. The header
+is one block, so it closes once, at the end.
+
+It applies to **every** RPG member — program, module and copybook alike. There is
+nothing about a copybook that makes its header different from a program's.
+
 ### 1.4 Layout
 
 - **Line width.** The hard maximum is the source file's **`SRCDTA` length** —
@@ -613,10 +636,9 @@ ctl-opt actgrp(*CALLER);
   are already annotated rather than needing a retrofit. Cheap now, and the only
   version of this that is expensive is the one done later.
 
-  **The `BLDOBJ` directive goes inside the block**, on the line after the `@@`,
-  with the closing `///` after it. Section 1.3 puts the directive immediately
-  after the `@@` so that anyone appending a `MODIFICATIONS` entry sees it; a
-  closing `///` in between separates the two for no reason.
+  The `BLDOBJ` directive goes inside that block, after the `@@`, exactly as it
+  does in a program — see section 1.3. A copybook's header is not a different
+  kind of header.
 
   Copybooks whose header is plain `//` are not defects — convert one when you are
   in it for another reason.
