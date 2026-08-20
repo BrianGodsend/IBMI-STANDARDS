@@ -965,8 +965,10 @@ Every program monitors globally and funnels to one handler:
              RETURN
 ```
 
-- Task Manager programs add `DEP0000 EXC0000 LOC0000 OBJ0000 TSK0000 UIM0000`
-  to the MSGID list.
+- A module adds its own message prefix to the MSGID list — `XFF0000` for the
+  Cross Reference. Task Manager adds `DEP0000 EXC0000 LOC0000 OBJ0000 TSK0000
+  UIM0000`, six prefixes for one module — the standing exception of section 8.2,
+  not the pattern to copy.
 - The `&STDERR` flag prevents handler re-entry; `FWDMSGH` (QMHMOVPM +
   QMHRSNEM) moves diagnostics to the caller and resignals the escape — callers
   see the original error, not a generic one.
@@ -1482,9 +1484,77 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
 
 ## 8. Messages
 
-- Product messages live in one message file (`TMMSG`), built from
-  `QREXSRC/TMMSG.REXX`; IDs are grouped by prefix (`TSK*`, `OBJ*`, `LOC*`,
-  `DEP*`, `EXC*`, `UIM*`).
+### 8.1 Message identifiers
+
+A message id is a **3-character prefix and a 4-character number**. Compose the
+prefix as a **2-character module id plus a type letter**, following IBM's own
+scheme in `QCPFMSG`:
+
+| Letter | Type | IBM's |
+| --- | --- | --- |
+| `A` | Action — inquiry messages expecting a reply | `CPA` |
+| `C` | Completion | `CPC` |
+| `D` | Diagnostic | `CPD` |
+| `I` | Informational — including `*STATUS` | `CPI` |
+| `X` | Text — titles, help text, NLS and cultural values | `CPX` |
+| `F` | Everything else — escape, notify | `CPF` |
+
+So the Cross Reference module sends `XFF*`, `XFC*`, `XFD*` and `XFI*`. (IBM's
+`F` stands for *facility*; `CPF` as a whole is System/38 compatibility. The
+letter is worth keeping anyway, because a module needs a bucket for the messages
+that are not one of the named types.)
+
+**Match the letter to the send type**: `*COMP` is `C`, `*DIAG` is `D`, and both
+`*INFO` and `*STATUS` are `I` — a status message is informational, not an
+"everything else".
+
+**But the letter records what the message IS, not every way it is ever sent.**
+`*DIAG` sits closest to `*ESCAPE`: both report a failure, and the choice between
+them is whether the sender stops or carries on. So a message sent `*ESCAPE` in one
+place and `*DIAG` in another is an `F` message being used as a diagnostic — IBM
+does this with `CPF*` constantly — and does not become a `D` message.
+
+**Number by area within the prefix**, so related messages read together:
+`XFF0nnn` for the build, `XFF1nnn` for environment definition. The number is
+hexadecimal — `A`–`F` are legal digits — but **do not use them in user-defined
+ids**. Reserve that for a custom version of an IBM message whose id already
+contains them.
+
+### 8.2 One module id per module
+
+**Every message a module owns carries the same 2-character module id.** Only the
+type letter varies.
+
+**This exists because messages are monitored by prefix group.** `MONMSG
+MSGID(CPF0000)` catches every `CPF` message; a module that spreads its messages
+across unrelated prefixes forces every caller to name each one:
+
+```text
+             MONMSG     MSGID(... TSK0000 OBJ0000 LOC0000 DEP0000 +
+                          EXC0000 UIM0000) EXEC(GOTO CMDLBL(STDERR))
+```
+
+Six prefixes for one module's failures, and a caller that names five of them
+misses the sixth **silently** — the escape is simply not caught, and the failure
+surfaces somewhere else as something else.
+
+**Splitting by type letter does not reintroduce the problem**, which is the point
+of putting the type in the prefix rather than in the number range. Only escapes
+are monitored, and escapes are all `F`, so a single `xxF0000` covers what a
+`MONMSG` needs. Completion, diagnostic and informational messages are read, not
+trapped.
+
+**Task Manager is the standing exception**, not a model. `TMMSG` predates this
+rule and uses `TSK*`, `OBJ*`, `LOC*`, `DEP*`, `EXC*` and `UIM*`. It is left alone
+because the remapping is genuinely hard — the areas hold colliding numbers, so
+they cannot simply be re-prefixed — and it is tracked in
+`GCUTL/QRPGLESRC/READMETM.MD` rather than done piecemeal. New modules follow the
+rule.
+
+### 8.3 Sending
+
+- Product messages live in one message file per product (`XFMSG`, `TMMSG`), built
+  from a `QREXSRC` REXX member.
 - Programs send message IDs, not hardcoded text, wherever a message exists;
   status messages use `CPDA0FF`.
 - **Keep a `*STATUS` message to 76 characters assembled.** That is the text plus
@@ -1504,7 +1574,7 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
 
   ```text
              CHGVAR     VAR(&STSTXT) VALUE('Scanning' *BCAT &LIB)
-             SNDPGMMSG  MSGID(XRF0007) MSGF(XFMSG) MSGDTA(&ENV *CAT +
+             SNDPGMMSG  MSGID(XFI0007) MSGF(XFMSG) MSGDTA(&ENV *CAT +
                           &STSTXT) TOPGMQ(*EXT) MSGTYPE(*STATUS)
   ```
 

@@ -1467,9 +1467,11 @@ DELETE +
              INCLUDE    SRCMBR(FWDMSGH) SRCFILE(QCLSRC)
              RETURN</code></pre>
         <ul>
-        <li><p>Task Manager programs add
-        <code>DEP0000 EXC0000 LOC0000 OBJ0000 TSK0000 UIM0000</code> to
-        the MSGID list.</p></li>
+        <li><p>A module adds its own message prefix to the MSGID list —
+        <code>XFF0000</code> for the Cross Reference. Task Manager adds
+        <code>DEP0000 EXC0000 LOC0000 OBJ0000 TSK0000 UIM0000</code>,
+        six prefixes for one module — the standing exception of section
+        8.2, not the pattern to copy.</p></li>
         <li><p>The <code>&amp;STDERR</code> flag prevents handler
         re-entry; <code>FWDMSGH</code> (QMHMOVPM + QMHRSNEM) moves
         diagnostics to the caller and resignals the escape — callers see
@@ -2185,13 +2187,114 @@ MODE   = *RSTD</code></pre>
         </ul>
         <hr />
         <h2 id="8-messages">8. Messages</h2>
+        <h3 id="81-message-identifiers">8.1 Message identifiers</h3>
+        <p>A message id is a <strong>3-character prefix and a
+        4-character number</strong>. Compose the prefix as a
+        <strong>2-character module id plus a type letter</strong>,
+        following IBM&#39;s own scheme in <code>QCPFMSG</code>:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Letter</th>
+        <th>Type</th>
+        <th>IBM&#39;s</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>A</code></td>
+        <td>Action — inquiry messages expecting a reply</td>
+        <td><code>CPA</code></td>
+        </tr>
+        <tr>
+        <td><code>C</code></td>
+        <td>Completion</td>
+        <td><code>CPC</code></td>
+        </tr>
+        <tr>
+        <td><code>D</code></td>
+        <td>Diagnostic</td>
+        <td><code>CPD</code></td>
+        </tr>
+        <tr>
+        <td><code>I</code></td>
+        <td>Informational — including <code>*STATUS</code></td>
+        <td><code>CPI</code></td>
+        </tr>
+        <tr>
+        <td><code>X</code></td>
+        <td>Text — titles, help text, NLS and cultural values</td>
+        <td><code>CPX</code></td>
+        </tr>
+        <tr>
+        <td><code>F</code></td>
+        <td>Everything else — escape, notify</td>
+        <td><code>CPF</code></td>
+        </tr>
+        </tbody>
+        </table>
+        <p>So the Cross Reference module sends <code>XFF*</code>,
+        <code>XFC*</code>, <code>XFD*</code> and <code>XFI*</code>.
+        (IBM&#39;s <code>F</code> stands for <em>facility</em>;
+        <code>CPF</code> as a whole is System/38 compatibility. The
+        letter is worth keeping anyway, because a module needs a bucket
+        for the messages that are not one of the named types.)</p>
+        <p><strong>Match the letter to the send type</strong>:
+        <code>*COMP</code> is <code>C</code>, <code>*DIAG</code> is
+        <code>D</code>, and both <code>*INFO</code> and
+        <code>*STATUS</code> are <code>I</code> — a status message is
+        informational, not an &quot;everything else&quot;.</p>
+        <p><strong>But the letter records what the message IS, not every
+        way it is ever sent.</strong> <code>*DIAG</code> sits closest to
+        <code>*ESCAPE</code>: both report a failure, and the choice
+        between them is whether the sender stops or carries on. So a
+        message sent <code>*ESCAPE</code> in one place and
+        <code>*DIAG</code> in another is an <code>F</code> message being
+        used as a diagnostic — IBM does this with <code>CPF*</code>
+        constantly — and does not become a <code>D</code> message.</p>
+        <p><strong>Number by area within the prefix</strong>, so related
+        messages read together: <code>XFF0nnn</code> for the build,
+        <code>XFF1nnn</code> for environment definition. The number is
+        hexadecimal — <code>A</code>–<code>F</code> are legal digits —
+        but <strong>do not use them in user-defined ids</strong>.
+        Reserve that for a custom version of an IBM message whose id
+        already contains them.</p>
+        <h3 id="82-one-module-id-per-module">8.2 One module id per
+        module</h3>
+        <p><strong>Every message a module owns carries the same
+        2-character module id.</strong> Only the type letter varies.</p>
+        <p><strong>This exists because messages are monitored by prefix
+        group.</strong> <code>MONMSG MSGID(CPF0000)</code> catches every
+        <code>CPF</code> message; a module that spreads its messages
+        across unrelated prefixes forces every caller to name each
+        one:</p>
+        <pre class="text"><code>             MONMSG     MSGID(... TSK0000 OBJ0000 LOC0000 DEP0000 +
+                          EXC0000 UIM0000) EXEC(GOTO CMDLBL(STDERR))</code></pre>
+        <p>Six prefixes for one module&#39;s failures, and a caller that
+        names five of them misses the sixth <strong>silently</strong> —
+        the escape is simply not caught, and the failure surfaces
+        somewhere else as something else.</p>
+        <p><strong>Splitting by type letter does not reintroduce the
+        problem</strong>, which is the point of putting the type in the
+        prefix rather than in the number range. Only escapes are
+        monitored, and escapes are all <code>F</code>, so a single
+        <code>xxF0000</code> covers what a <code>MONMSG</code> needs.
+        Completion, diagnostic and informational messages are read, not
+        trapped.</p>
+        <p><strong>Task Manager is the standing exception</strong>, not
+        a model. <code>TMMSG</code> predates this rule and uses
+        <code>TSK*</code>, <code>OBJ*</code>, <code>LOC*</code>,
+        <code>DEP*</code>, <code>EXC*</code> and <code>UIM*</code>. It
+        is left alone because the remapping is genuinely hard — the
+        areas hold colliding numbers, so they cannot simply be
+        re-prefixed — and it is tracked in
+        <code>GCUTL/QRPGLESRC/READMETM.MD</code> rather than done
+        piecemeal. New modules follow the rule.</p>
+        <h3 id="83-sending">8.3 Sending</h3>
         <ul>
-        <li><p>Product messages live in one message file
-        (<code>TMMSG</code>), built from
-        <code>QREXSRC/TMMSG.REXX</code>; IDs are grouped by prefix
-        (<code>TSK*</code>, <code>OBJ*</code>, <code>LOC*</code>,
-        <code>DEP*</code>, <code>EXC*</code>,
-        <code>UIM*</code>).</p></li>
+        <li><p>Product messages live in one message file per product
+        (<code>XFMSG</code>, <code>TMMSG</code>), built from a
+        <code>QREXSRC</code> REXX member.</p></li>
         <li><p>Programs send message IDs, not hardcoded text, wherever a
         message exists; status messages use
         <code>CPDA0FF</code>.</p></li>
@@ -2215,7 +2318,7 @@ MODE   = *RSTD</code></pre>
         rather than as an error. Concatenating a 10-byte variable with a
         shorter expression is the easy way to get this wrong:</p>
         <pre class="text"><code>           CHGVAR     VAR(&amp;STSTXT) VALUE(&#39;Scanning&#39; *BCAT &amp;LIB)
-           SNDPGMMSG  MSGID(XRF0007) MSGF(XFMSG) MSGDTA(&amp;ENV *CAT +
+           SNDPGMMSG  MSGID(XFI0007) MSGF(XFMSG) MSGDTA(&amp;ENV *CAT +
                         &amp;STSTXT) TOPGMQ(*EXT) MSGTYPE(*STATUS)</code></pre>
         <p><code>&amp;STSTXT</code> is declared at the <code>FMT</code>
         width, so the total is right whatever the text inside it happens
