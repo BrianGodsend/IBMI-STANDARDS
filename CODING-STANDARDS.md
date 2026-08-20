@@ -298,9 +298,9 @@ move it down when you are in the member for another reason.
     panel group (see section 6), `@QUIM_*` to UIM. Takes that object's name,
     which is what keeps the panel-group constants matching their `:VARRCD`
     and `:LISTDEF` names.
-  - **Owned by a concept rather than an object** — `@SQLCODE_NODATA`,
-    `@OPTNBR_*` for list option numbers, `@QUALOBJ_*` for qualified object
-    names. There is no object to name, so a stable category prefix serves.
+  - **Owned by a concept rather than an object** — `@OPTNBR_*` for list option
+    numbers, `@QUALOBJ_*` for qualified object names. There is no object to
+    name, so a stable category prefix serves.
 
   The third case is a **fallback that has to be justified, not a free choice**.
   Use it only when no object owns the concept; if one does, its name wins. The
@@ -310,6 +310,15 @@ move it down when you are in the member for another reason.
   happens rather than as wrong behaviour at run time, which is what makes it
   tolerable — but only while the set of programs that can see the constant
   stays small.
+
+  **`@SQLCODE_*` was in this list and has been taken out of it, which is the
+  case working as intended.** The SQLCODE values had no owner, so three
+  separate members each declared their own — and the moment two of them could
+  be pulled into one program, the category prefix was a collision waiting to
+  happen. Giving them an owner resolved it: `GUSQCPYH` already published
+  `@GUSQCPY_SQLSTATE_CLASS_*`, so SQLCODE belonged beside it as
+  `@GUSQCPY_SQLCODE_*`. **When a concept turns out to have a natural owner,
+  move it — the fallback is not a resting place.**
 
   **So category prefixes must not appear in a general-use copybook.** A member
   written to be pulled in broadly — the API wrapper copybooks (`QAPIH`,
@@ -585,7 +594,7 @@ ctl-opt actgrp(*CALLER);
 ### 2.4 Declarations
 
 - **Constants:** SCREAMING_SNAKE_CASE prefixed with `@` (C-style), grouped by
-  topic: `dcl-c @QUIM_FNCKEY_ENTER 1;`, `dcl-c @SQLCODE_NODATA 100;`
+  topic: `dcl-c @QUIM_FNCKEY_ENTER 1;`, `dcl-c @GUSQCPY_SQLCODE_NODATA 100;`
 - **Templates:** all-lowercase name with a `_t` suffix — "My Template
   Variable" becomes `mytemplatevariable_t` — declared `template qualified inz`,
   and namespaced with the publishing member's full name (section 1.5):
@@ -812,7 +821,8 @@ ctl-opt actgrp(*CALLER);
 
 - `DECLARE CURSOR` belongs in the mainline/`*inzsr`, **not** in a subprocedure
   (activation-group/scoping surprises).
-- Test `sqlcode` against named constants (`@SQLCODE_SUCCESS`, `@SQLCODE_NODATA`)
+- Test `sqlcode` against named constants — `@GUSQCPY_SQLCODE_SUCCESS`,
+  `@GUSQCPY_SQLCODE_NODATA` from `GUSQCPYH` —
   right after each statement; reset stale state (e.g. counts) before reuse.
 
 ---

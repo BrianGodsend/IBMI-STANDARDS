@@ -579,10 +579,9 @@ MW  07/21/20  The last change
         what keeps the panel-group constants matching their
         <code>:VARRCD</code> and <code>:LISTDEF</code> names.</li>
         <li><strong>Owned by a concept rather than an object</strong> —
-        <code>@SQLCODE_NODATA</code>, <code>@OPTNBR_*</code> for list
-        option numbers, <code>@QUALOBJ_*</code> for qualified object
-        names. There is no object to name, so a stable category prefix
-        serves.</li>
+        <code>@OPTNBR_*</code> for list option numbers,
+        <code>@QUALOBJ_*</code> for qualified object names. There is no
+        object to name, so a stable category prefix serves.</li>
         </ul>
         <p>The third case is a <strong>fallback that has to be
         justified, not a free choice</strong>. Use it only when no
@@ -594,6 +593,16 @@ MW  07/21/20  The last change
         rather than as wrong behaviour at run time, which is what makes
         it tolerable — but only while the set of programs that can see
         the constant stays small.</p>
+        <p><strong><code>@SQLCODE_*</code> was in this list and has been
+        taken out of it, which is the case working as intended.</strong>
+        The SQLCODE values had no owner, so three separate members each
+        declared their own — and the moment two of them could be pulled
+        into one program, the category prefix was a collision waiting to
+        happen. Giving them an owner resolved it: <code>GUSQCPYH</code>
+        already published <code>@GUSQCPY_SQLSTATE_CLASS_*</code>, so
+        SQLCODE belonged beside it as <code>@GUSQCPY_SQLCODE_*</code>.
+        <strong>When a concept turns out to have a natural owner, move
+        it — the fallback is not a resting place.</strong></p>
         <p><strong>So category prefixes must not appear in a general-use
         copybook.</strong> A member written to be pulled in broadly —
         the API wrapper copybooks (<code>QAPIH</code>,
@@ -977,7 +986,7 @@ ctl-opt actgrp(*CALLER);
         <li><p><strong>Constants:</strong> SCREAMING_SNAKE_CASE prefixed
         with <code>@</code> (C-style), grouped by topic:
         <code>dcl-c @QUIM_FNCKEY_ENTER 1;</code>,
-        <code>dcl-c @SQLCODE_NODATA 100;</code></p></li>
+        <code>dcl-c @GUSQCPY_SQLCODE_NODATA 100;</code></p></li>
         <li><p><strong>Templates:</strong> all-lowercase name with a
         <code>_t</code> suffix — &quot;My Template Variable&quot; becomes
         <code>mytemplatevariable_t</code> — declared
@@ -1269,9 +1278,10 @@ if (objType = @OBJTYPE_FILE)
         <li><p><code>DECLARE CURSOR</code> belongs in the
         mainline/<code>*inzsr</code>, <strong>not</strong> in a
         subprocedure (activation-group/scoping surprises).</p></li>
-        <li><p>Test <code>sqlcode</code> against named constants
-        (<code>@SQLCODE_SUCCESS</code>, <code>@SQLCODE_NODATA</code>)
-        right after each statement; reset stale state (e.g. counts)
+        <li><p>Test <code>sqlcode</code> against named constants —
+        <code>@GUSQCPY_SQLCODE_SUCCESS</code>,
+        <code>@GUSQCPY_SQLCODE_NODATA</code> from <code>GUSQCPYH</code>
+        — right after each statement; reset stale state (e.g. counts)
         before reuse.</p></li>
         </ul>
         <hr />
