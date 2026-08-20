@@ -577,11 +577,13 @@ ctl-opt actgrp(*CALLER);
   /ENDIF
   /DEFINE TMXXXWRKH
 
+  ///
   //  Purpose of the member ...
   //
   //  MODIFICATIONS:
   //  BS  08/20/26  Created.
   //  @@
+  ///
   //  *> <BLDOBJ TEXT="..."/>
   ```
 
@@ -599,17 +601,20 @@ ctl-opt actgrp(*CALLER);
   the guard first, and there is no "is this line safe above the guard" question
   left to get wrong later.
 
-  **A member-level `///` block on a copybook is not wrong — it just has no
-  consumer.** Nothing here parses ILEDoc into a documentation repository. The one
-  thing that reads it is the VS Code *Code for IBM i* plugin, which turns it into
-  hover and content-assist help **on a symbol** — so the blocks on constants,
-  templates and prototypes earn their keep, and one describing the member itself
-  has nothing to attach to.
+  **The header comment is an ILEDoc `///` block, as it is in any other member.**
+  Nothing today parses ILEDoc into a documentation repository — the one thing
+  that reads it is the VS Code *Code for IBM i* plugin, which turns it into hover
+  and content-assist help **on a symbol**, and a member-level block has no symbol
+  to attach to. So it earns nothing right now.
 
-  So use plain `//` for the header and keep `///` for what the member publishes.
-  That is also what most existing copybooks already do, which makes it the
-  cheaper of the two conventions to settle on rather than a correction of the
-  other.
+  Write it anyway. It is an opening and a closing line; it keeps copybooks
+  looking like the rest of the source instead of a category with its own comment
+  style; and if a documentation repository is ever built from these, the members
+  are already annotated rather than needing a retrofit. Cheap now, and the only
+  version of this that is expensive is the one done later.
+
+  Copybooks whose header is plain `//` are not defects — convert one when you are
+  in it for another reason.
 
 - A copybook contains, in order: nested `/copy` of its dependencies, named
   constants, data-structure templates, then prototypes. Terminate each group with

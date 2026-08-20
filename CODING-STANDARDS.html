@@ -964,11 +964,13 @@ ctl-opt actgrp(*CALLER);
 /ENDIF
 /DEFINE TMXXXWRKH
 
+///
 //  Purpose of the member ...
 //
 //  MODIFICATIONS:
 //  BS  08/20/26  Created.
 //  @@
+///
 //  *&gt; &lt;BLDOBJ TEXT=&quot;...&quot;/&gt;</code></pre>
         <p><strong>The order matters because of what reads the
         member.</strong> <code>BLDOBJ</code> does not inline copy
@@ -988,19 +990,23 @@ ctl-opt actgrp(*CALLER);
         is the simple one — put the guard first, and there is no &quot;is
         this line safe above the guard&quot; question left to get wrong
         later.</p>
-        <p><strong>A member-level <code>///</code> block on a copybook
-        is not wrong — it just has no consumer.</strong> Nothing here
-        parses ILEDoc into a documentation repository. The one thing
+        <p><strong>The header comment is an ILEDoc <code>///</code>
+        block, as it is in any other member.</strong> Nothing today
+        parses ILEDoc into a documentation repository — the one thing
         that reads it is the VS Code <em>Code for IBM i</em> plugin,
         which turns it into hover and content-assist help <strong>on a
-        symbol</strong> — so the blocks on constants, templates and
-        prototypes earn their keep, and one describing the member itself
-        has nothing to attach to.</p>
-        <p>So use plain <code>//</code> for the header and keep
-        <code>///</code> for what the member publishes. That is also
-        what most existing copybooks already do, which makes it the
-        cheaper of the two conventions to settle on rather than a
-        correction of the other.</p></li>
+        symbol</strong>, and a member-level block has no symbol to
+        attach to. So it earns nothing right now.</p>
+        <p>Write it anyway. It is an opening and a closing line; it
+        keeps copybooks looking like the rest of the source instead of a
+        category with its own comment style; and if a documentation
+        repository is ever built from these, the members are already
+        annotated rather than needing a retrofit. Cheap now, and the
+        only version of this that is expensive is the one done
+        later.</p>
+        <p>Copybooks whose header is plain <code>//</code> are not
+        defects — convert one when you are in it for another
+        reason.</p></li>
         <li><p>A copybook contains, in order: nested <code>/copy</code>
         of its dependencies, named constants, data-structure templates,
         then prototypes. Terminate each group with a separator
