@@ -174,6 +174,14 @@ is one block, so it closes once, at the end.
 It applies to **every** RPG member — program, module and copybook alike. There is
 nothing about a copybook that makes its header different from a program's.
 
+**CL is left alone, for now.** CLLE supports ILEDoc too, but nothing in these
+repos uses it — not one `@param` across `QCLSRC`, against several hundred in
+`QRPGLESRC` — and it is not established that anything reads it, including the
+VS Code extension. So a CL member keeps its `/*> … <*/` directive lines as they
+are: there is no block for them to be inside of, and inventing one would mean
+choosing a convention with no consumer to validate it. Not a gap to be filled by
+whoever notices it next.
+
 ### 1.4 Layout
 
 - **Line width.** The hard maximum is the source file's **`SRCDTA` length** —

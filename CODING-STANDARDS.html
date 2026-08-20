@@ -354,6 +354,16 @@ MW  07/21/20  The last change
         <p>It applies to <strong>every</strong> RPG member — program,
         module and copybook alike. There is nothing about a copybook
         that makes its header different from a program&#39;s.</p>
+        <p><strong>CL is left alone, for now.</strong> CLLE supports
+        ILEDoc too, but nothing in these repos uses it — not one
+        <code>@param</code> across <code>QCLSRC</code>, against several
+        hundred in <code>QRPGLESRC</code> — and it is not established
+        that anything reads it, including the VS Code extension. So a CL
+        member keeps its <code>/*&gt; … &lt;*/</code> directive lines as
+        they are: there is no block for them to be inside of, and
+        inventing one would mean choosing a convention with no consumer
+        to validate it. Not a gap to be filled by whoever notices it
+        next.</p>
         <h3 id="14-layout">1.4 Layout</h3>
         <ul>
         <li><p><strong>Line width.</strong> The hard maximum is the
