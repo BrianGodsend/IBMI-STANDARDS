@@ -1508,11 +1508,16 @@ that are not one of the named types.)
 `*INFO` and `*STATUS` are `I` — a status message is informational, not an
 "everything else".
 
-**But the letter records what the message IS, not every way it is ever sent.**
-`*DIAG` sits closest to `*ESCAPE`: both report a failure, and the choice between
-them is whether the sender stops or carries on. So a message sent `*ESCAPE` in one
-place and `*DIAG` in another is an `F` message being used as a diagnostic — IBM
-does this with `CPF*` constantly — and does not become a `D` message.
+**But the letter records what the message IS, not every way it is ever sent** —
+and the test is where it could have ORIGINATED. `*DIAG` is the one send type
+that may be an escape in transit: forwarding an escape as a diagnostic is
+routine, and is exactly what the `FWDMSGH` pattern of section 3.4 does. So a
+message sent `*ESCAPE` in one place and `*DIAG` in another stays an `F` message
+being used as a diagnostic.
+
+That is also why `*STATUS` is unambiguous where `*DIAG` is not. A `*STATUS`
+message is never sent as `*ESCAPE` and never arrives by being forwarded from one,
+so it has no other origin to weigh — it is `I` and nothing else.
 
 **Number by area within the prefix**, so related messages read together:
 `XFF0nnn` for the build, `XFF1nnn` for environment definition. The number is

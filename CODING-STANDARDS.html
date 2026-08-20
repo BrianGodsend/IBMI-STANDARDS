@@ -2245,13 +2245,19 @@ MODE   = *RSTD</code></pre>
         <code>*STATUS</code> are <code>I</code> — a status message is
         informational, not an &quot;everything else&quot;.</p>
         <p><strong>But the letter records what the message IS, not every
-        way it is ever sent.</strong> <code>*DIAG</code> sits closest to
-        <code>*ESCAPE</code>: both report a failure, and the choice
-        between them is whether the sender stops or carries on. So a
-        message sent <code>*ESCAPE</code> in one place and
-        <code>*DIAG</code> in another is an <code>F</code> message being
-        used as a diagnostic — IBM does this with <code>CPF*</code>
-        constantly — and does not become a <code>D</code> message.</p>
+        way it is ever sent</strong> — and the test is where it could
+        have ORIGINATED. <code>*DIAG</code> is the one send type that
+        may be an escape in transit: forwarding an escape as a
+        diagnostic is routine, and is exactly what the
+        <code>FWDMSGH</code> pattern of section 3.4 does. So a message
+        sent <code>*ESCAPE</code> in one place and <code>*DIAG</code> in
+        another stays an <code>F</code> message being used as a
+        diagnostic.</p>
+        <p>That is also why <code>*STATUS</code> is unambiguous where
+        <code>*DIAG</code> is not. A <code>*STATUS</code> message is
+        never sent as <code>*ESCAPE</code> and never arrives by being
+        forwarded from one, so it has no other origin to weigh — it is
+        <code>I</code> and nothing else.</p>
         <p><strong>Number by area within the prefix</strong>, so related
         messages read together: <code>XFF0nnn</code> for the build,
         <code>XFF1nnn</code> for environment definition. The number is
