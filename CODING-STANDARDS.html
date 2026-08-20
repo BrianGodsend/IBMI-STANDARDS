@@ -953,12 +953,46 @@ ctl-opt actgrp(*CALLER);
         <ul>
         <li><p>Include with <code>/copy qrpglesrc,membername</code>
         (lowercase, no library).</p></li>
-        <li><p>Every copybook starts with an include guard:</p>
+        <li><p><strong>Every copybook starts with an include guard, and
+        the guard comes FIRST</strong> — immediately after
+        <code>**FREE</code>, ahead of the purpose comment, the
+        <code>MODIFICATIONS</code> log and the <code>BLDOBJ</code>
+        directives:</p>
         <pre class="rpgle"><code>**FREE
 /IF DEFINED(TMXXXWRKH)
 /EOF
 /ENDIF
-/DEFINE TMXXXWRKH</code></pre></li>
+/DEFINE TMXXXWRKH
+
+//  Purpose of the member ...
+//
+//  MODIFICATIONS:
+//  BS  08/20/26  Created.
+//  @@
+//  *&gt; &lt;BLDOBJ TEXT=&quot;...&quot;/&gt;</code></pre>
+        <p><strong>The order matters because of what reads the
+        member.</strong> <code>BLDOBJ</code> does not inline copy
+        members today, but the SQL precompiler does: it builds an
+        exploded copy of the source before compiling, with every
+        <code>/copy</code> expanded in place. On a second inclusion the
+        guard&#39;s <code>/EOF</code> stops that expansion — but only from
+        the <code>/EOF</code> onward. <strong>Anything above it has
+        already been read</strong>, on every inclusion.</p>
+        <p>Comments above the guard are harmless, which is why an
+        existing member carrying its purpose block on top is not a
+        defect worth a sweep. A <strong>compiler directive</strong>
+        above it is not harmless: a <code>/DEFINE</code>,
+        <code>/SET</code> or <code>/COPY</code> placed there is acted on
+        again on the second inclusion, which is the thing the guard
+        exists to prevent. Nothing marks that boundary, so the safe rule
+        is the simple one — put the guard first, and there is no &quot;is
+        this line safe above the guard&quot; question left to get wrong
+        later.</p>
+        <p>A member-level <code>///</code> ILEDoc block on a copybook
+        buys nothing: ILEDoc documents symbols, and a copy member is not
+        one. Use plain <code>//</code> for the header comment and keep
+        <code>///</code> for the constants, templates and prototypes
+        inside.</p></li>
         <li><p>A copybook contains, in order: nested <code>/copy</code>
         of its dependencies, named constants, data-structure templates,
         then prototypes. Terminate each group with a separator

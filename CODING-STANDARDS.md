@@ -566,7 +566,9 @@ ctl-opt actgrp(*CALLER);
 ### 2.3 Copybooks (`…H` members)
 
 - Include with `/copy qrpglesrc,membername` (lowercase, no library).
-- Every copybook starts with an include guard:
+- **Every copybook starts with an include guard, and the guard comes FIRST** —
+  immediately after `**FREE`, ahead of the purpose comment, the `MODIFICATIONS`
+  log and the `BLDOBJ` directives:
 
   ```rpgle
   **FREE
@@ -574,7 +576,32 @@ ctl-opt actgrp(*CALLER);
   /EOF
   /ENDIF
   /DEFINE TMXXXWRKH
+
+  //  Purpose of the member ...
+  //
+  //  MODIFICATIONS:
+  //  BS  08/20/26  Created.
+  //  @@
+  //  *> <BLDOBJ TEXT="..."/>
   ```
+
+  **The order matters because of what reads the member.** `BLDOBJ` does not
+  inline copy members today, but the SQL precompiler does: it builds an exploded
+  copy of the source before compiling, with every `/copy` expanded in place. On a
+  second inclusion the guard's `/EOF` stops that expansion — but only from the
+  `/EOF` onward. **Anything above it has already been read**, on every inclusion.
+
+  Comments above the guard are harmless, which is why an existing member carrying
+  its purpose block on top is not a defect worth a sweep. A **compiler directive**
+  above it is not harmless: a `/DEFINE`, `/SET` or `/COPY` placed there is acted
+  on again on the second inclusion, which is the thing the guard exists to
+  prevent. Nothing marks that boundary, so the safe rule is the simple one — put
+  the guard first, and there is no "is this line safe above the guard" question
+  left to get wrong later.
+
+  A member-level `///` ILEDoc block on a copybook buys nothing: ILEDoc documents
+  symbols, and a copy member is not one. Use plain `//` for the header comment
+  and keep `///` for the constants, templates and prototypes inside.
 
 - A copybook contains, in order: nested `/copy` of its dependencies, named
   constants, data-structure templates, then prototypes. Terminate each group with
