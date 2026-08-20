@@ -988,11 +988,19 @@ ctl-opt actgrp(*CALLER);
         is the simple one — put the guard first, and there is no &quot;is
         this line safe above the guard&quot; question left to get wrong
         later.</p>
-        <p>A member-level <code>///</code> ILEDoc block on a copybook
-        buys nothing: ILEDoc documents symbols, and a copy member is not
-        one. Use plain <code>//</code> for the header comment and keep
-        <code>///</code> for the constants, templates and prototypes
-        inside.</p></li>
+        <p><strong>A member-level <code>///</code> block on a copybook
+        is not wrong — it just has no consumer.</strong> Nothing here
+        parses ILEDoc into a documentation repository. The one thing
+        that reads it is the VS Code <em>Code for IBM i</em> plugin,
+        which turns it into hover and content-assist help <strong>on a
+        symbol</strong> — so the blocks on constants, templates and
+        prototypes earn their keep, and one describing the member itself
+        has nothing to attach to.</p>
+        <p>So use plain <code>//</code> for the header and keep
+        <code>///</code> for what the member publishes. That is also
+        what most existing copybooks already do, which makes it the
+        cheaper of the two conventions to settle on rather than a
+        correction of the other.</p></li>
         <li><p>A copybook contains, in order: nested <code>/copy</code>
         of its dependencies, named constants, data-structure templates,
         then prototypes. Terminate each group with a separator
