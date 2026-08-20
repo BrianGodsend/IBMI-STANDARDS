@@ -970,8 +970,8 @@ ctl-opt actgrp(*CALLER);
 //  MODIFICATIONS:
 //  BS  08/20/26  Created.
 //  @@
-///
-//  *&gt; &lt;BLDOBJ TEXT=&quot;...&quot;/&gt;</code></pre>
+//  *&gt; &lt;BLDOBJ TEXT=&quot;...&quot;/&gt;
+///</code></pre>
         <p><strong>The order matters because of what reads the
         member.</strong> <code>BLDOBJ</code> does not inline copy
         members today, but the SQL precompiler does: it builds an
@@ -1004,6 +1004,12 @@ ctl-opt actgrp(*CALLER);
         annotated rather than needing a retrofit. Cheap now, and the
         only version of this that is expensive is the one done
         later.</p>
+        <p><strong>The <code>BLDOBJ</code> directive goes inside the
+        block</strong>, on the line after the <code>@@</code>, with the
+        closing <code>///</code> after it. Section 1.3 puts the
+        directive immediately after the <code>@@</code> so that anyone
+        appending a <code>MODIFICATIONS</code> entry sees it; a closing
+        <code>///</code> in between separates the two for no reason.</p>
         <p>Copybooks whose header is plain <code>//</code> are not
         defects — convert one when you are in it for another
         reason.</p></li>

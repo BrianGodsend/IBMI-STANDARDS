@@ -583,8 +583,8 @@ ctl-opt actgrp(*CALLER);
   //  MODIFICATIONS:
   //  BS  08/20/26  Created.
   //  @@
-  ///
   //  *> <BLDOBJ TEXT="..."/>
+  ///
   ```
 
   **The order matters because of what reads the member.** `BLDOBJ` does not
@@ -612,6 +612,11 @@ ctl-opt actgrp(*CALLER);
   style; and if a documentation repository is ever built from these, the members
   are already annotated rather than needing a retrofit. Cheap now, and the only
   version of this that is expensive is the one done later.
+
+  **The `BLDOBJ` directive goes inside the block**, on the line after the `@@`,
+  with the closing `///` after it. Section 1.3 puts the directive immediately
+  after the `@@` so that anyone appending a `MODIFICATIONS` entry sees it; a
+  closing `///` in between separates the two for no reason.
 
   Copybooks whose header is plain `//` are not defects — convert one when you are
   in it for another reason.
