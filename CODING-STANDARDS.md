@@ -1732,13 +1732,32 @@ the callback for that entry:
 **Do not look for an "after all list actions" hook. There is none.** UIM
 processes the selected entries and redisplays the panel internally; the driver
 does not regain control, and the panel's `ENTER=` action fires only when nothing
-is pending. Two members in these repos carry a TODO from someone looking for that
-hook and not finding it — which is the evidence, not a suggestion to keep looking.
+is pending. The observable symptom is that work done by the options is not on the
+panel until the user presses F5.
 
 A **full reload belongs to the driver**, reached the only way the driver can be
 reached: a function key whose action is `return nn`, after which the driver runs
-its command and calls its load routine. That is why F6=Add is handled in the
-driver rather than in the exit program.
+its command and calls its load routine.
+
+**That is why F6=Add is handled in the driver rather than in the exit program**,
+and the reason is written down in six members across the `WRK*TM` family — the
+same note in each driver and its exit program:
+
+```text
+//  HOWEVER, the panel will use either one or the other
+//  based on the action for the F6 key being set to
+//  'return 6' (handled by TMLOCWRK) or 'CALLE EXITPG'
+//  (handled by TMLOCEXT).  The problem of using the
+//  exit handler program to add the location is the ability
+//  to refresh the location list ... not sure how to do that
+//  without re-coding the entire load list routine.
+```
+
+Note what that is and is not. It is about a **function key** whose work happens
+to create a row, and the difficulty is that the exit program has no access to the
+driver's load routine — not that a hook is missing. Either program can service
+F6; only one of them can rebuild the list afterwards, so F6 goes where the reload
+is. The note has nothing to say about list actions.
 
 Reloading from a post-action would rebuild the whole list once per selected entry
 and throw away the list position each time.
