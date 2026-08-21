@@ -5,7 +5,7 @@ in **all Godsend Consulting IBM i repositories** — GCUTL, BSLIB, RBUTL, and an
 future project. They were derived from the current best practice in these libraries —
 primarily the Task Manager (`TM*`) and developer-utility (`RB*`) members in
 **RBUTL**, which is the curated exemplar. BSLIB additionally carries legacy,
-third-party, and scratch code that does *not* set the standard (see section 10,
+third-party, and scratch code that does *not* set the standard (see section 11,
 Legacy and scratch code).
 
 > **Canonical copy:** the master of this document lives in the `IBMI-STANDARDS`
@@ -1052,7 +1052,7 @@ Every program monitors globally and funnels to one handler:
 
 - A module adds its own message prefix to the MSGID list — `XFF0000` for the
   Cross Reference. Task Manager adds `DEP0000 EXC0000 LOC0000 OBJ0000 TSK0000
-  UIM0000`, six prefixes for one module — the standing exception of section 8.2,
+  UIM0000`, six prefixes for one module — the standing exception of section 9.2,
   not the pattern to copy.
 - The `&STDERR` flag prevents handler re-entry; `FWDMSGH` (QMHMOVPM +
   QMHRSNEM) moves diagnostics to the caller and resignals the escape — callers
@@ -1212,7 +1212,7 @@ CREATE OR REPLACE TABLE ... (
   postpones the problem into every statement that reads the column.
 - Identity `BIGINT` primary key named `<entity>_id`.
 - `NOT NULL DEFAULT` on business columns; `CHECK` constraints where the domain
-  is enumerable. Enumerated values are **numeric, not alpha** — see section 9.
+  is enumerable. Enumerated values are **numeric, not alpha** — see section 10.
 - **Audit columns**, all `IMPLICITLY HIDDEN`: `audit_timestamp` (row change
   timestamp), `audit_job_number/user/name`, `audit_current_user`, plus matching
   `create_*` columns.
@@ -1553,7 +1553,239 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
 
 ---
 
-## 7. Display files (QDDSSRC)
+## 7. Application display programming (UIM)
+
+Section 6 covers panel *source*. This covers the *programs* — the driver that
+opens the application and loads the list, and the exit program UIM calls back.
+
+**Most of what follows is not discoverable from the panel source, and is only
+half-discoverable from the API reference.** It was established the expensive
+way, by building `WRKENVXF`, and it is written down here so the next work-with
+panel does not pay for it again. Where a rule below looks arbitrary, it is
+usually the record of a failure that took a day to identify.
+
+### 7.1 Two programs, no compile-time link
+
+A work-with panel is a **driver** and an **exit program**:
+
+| | Responsibility |
+| --- | --- |
+| Driver (`xxxWRK`) | Opens the display application, builds the list, displays the panel in a loop, handles the function keys that `return nn` |
+| Exit program (`xxxEXT`) | Everything UIM calls back for — list options, panel checking, post-action |
+
+**Nothing binds a program to its panel group at compile time.** Unlike a display
+file, a panel group is resolved *by name at run time*: the panel id, the
+`:VARRCD` name and the `:LISTDEF` name are character strings the program hands to
+an API. Get one wrong and the compiler is silent — the failure is a UIM escape at
+the moment that path is first exercised, which may be days later.
+
+That is the whole reason for the `@…_PNLID` / `@…_VARRCD` / `@…_LSTNAM` constants
+of section 1.5. They are not tidiness; they are the only mechanism keeping the
+two members in step, so **every** name crossing the boundary is a named constant
+and never a literal.
+
+### 7.2 Call types
+
+The exit program's first act is to branch on `typCall`. **Name the call types** —
+`@QUIM_TYPCALL_*` in `QUIMH` — rather than testing bare numbers.
+
+| Declared on | Call type | Fires |
+| --- | --- | --- |
+| `:KEYI ACTION='CALL EXITPG'` | 1 `FNCKEY` | when that function key is pressed |
+| `:LISTACT ENTER=`/`PROMPT='CALL EXITPG'` | 3 `LSTOPT` | once per selected entry, to *perform* the action |
+| `:PANEL USREXIT='CALL EXITPG'` | 4 `PNLCHK` | once for the panel, at **input validation** time |
+| `:LISTACT USREXIT='CALL EXITPG'` | 5 `LSTEXT` | once per selected entry, **after** the action |
+
+Two of these are routinely confused, and the difference decides the design:
+
+- **`USREXIT` on a `:LISTACT` is not `USREXIT` on a `:PANEL`.** The first is a
+  per-entry post-action (type 5), the second a whole-panel exit (type 4). They
+  share a keyword and nothing else.
+- **Type 4 is validation, not post-processing.** It runs while the panel's input
+  is being checked, which is *before* any list action on that panel — so it is
+  the place to reject input, and never the place to react to work already done.
+  Reaching for it as an "after everything" hook is the mistake it invites.
+
+### 7.3 A list action can run the command itself
+
+An exit program is **not required** to perform an option. A list action may name
+a command, and UIM runs it per selected entry:
+
+```text
+:LISTACT ENTER='CMD CPYENVXF FROMENV(&ENV.) TOENV(&TOENV.)'
+         PROMPT='CMD ?CPYENVXF ?*FROMENV(&ENV.) TOENV()'
+         USREXIT='CALL EXITPG'
+```
+
+Prefer this to building the same command string in RPG. It is declarative, the
+prompted and unprompted forms sit together where they can be compared, and the
+exit program is left with only the post-action.
+
+**The variables resolve against the ACTION entry** — the entry of the list the
+`:LISTACT` belongs to — not against whatever panel is on the screen when the user
+types. Section 7.5 is a direct consequence of that sentence.
+
+### 7.4 `:VARRCD` and `:LISTDEF` are different things
+
+Both list variable names, and they are not interchangeable:
+
+| Tag | What it is |
+| --- | --- |
+| `:VARRCD` | An **I/O buffer layout**. Named on every get/put/add/update call, and a byte-for-byte match of the RPG data structure passed with it. |
+| `:LISTDEF` | The **set of per-entry variables** a list carries, plus its `EMPHASIS` slots. Not a buffer. |
+
+Neither is a subset of the other. A variable may sit in a `:VARRCD` and not in
+the `:LISTDEF`, and — the case that matters — **in a `:LISTDEF` and in no
+`:VARRCD` at all**, which is exactly what a confirmation list's variables do.
+
+Two failure modes follow, both worth recognizing on sight:
+
+- **"Variable buffer length too small"** means the record the panel declares is
+  longer than the buffer the program passed. The usual cause is not a coding
+  error but a **stale object**: a field was added to the copybook and only some of
+  the programs that `/copy` it were rebuilt. Recompile every consumer, not only
+  the member that changed.
+- **A varying field in a dialog variable record is silent corruption.** A
+  `Varchar` carries a 2-byte length prefix, which shifts every field after it and
+  renders the text as garbage. Type these `Char(n)` even where the column is
+  `VARCHAR(n)` and section 2.4 would otherwise call for `like()` — and say so in a
+  comment, or the next reader will "fix" it back.
+
+### 7.5 Confirmation lists belong to UIM
+
+`CONFIRM=` on a `:LISTACT` names a panel that shows the selected entries. **UIM
+builds and owns that list.** No program adds to it: its `:LISTDEF` names a
+**subset of the action list's variables, matched by name**, and UIM copies the
+selected entries into it.
+
+Three consequences:
+
+- **A column the user types into on a confirmation panel must also be a variable
+  of the action list.** Declared only on the confirmation `:LISTDEF`, it has no
+  per-entry storage on the entry the action runs against, and the substitution in
+  section 7.3 resolves to blanks. Carry it on the main `:LISTDEF` even though no
+  `:LISTCOL` on the main panel displays it.
+- **UIM does not carry the typed value back to the action entry.** Nothing does.
+  Give the confirmation panel a `:PANEL USREXIT`, read its list in the type 4
+  exit, and write the value onto the matching action entry. By the time UIM
+  resolves the command, the value is there.
+- **The confirmation list is addressable only while its panel is current.**
+  Reading it from an exit called on the *main* panel fails with `CPF6A92`, *List
+  &4 not active* — a statement about scope, not about the approach.
+
+**This is the mechanism we arrived at, not one we found.** The behaviour is
+familiar from PDM, whose `7=Rename` shows the selected members with an input
+column for the new name and processes them all on one Enter — but PDM is not a
+UIM application (section 7.9), so it is not evidence about what UIM does. No UIM
+example of an input column on a confirmation panel has been located, in these
+repos or in the documentation.
+
+Treat this section as the route that works. **Do not read the amount of
+machinery as proof that a shorter path exists** — the screen that suggested one
+turned out to be a different technology, so there is nothing left implying UIM
+has a neater answer. This may simply be what UIM costs. If a genuine UIM example
+turns up, revisit before copying this again.
+
+### 7.6 Reading and positioning list entries
+
+`QUIGETLE` takes a **position option** saying which entry to return:
+
+| Option | Returns |
+| --- | --- |
+| `FRST` / `NEXT` / `PREV` / `LAST` | a plain walk |
+| `HNDL` | the entry named by a handle — what an exit program uses to read the entry it was called for |
+| `FSLT` / `NSLT` / `PSLT` / `LSLT` | the first/next entry **satisfying a selection criteria** |
+
+**The `*SLT` options require the Selection Criteria parameter**, and it is not
+optional — omitting it is `CPF6A2D`, *Value for Selection Criteria parameter not
+valid*. The criteria is a relational operator plus **the name of a dialog
+variable**; UIM compares that variable's current value against the value held in
+each list entry.
+
+So a single entry is **fetched, not searched for**:
+
+```rpgle
+sltCri.relOpr    = @QUIM_RELOPR_EQ;
+sltCri.dlgVarNam = @XFENVWRK_VAR_ENV;
+```
+
+with `@QUIM_LSTPOS_FIRST_SLT`. Set the dialog variable first — reading another
+entry with copy-to-dialog-variables on is one way, an explicit `QUIPUTV` the
+other — and **the two calls are then ordered, not merely adjacent**. Say so in a
+comment: nothing in the source makes that dependency visible, and separating the
+calls breaks the second one silently.
+
+Prefer this to walking. Walking the list once per selected entry is a full scan
+per action — invisible on a ten-row list, embarrassing on a long one.
+
+### 7.7 The list is maintained, not reloaded
+
+Every list change is an entry-level operation, performed by the exit program on
+the callback for that entry:
+
+| Option | Post-action does |
+| --- | --- |
+| Change | `QUIUPDLE` the entry |
+| Remove | `QUIRMVLE` the entry |
+| Copy / create | `QUIADDLE` the new entry, positioned to keep the list's order |
+
+**Do not look for an "after all list actions" hook. There is none.** UIM
+processes the selected entries and redisplays the panel internally; the driver
+does not regain control, and the panel's `ENTER=` action fires only when nothing
+is pending. Two members in these repos carry a TODO from someone looking for that
+hook and not finding it — which is the evidence, not a suggestion to keep looking.
+
+A **full reload belongs to the driver**, reached the only way the driver can be
+reached: a function key whose action is `return nn`, after which the driver runs
+its command and calls its load routine. That is why F6=Add is handled in the
+driver rather than in the exit program.
+
+Reloading from a post-action would rebuild the whole list once per selected entry
+and throw away the list position each time.
+
+### 7.8 A value written to a list entry stays there
+
+A list entry is storage, not a screen field. A value written onto it for one
+action is still there for the next, so a second use of the option arrives
+prefilled — which no other option does, and which is a defect rather than a
+convenience.
+
+**Clear it in the post-action**, along with the option number, exactly as a change
+post-action clears the option. Clear it on the **success** path only: where the
+command failed, what the user typed is what they need in order to correct it.
+
+### 7.9 PDM is not a UIM application, and is not a model for one
+
+PDM's screens come from a **display file** — `QPDA/QDUODSPF`. UIM panels are not
+display files of their own; they are routed through `QDUI80` and `QDUI132`. So
+every work-with behaviour PDM exhibits is DDS subfile behaviour, and none of it
+is evidence about what UIM can be made to do.
+
+This matters because PDM is the work-with panel everybody knows, and it is the
+obvious thing to reach for when deciding how a new one should behave. Time has
+been lost here trying to reproduce PDM behaviour *exactly* in UIM, on the
+assumption that IBM had done it with the same tool and the technique was simply
+undiscovered.
+
+**The option field is the tell**, and it is visible without checking any object:
+
+| | PDM | UIM |
+| --- | --- | --- |
+| Option value | alphanumeric | numeric |
+| Available options | extensible at run time through a user options file | every one declared in the panel source at compile time |
+
+A screen accepting user-defined two-character options is not a UIM list. Where a
+UIM panel needs an option UIM does not offer, it has to be coded — there is no
+options file to extend.
+
+**Check before treating any IBM screen as precedent.** `WRKOBJ
+OBJ(<lib>/*ALL) OBJTYPE(*PNLGRP)` answers it: a UIM application has panel
+groups, and `RTVPNLGRPSRC` will then give you the source to read. An application
+with none is not one to copy from.
+
+---
+
+## 8. Display files (QDDSSRC)
 
 - Standard header applies: `A*` comment lines carrying the purpose,
   `MODIFICATIONS:` log, and `*>` build directives (`CRTDSPF`, continued
@@ -1577,7 +1809,7 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
 
 ---
 
-## 8. Messages
+## 9. Messages
 
 ### 8.1 Message identifiers
 
@@ -1685,7 +1917,7 @@ rule.
 
 ---
 
-## 9. Cross-cutting rules
+## 10. Cross-cutting rules
 
 - **Self-documenting builds:** if it can't be rebuilt from its BLDOBJ
   directives, it isn't done.
@@ -1728,7 +1960,7 @@ rule.
 
 ---
 
-## 10. Legacy and scratch code
+## 11. Legacy and scratch code
 
 - **Scratch:** `JUNK*` members are experiments. Git-ignores them going forward;
   never reference or promote them, and don't cite them as precedent.

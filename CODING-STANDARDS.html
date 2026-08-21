@@ -129,7 +129,7 @@ padding: 6px 13px;
         and developer-utility (<code>RB*</code>) members in
         <strong>RBUTL</strong>, which is the curated exemplar. BSLIB
         additionally carries legacy, third-party, and scratch code that
-        does <em>not</em> set the standard (see section 10, Legacy and
+        does <em>not</em> set the standard (see section 11, Legacy and
         scratch code).</p>
         <blockquote>
         <p><strong>Canonical copy:</strong> the master of this document
@@ -1564,7 +1564,7 @@ DELETE +
         <code>XFF0000</code> for the Cross Reference. Task Manager adds
         <code>DEP0000 EXC0000 LOC0000 OBJ0000 TSK0000 UIM0000</code>,
         six prefixes for one module — the standing exception of section
-        8.2, not the pattern to copy.</p></li>
+        9.2, not the pattern to copy.</p></li>
         <li><p>The <code>&amp;STDERR</code> flag prevents handler
         re-entry; <code>FWDMSGH</code> (QMHMOVPM + QMHRSNEM) moves
         diagnostics to the caller and resignals the escape — callers see
@@ -1748,7 +1748,7 @@ DELETE +
         <li><code>NOT NULL DEFAULT</code> on business columns;
         <code>CHECK</code> constraints where the domain is enumerable.
         Enumerated values are <strong>numeric, not alpha</strong> — see
-        section 9.</li>
+        section 10.</li>
         <li><strong>Audit columns</strong>, all
         <code>IMPLICITLY HIDDEN</code>: <code>audit_timestamp</code>
         (row change timestamp), <code>audit_job_number/user/name</code>,
@@ -2243,7 +2243,373 @@ MODE   = *RSTD</code></pre>
         <code>Description</code> fit in one.</p></li>
         </ul>
         <hr />
-        <h2 id="7-display-files-qddssrc">7. Display files (QDDSSRC)</h2>
+        <h2 id="7-application-display-programming-uim">7. Application
+        display programming (UIM)</h2>
+        <p>Section 6 covers panel <em>source</em>. This covers the
+        <em>programs</em> — the driver that opens the application and
+        loads the list, and the exit program UIM calls back.</p>
+        <p><strong>Most of what follows is not discoverable from the
+        panel source, and is only half-discoverable from the API
+        reference.</strong> It was established the expensive way, by
+        building <code>WRKENVXF</code>, and it is written down here so
+        the next work-with panel does not pay for it again. Where a rule
+        below looks arbitrary, it is usually the record of a failure
+        that took a day to identify.</p>
+        <h3 id="71-two-programs-no-compile-time-link">7.1 Two programs,
+        no compile-time link</h3>
+        <p>A work-with panel is a <strong>driver</strong> and an
+        <strong>exit program</strong>:</p>
+        <table>
+        <thead>
+        <tr>
+        <th></th>
+        <th>Responsibility</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>Driver (<code>xxxWRK</code>)</td>
+        <td>Opens the display application, builds the list, displays the
+        panel in a loop, handles the function keys that
+        <code>return nn</code></td>
+        </tr>
+        <tr>
+        <td>Exit program (<code>xxxEXT</code>)</td>
+        <td>Everything UIM calls back for — list options, panel
+        checking, post-action</td>
+        </tr>
+        </tbody>
+        </table>
+        <p><strong>Nothing binds a program to its panel group at compile
+        time.</strong> Unlike a display file, a panel group is resolved
+        <em>by name at run time</em>: the panel id, the
+        <code>:VARRCD</code> name and the <code>:LISTDEF</code> name are
+        character strings the program hands to an API. Get one wrong and
+        the compiler is silent — the failure is a UIM escape at the
+        moment that path is first exercised, which may be days
+        later.</p>
+        <p>That is the whole reason for the <code>@…_PNLID</code> /
+        <code>@…_VARRCD</code> / <code>@…_LSTNAM</code> constants of
+        section 1.5. They are not tidiness; they are the only mechanism
+        keeping the two members in step, so <strong>every</strong> name
+        crossing the boundary is a named constant and never a
+        literal.</p>
+        <h3 id="72-call-types">7.2 Call types</h3>
+        <p>The exit program&#39;s first act is to branch on
+        <code>typCall</code>. <strong>Name the call types</strong> —
+        <code>@QUIM_TYPCALL_*</code> in <code>QUIMH</code> — rather than
+        testing bare numbers.</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Declared on</th>
+        <th>Call type</th>
+        <th>Fires</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>:KEYI ACTION=&#39;CALL EXITPG&#39;</code></td>
+        <td>1 <code>FNCKEY</code></td>
+        <td>when that function key is pressed</td>
+        </tr>
+        <tr>
+        <td><code>:LISTACT ENTER=</code>/<code>PROMPT=&#39;CALL EXITPG&#39;</code></td>
+        <td>3 <code>LSTOPT</code></td>
+        <td>once per selected entry, to <em>perform</em> the action</td>
+        </tr>
+        <tr>
+        <td><code>:PANEL USREXIT=&#39;CALL EXITPG&#39;</code></td>
+        <td>4 <code>PNLCHK</code></td>
+        <td>once for the panel, at <strong>input validation</strong>
+        time</td>
+        </tr>
+        <tr>
+        <td><code>:LISTACT USREXIT=&#39;CALL EXITPG&#39;</code></td>
+        <td>5 <code>LSTEXT</code></td>
+        <td>once per selected entry, <strong>after</strong> the
+        action</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>Two of these are routinely confused, and the difference
+        decides the design:</p>
+        <ul>
+        <li><strong><code>USREXIT</code> on a <code>:LISTACT</code> is
+        not <code>USREXIT</code> on a <code>:PANEL</code>.</strong> The
+        first is a per-entry post-action (type 5), the second a
+        whole-panel exit (type 4). They share a keyword and nothing
+        else.</li>
+        <li><strong>Type 4 is validation, not post-processing.</strong>
+        It runs while the panel&#39;s input is being checked, which is
+        <em>before</em> any list action on that panel — so it is the
+        place to reject input, and never the place to react to work
+        already done. Reaching for it as an &quot;after everything&quot; hook is
+        the mistake it invites.</li>
+        </ul>
+        <h3 id="73-a-list-action-can-run-the-command-itself">7.3 A list
+        action can run the command itself</h3>
+        <p>An exit program is <strong>not required</strong> to perform
+        an option. A list action may name a command, and UIM runs it per
+        selected entry:</p>
+        <pre class="text"><code>:LISTACT ENTER=&#39;CMD CPYENVXF FROMENV(&amp;ENV.) TOENV(&amp;TOENV.)&#39;
+         PROMPT=&#39;CMD ?CPYENVXF ?*FROMENV(&amp;ENV.) TOENV()&#39;
+         USREXIT=&#39;CALL EXITPG&#39;</code></pre>
+        <p>Prefer this to building the same command string in RPG. It is
+        declarative, the prompted and unprompted forms sit together
+        where they can be compared, and the exit program is left with
+        only the post-action.</p>
+        <p><strong>The variables resolve against the ACTION
+        entry</strong> — the entry of the list the <code>:LISTACT</code>
+        belongs to — not against whatever panel is on the screen when
+        the user types. Section 7.5 is a direct consequence of that
+        sentence.</p>
+        <h3 id="74-varrcd-and-listdef-are-different-things">7.4
+        <code>:VARRCD</code> and <code>:LISTDEF</code> are different
+        things</h3>
+        <p>Both list variable names, and they are not
+        interchangeable:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Tag</th>
+        <th>What it is</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>:VARRCD</code></td>
+        <td>An <strong>I/O buffer layout</strong>. Named on every
+        get/put/add/update call, and a byte-for-byte match of the RPG
+        data structure passed with it.</td>
+        </tr>
+        <tr>
+        <td><code>:LISTDEF</code></td>
+        <td>The <strong>set of per-entry variables</strong> a list
+        carries, plus its <code>EMPHASIS</code> slots. Not a
+        buffer.</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>Neither is a subset of the other. A variable may sit in a
+        <code>:VARRCD</code> and not in the <code>:LISTDEF</code>, and —
+        the case that matters — <strong>in a <code>:LISTDEF</code> and
+        in no <code>:VARRCD</code> at all</strong>, which is exactly
+        what a confirmation list&#39;s variables do.</p>
+        <p>Two failure modes follow, both worth recognizing on
+        sight:</p>
+        <ul>
+        <li><strong>&quot;Variable buffer length too small&quot;</strong> means
+        the record the panel declares is longer than the buffer the
+        program passed. The usual cause is not a coding error but a
+        <strong>stale object</strong>: a field was added to the copybook
+        and only some of the programs that <code>/copy</code> it were
+        rebuilt. Recompile every consumer, not only the member that
+        changed.</li>
+        <li><strong>A varying field in a dialog variable record is
+        silent corruption.</strong> A <code>Varchar</code> carries a
+        2-byte length prefix, which shifts every field after it and
+        renders the text as garbage. Type these <code>Char(n)</code>
+        even where the column is <code>VARCHAR(n)</code> and section 2.4
+        would otherwise call for <code>like()</code> — and say so in a
+        comment, or the next reader will &quot;fix&quot; it back.</li>
+        </ul>
+        <h3 id="75-confirmation-lists-belong-to-uim">7.5 Confirmation
+        lists belong to UIM</h3>
+        <p><code>CONFIRM=</code> on a <code>:LISTACT</code> names a
+        panel that shows the selected entries. <strong>UIM builds and
+        owns that list.</strong> No program adds to it: its
+        <code>:LISTDEF</code> names a <strong>subset of the action
+        list&#39;s variables, matched by name</strong>, and UIM copies the
+        selected entries into it.</p>
+        <p>Three consequences:</p>
+        <ul>
+        <li><strong>A column the user types into on a confirmation panel
+        must also be a variable of the action list.</strong> Declared
+        only on the confirmation <code>:LISTDEF</code>, it has no
+        per-entry storage on the entry the action runs against, and the
+        substitution in section 7.3 resolves to blanks. Carry it on the
+        main <code>:LISTDEF</code> even though no <code>:LISTCOL</code>
+        on the main panel displays it.</li>
+        <li><strong>UIM does not carry the typed value back to the
+        action entry.</strong> Nothing does. Give the confirmation panel
+        a <code>:PANEL USREXIT</code>, read its list in the type 4 exit,
+        and write the value onto the matching action entry. By the time
+        UIM resolves the command, the value is there.</li>
+        <li><strong>The confirmation list is addressable only while its
+        panel is current.</strong> Reading it from an exit called on the
+        <em>main</em> panel fails with <code>CPF6A92</code>, <em>List
+        &amp;4 not active</em> — a statement about scope, not about the
+        approach.</li>
+        </ul>
+        <p><strong>This is the mechanism we arrived at, not one we
+        found.</strong> The behaviour is familiar from PDM, whose
+        <code>7=Rename</code> shows the selected members with an input
+        column for the new name and processes them all on one Enter —
+        but PDM is not a UIM application (section 7.9), so it is not
+        evidence about what UIM does. No UIM example of an input column
+        on a confirmation panel has been located, in these repos or in
+        the documentation.</p>
+        <p>Treat this section as the route that works. <strong>Do not
+        read the amount of machinery as proof that a shorter path
+        exists</strong> — the screen that suggested one turned out to be
+        a different technology, so there is nothing left implying UIM
+        has a neater answer. This may simply be what UIM costs. If a
+        genuine UIM example turns up, revisit before copying this
+        again.</p>
+        <h3 id="76-reading-and-positioning-list-entries">7.6 Reading and
+        positioning list entries</h3>
+        <p><code>QUIGETLE</code> takes a <strong>position
+        option</strong> saying which entry to return:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Option</th>
+        <th>Returns</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>FRST</code> / <code>NEXT</code> / <code>PREV</code> /
+        <code>LAST</code></td>
+        <td>a plain walk</td>
+        </tr>
+        <tr>
+        <td><code>HNDL</code></td>
+        <td>the entry named by a handle — what an exit program uses to
+        read the entry it was called for</td>
+        </tr>
+        <tr>
+        <td><code>FSLT</code> / <code>NSLT</code> / <code>PSLT</code> /
+        <code>LSLT</code></td>
+        <td>the first/next entry <strong>satisfying a selection
+        criteria</strong></td>
+        </tr>
+        </tbody>
+        </table>
+        <p><strong>The <code>*SLT</code> options require the Selection
+        Criteria parameter</strong>, and it is not optional — omitting
+        it is <code>CPF6A2D</code>, <em>Value for Selection Criteria
+        parameter not valid</em>. The criteria is a relational operator
+        plus <strong>the name of a dialog variable</strong>; UIM
+        compares that variable&#39;s current value against the value held in
+        each list entry.</p>
+        <p>So a single entry is <strong>fetched, not searched
+        for</strong>:</p>
+        <pre class="rpgle"><code>sltCri.relOpr    = @QUIM_RELOPR_EQ;
+sltCri.dlgVarNam = @XFENVWRK_VAR_ENV;</code></pre>
+        <p>with <code>@QUIM_LSTPOS_FIRST_SLT</code>. Set the dialog
+        variable first — reading another entry with
+        copy-to-dialog-variables on is one way, an explicit
+        <code>QUIPUTV</code> the other — and <strong>the two calls are
+        then ordered, not merely adjacent</strong>. Say so in a comment:
+        nothing in the source makes that dependency visible, and
+        separating the calls breaks the second one silently.</p>
+        <p>Prefer this to walking. Walking the list once per selected
+        entry is a full scan per action — invisible on a ten-row list,
+        embarrassing on a long one.</p>
+        <h3 id="77-the-list-is-maintained-not-reloaded">7.7 The list is
+        maintained, not reloaded</h3>
+        <p>Every list change is an entry-level operation, performed by
+        the exit program on the callback for that entry:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Option</th>
+        <th>Post-action does</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>Change</td>
+        <td><code>QUIUPDLE</code> the entry</td>
+        </tr>
+        <tr>
+        <td>Remove</td>
+        <td><code>QUIRMVLE</code> the entry</td>
+        </tr>
+        <tr>
+        <td>Copy / create</td>
+        <td><code>QUIADDLE</code> the new entry, positioned to keep the
+        list&#39;s order</td>
+        </tr>
+        </tbody>
+        </table>
+        <p><strong>Do not look for an &quot;after all list actions&quot; hook.
+        There is none.</strong> UIM processes the selected entries and
+        redisplays the panel internally; the driver does not regain
+        control, and the panel&#39;s <code>ENTER=</code> action fires only
+        when nothing is pending. Two members in these repos carry a TODO
+        from someone looking for that hook and not finding it — which is
+        the evidence, not a suggestion to keep looking.</p>
+        <p>A <strong>full reload belongs to the driver</strong>, reached
+        the only way the driver can be reached: a function key whose
+        action is <code>return nn</code>, after which the driver runs
+        its command and calls its load routine. That is why F6=Add is
+        handled in the driver rather than in the exit program.</p>
+        <p>Reloading from a post-action would rebuild the whole list
+        once per selected entry and throw away the list position each
+        time.</p>
+        <h3 id="78-a-value-written-to-a-list-entry-stays-there">7.8 A
+        value written to a list entry stays there</h3>
+        <p>A list entry is storage, not a screen field. A value written
+        onto it for one action is still there for the next, so a second
+        use of the option arrives prefilled — which no other option
+        does, and which is a defect rather than a convenience.</p>
+        <p><strong>Clear it in the post-action</strong>, along with the
+        option number, exactly as a change post-action clears the
+        option. Clear it on the <strong>success</strong> path only:
+        where the command failed, what the user typed is what they need
+        in order to correct it.</p>
+        <h3 id="79-pdm-is-not-a-uim-application-and-is-not-a-model-for-one">7.9
+        PDM is not a UIM application, and is not a model for one</h3>
+        <p>PDM&#39;s screens come from a <strong>display file</strong> —
+        <code>QPDA/QDUODSPF</code>. UIM panels are not display files of
+        their own; they are routed through <code>QDUI80</code> and
+        <code>QDUI132</code>. So every work-with behaviour PDM exhibits
+        is DDS subfile behaviour, and none of it is evidence about what
+        UIM can be made to do.</p>
+        <p>This matters because PDM is the work-with panel everybody
+        knows, and it is the obvious thing to reach for when deciding
+        how a new one should behave. Time has been lost here trying to
+        reproduce PDM behaviour <em>exactly</em> in UIM, on the
+        assumption that IBM had done it with the same tool and the
+        technique was simply undiscovered.</p>
+        <p><strong>The option field is the tell</strong>, and it is
+        visible without checking any object:</p>
+        <table>
+        <thead>
+        <tr>
+        <th></th>
+        <th>PDM</th>
+        <th>UIM</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>Option value</td>
+        <td>alphanumeric</td>
+        <td>numeric</td>
+        </tr>
+        <tr>
+        <td>Available options</td>
+        <td>extensible at run time through a user options file</td>
+        <td>every one declared in the panel source at compile time</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>A screen accepting user-defined two-character options is not
+        a UIM list. Where a UIM panel needs an option UIM does not
+        offer, it has to be coded — there is no options file to
+        extend.</p>
+        <p><strong>Check before treating any IBM screen as
+        precedent.</strong>
+        <code>WRKOBJ OBJ(&lt;lib&gt;/*ALL) OBJTYPE(*PNLGRP)</code>
+        answers it: a UIM application has panel groups, and
+        <code>RTVPNLGRPSRC</code> will then give you the source to read.
+        An application with none is not one to copy from.</p>
+        <hr />
+        <h2 id="8-display-files-qddssrc">8. Display files (QDDSSRC)</h2>
         <ul>
         <li><p>Standard header applies: <code>A*</code> comment lines
         carrying the purpose, <code>MODIFICATIONS:</code> log, and
@@ -2294,7 +2660,7 @@ MODE   = *RSTD</code></pre>
         patterns inferred from the few local examples.</p></li>
         </ul>
         <hr />
-        <h2 id="8-messages">8. Messages</h2>
+        <h2 id="9-messages">9. Messages</h2>
         <h3 id="81-message-identifiers">8.1 Message identifiers</h3>
         <p>A message id is a <strong>3-character prefix and a
         4-character number</strong>. Compose the prefix as a
@@ -2442,7 +2808,7 @@ MODE   = *RSTD</code></pre>
         reaches the user.</p></li>
         </ul>
         <hr />
-        <h2 id="9-cross-cutting-rules">9. Cross-cutting rules</h2>
+        <h2 id="10-cross-cutting-rules">10. Cross-cutting rules</h2>
         <ul>
         <li><strong>Self-documenting builds:</strong> if it can&#39;t be
         rebuilt from its BLDOBJ directives, it isn&#39;t done.</li>
@@ -2500,7 +2866,7 @@ MODE   = *RSTD</code></pre>
         </ul></li>
         </ul>
         <hr />
-        <h2 id="10-legacy-and-scratch-code">10. Legacy and scratch
+        <h2 id="11-legacy-and-scratch-code">11. Legacy and scratch
         code</h2>
         <ul>
         <li><p><strong>Scratch:</strong> <code>JUNK*</code> members are
