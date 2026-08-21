@@ -1562,7 +1562,20 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   | A variable value | `:PT.:PV.environment-name:EPV.` | `:PV.:HP2.…:EHP2.:EPV.` |
   | A special value | `:PT.:PK.*ALL:EPK.` | `:PT.:PV.*ALL:EPV.` |
   | The **default** value | `:PT.:PK DEF.*YES:EPK.` | — |
+  | A list of the values a parameter takes | `:PARML.` with `:PT.`/`:PD.` | `:DL.` with `:DT.`/`:DD.` |
   | A message-group heading | `:P.:HP3.*ESCAPE …:EHP3.` | `:DT.:HP4.…:EHP4.` |
+
+  **`:PARML` and `:DL` are two different lists, and only `:PARML` accepts value
+  tags.** `:PT.` is a parameter *term* and takes `:PK.` and `:PV.`; `:DT.` is a
+  definition *term* and takes neither. So anything enumerating what a parameter
+  or a field may be set to is a `:PARML`, every time — including help written
+  for a **panel** field rather than a command parameter, which is where the
+  wrong one gets reached for, because the content is prose and the `:DL` looks
+  like the plainer choice.
+
+  `:DL`/`:DT`/`:DD` is for plain terms with no value tagging. In practice that
+  is the `ERROR/MESSAGES` section, where `:DT.` carries a bare message id and
+  `:DD.` its `&msg(...)` — and that one stays as it is.
 
   `:PV.` is a *variable* — something the user substitutes, like
   `environment-name`. `:PK.` is a *keyword* — a literal special value such as

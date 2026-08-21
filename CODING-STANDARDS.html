@@ -2231,12 +2231,35 @@ MODE   = *RSTD</code></pre>
         <td>—</td>
         </tr>
         <tr>
+        <td>A list of the values a parameter takes</td>
+        <td><code>:PARML.</code> with
+        <code>:PT.</code>/<code>:PD.</code></td>
+        <td><code>:DL.</code> with
+        <code>:DT.</code>/<code>:DD.</code></td>
+        </tr>
+        <tr>
         <td>A message-group heading</td>
         <td><code>:P.:HP3.*ESCAPE …:EHP3.</code></td>
         <td><code>:DT.:HP4.…:EHP4.</code></td>
         </tr>
         </tbody>
         </table>
+        <p><strong><code>:PARML</code> and <code>:DL</code> are two
+        different lists, and only <code>:PARML</code> accepts value
+        tags.</strong> <code>:PT.</code> is a parameter <em>term</em>
+        and takes <code>:PK.</code> and <code>:PV.</code>;
+        <code>:DT.</code> is a definition <em>term</em> and takes
+        neither. So anything enumerating what a parameter or a field may
+        be set to is a <code>:PARML</code>, every time — including help
+        written for a <strong>panel</strong> field rather than a command
+        parameter, which is where the wrong one gets reached for,
+        because the content is prose and the <code>:DL</code> looks like
+        the plainer choice.</p>
+        <p><code>:DL</code>/<code>:DT</code>/<code>:DD</code> is for
+        plain terms with no value tagging. In practice that is the
+        <code>ERROR/MESSAGES</code> section, where <code>:DT.</code>
+        carries a bare message id and <code>:DD.</code> its
+        <code>&amp;msg(...)</code> — and that one stays as it is.</p>
         <p><code>:PV.</code> is a <em>variable</em> — something the user
         substitutes, like <code>environment-name</code>.
         <code>:PK.</code> is a <em>keyword</em> — a literal special
