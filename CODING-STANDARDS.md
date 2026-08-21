@@ -1739,9 +1739,9 @@ A **full reload belongs to the driver**, reached the only way the driver can be
 reached: a function key whose action is `return nn`, after which the driver runs
 its command and calls its load routine.
 
-**That is why F6=Add is handled in the driver rather than in the exit program**,
-and the reason is written down in six members across the `WRK*TM` family — the
-same note in each driver and its exit program:
+**F6=Add sits in the driver for that reason — but the reason does not hold.**
+Six members across the `WRK*TM` family carry the same note, in each driver and
+its exit program:
 
 ```text
 //  HOWEVER, the panel will use either one or the other
@@ -1753,11 +1753,23 @@ same note in each driver and its exit program:
 //  without re-coding the entire load list routine.
 ```
 
-Note what that is and is not. It is about a **function key** whose work happens
-to create a row, and the difficulty is that the exit program has no access to the
-driver's load routine — not that a hook is missing. Either program can service
-F6; only one of them can rebuild the list afterwards, so F6 goes where the reload
-is. The note has nothing to say about list actions.
+Read it for what it is: a **function key** whose work happens to create a row,
+and an exit program with no access to the driver's load routine. It says nothing
+about list actions, and it is not evidence that a hook is missing.
+
+**Its premise is also wrong, which is the more useful lesson.** A new row does
+not need the list rebuilt — it needs one entry inserted, which is `QUIADDLE` and
+is exactly what the copy post-action in the table above does. The exit program
+can service F6 perfectly well. The note reads as a dead end only because it
+equates *refresh* with *reload*, and once a list is understood as maintained
+per entry rather than reloaded, the difficulty disappears. **Watch for that
+equation in your own reasoning**; it is what sends people looking for a hook
+instead of writing three API calls.
+
+**Insert a newly created entry whatever the active subset says.** The user has
+just created the thing, and a list that does not show it reads as a command that
+failed. It drops out at the next genuine reload, which is the right moment for a
+filter to be applied — not the moment of creation.
 
 Reloading from a post-action would rebuild the whole list once per selected entry
 and throw away the list position each time.
