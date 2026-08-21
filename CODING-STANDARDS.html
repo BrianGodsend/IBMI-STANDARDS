@@ -2308,6 +2308,25 @@ MODE   = *RSTD</code></pre>
         <code>@…_PNLID</code> / <code>@…_VARRCD</code> /
         <code>@…_LSTNAM</code> constants in the RPG <code>…H</code>
         copybook.</p></li>
+        <li><p><strong><code>DEPTH</code> counts the separator lines,
+        not just the content.</strong> The manual: <em>&quot;The depth of the
+        area in lines, including separators if any are specified.&quot;</em>
+        So a <code>:DATA</code> area with <code>BOTSEP=space</code>
+        holding one line of content needs <code>DEPTH=2</code> — at
+        <code>DEPTH=1</code> the separator consumes the whole area and
+        <code>CRTPNLGRP</code> says</p>
+        <pre class="text"><code>CPD5B8A  DATAI will not fit in the body of this DATA area.</code></pre>
+        <p>which reads as though the <em>item</em> were too wide. It is
+        not about width at all. Check the separators before touching the
+        item.</p>
+        <p><code>WRKOBJTM</code>&#39;s description area is the reference:
+        one line of text, <code>BOTSEP=space</code>,
+        <code>DEPTH=2</code>. It looks like it has a spare line and it
+        does not.</p>
+        <p>Only one area on a panel may code <code>DEPTH=&#39;*&#39;</code>, and
+        <code>DEPTH</code> is <strong>not allowed at all on a print
+        panel</strong> — there the areas simply flow onto the
+        page.</p></li>
         <li><p><strong><code>MAXWIDTH</code> sizes the column, not the
         data</strong> — it must cover the <em>wider</em> of the value
         and the column heading. A <code>CHAR(10)</code> name under a

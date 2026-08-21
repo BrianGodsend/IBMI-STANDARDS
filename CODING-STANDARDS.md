@@ -1625,6 +1625,25 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   (`header`, `detail`, `csrrcd`, `cmdlin`), `:LISTDEF`s (`dtllist` with
   `EMPHASIS` columns), conditions, and key lists — the names must match the
   `@…_PNLID` / `@…_VARRCD` / `@…_LSTNAM` constants in the RPG `…H` copybook.
+- **`DEPTH` counts the separator lines, not just the content.** The manual:
+  *"The depth of the area in lines, including separators if any are
+  specified."* So a `:DATA` area with `BOTSEP=space` holding one line of
+  content needs `DEPTH=2` — at `DEPTH=1` the separator consumes the whole
+  area and `CRTPNLGRP` says
+
+  ```text
+  CPD5B8A  DATAI will not fit in the body of this DATA area.
+  ```
+
+  which reads as though the *item* were too wide. It is not about width at
+  all. Check the separators before touching the item.
+
+  `WRKOBJTM`'s description area is the reference: one line of text,
+  `BOTSEP=space`, `DEPTH=2`. It looks like it has a spare line and it does
+  not.
+
+  Only one area on a panel may code `DEPTH='*'`, and `DEPTH` is **not allowed
+  at all on a print panel** — there the areas simply flow onto the page.
 - **`MAXWIDTH` sizes the column, not the data** — it must cover the *wider* of
   the value and the column heading. A `CHAR(10)` name under a heading reading
   `Environment` needs `MAXWIDTH=11`, because the heading is the wider of the
