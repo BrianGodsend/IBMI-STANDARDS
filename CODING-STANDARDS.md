@@ -1546,10 +1546,39 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   two. Sizing it from the data alone is the easy mistake, and it is caught by
   `CRTPNLGRP` rather than at run time, so it costs a compile rather than a
   defect.
-- **A heading containing a space is rendered on more than one line**, so
-  `MAXHEAD` on the `:LIST` has to allow for it. `From Environment` and
-  `To Environment` draw as two lines each and need `MAXHEAD=2`; single-word
-  headings like `Environment` and `Description` fit in one.
+- **Each WORD of a column heading goes on its own line — apostrophes are what
+  hold them together.** The manual is explicit, in the same wording for
+  `:LISTCOL` and `:DATACOL`:
+
+  > "Each word of the column heading is placed on a new line. If multiple words
+  > are necessary in a line of the column heading, they must be enclosed in
+  > apostrophes ('). Each word or quoted string must fit within the maximum
+  > column width defined by the MAXWIDTH attribute of this tag. The maximum
+  > number of words or quoted strings allowed is specified by the MAXHEAD
+  > attribute on the LIST tag."
+
+  So `.Merge Env` draws on two lines and `.'Merge Env'` draws on one. **The
+  multi-line form is a default, not a constraint** — which is worth stating
+  because the default is what you get by accident, and it reads like the tag
+  refusing to do what you asked.
+
+  Three consequences, and the second is the one that bites:
+
+  - **`MAXHEAD` counts words or quoted strings**, not lines of text.
+  - **The limit a quoted heading must fit is `MAXWIDTH`, not the layout
+    column.** A heading quoted into one line still has to fit the column it
+    heads, so widening `LAYOUT` does not buy room for it.
+  - Column data is **centred** under a wider heading, the slack going right
+    for `JUSTIFY=LEFT`.
+
+  `'Merge Env'` is 9 against `MAXWIDTH=10`, so it fits and stays on one line.
+  `From Environment` in `WRKENVXF` is 16 against `MAXWIDTH=11`, so it cannot be
+  quoted onto one line at all and `MAXHEAD=2` is genuinely required — the two
+  cases look alike and are decided by that comparison.
+
+  Prefer a heading that fits on one line, and abbreviate to get there —
+  `Merge Env` over `Merge Environment`. A two-line heading costs a list line,
+  which at `LAYOUT=6` is six entries a page.
 
 ---
 
@@ -1563,6 +1592,18 @@ half-discoverable from the API reference.** It was established the expensive
 way, by building `WRKENVXF`, and it is written down here so the next work-with
 panel does not pay for it again. Where a rule below looks arbitrary, it is
 usually the record of a failure that took a day to identify.
+
+**Read the manual before reasoning from first principles.** *Application
+Display Programming*, SC41-5715, is the panel group tag reference — every tag,
+every attribute, with the formatting rules that are otherwise discovered by
+compile error. It answers most of what this section had to work out the hard
+way, including several things assumed impossible here before it was consulted.
+
+Getting a copy is the only awkward part, and worth recording: `ibm.com/docs`
+returns 403 to a plain fetch, but the V6R1 PDF is mirrored at
+`public.dhe.ibm.com/systems/power/docs/systemi/v6r1/en_US/sc415715.pdf`.
+Download it and run `pdftotext -layout` over it — the result greps well, which
+a 700-page PDF does not.
 
 ### 7.1 Two programs, no compile-time link
 

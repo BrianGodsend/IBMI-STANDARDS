@@ -2234,13 +2234,48 @@ MODE   = *RSTD</code></pre>
         the two. Sizing it from the data alone is the easy mistake, and
         it is caught by <code>CRTPNLGRP</code> rather than at run time,
         so it costs a compile rather than a defect.</p></li>
-        <li><p><strong>A heading containing a space is rendered on more
-        than one line</strong>, so <code>MAXHEAD</code> on the
-        <code>:LIST</code> has to allow for it.
-        <code>From Environment</code> and <code>To Environment</code>
-        draw as two lines each and need <code>MAXHEAD=2</code>;
-        single-word headings like <code>Environment</code> and
-        <code>Description</code> fit in one.</p></li>
+        <li><p><strong>Each WORD of a column heading goes on its own
+        line — apostrophes are what hold them together.</strong> The
+        manual is explicit, in the same wording for
+        <code>:LISTCOL</code> and <code>:DATACOL</code>:</p>
+        <blockquote>
+        <p>&quot;Each word of the column heading is placed on a new line. If
+        multiple words are necessary in a line of the column heading,
+        they must be enclosed in apostrophes (&#39;). Each word or quoted
+        string must fit within the maximum column width defined by the
+        MAXWIDTH attribute of this tag. The maximum number of words or
+        quoted strings allowed is specified by the MAXHEAD attribute on
+        the LIST tag.&quot;</p>
+        </blockquote>
+        <p>So <code>.Merge Env</code> draws on two lines and
+        <code>.&#39;Merge Env&#39;</code> draws on one. <strong>The multi-line
+        form is a default, not a constraint</strong> — which is worth
+        stating because the default is what you get by accident, and it
+        reads like the tag refusing to do what you asked.</p>
+        <p>Three consequences, and the second is the one that bites:</p>
+        <ul>
+        <li><strong><code>MAXHEAD</code> counts words or quoted
+        strings</strong>, not lines of text.</li>
+        <li><strong>The limit a quoted heading must fit is
+        <code>MAXWIDTH</code>, not the layout column.</strong> A heading
+        quoted into one line still has to fit the column it heads, so
+        widening <code>LAYOUT</code> does not buy room for it.</li>
+        <li>Column data is <strong>centred</strong> under a wider
+        heading, the slack going right for
+        <code>JUSTIFY=LEFT</code>.</li>
+        </ul>
+        <p><code>&#39;Merge Env&#39;</code> is 9 against
+        <code>MAXWIDTH=10</code>, so it fits and stays on one line.
+        <code>From Environment</code> in <code>WRKENVXF</code> is 16
+        against <code>MAXWIDTH=11</code>, so it cannot be quoted onto
+        one line at all and <code>MAXHEAD=2</code> is genuinely required
+        — the two cases look alike and are decided by that
+        comparison.</p>
+        <p>Prefer a heading that fits on one line, and abbreviate to get
+        there — <code>Merge Env</code> over
+        <code>Merge Environment</code>. A two-line heading costs a list
+        line, which at <code>LAYOUT=6</code> is six entries a
+        page.</p></li>
         </ul>
         <hr />
         <h2 id="7-application-display-programming-uim">7. Application
@@ -2255,6 +2290,19 @@ MODE   = *RSTD</code></pre>
         the next work-with panel does not pay for it again. Where a rule
         below looks arbitrary, it is usually the record of a failure
         that took a day to identify.</p>
+        <p><strong>Read the manual before reasoning from first
+        principles.</strong> <em>Application Display Programming</em>,
+        SC41-5715, is the panel group tag reference — every tag, every
+        attribute, with the formatting rules that are otherwise
+        discovered by compile error. It answers most of what this
+        section had to work out the hard way, including several things
+        assumed impossible here before it was consulted.</p>
+        <p>Getting a copy is the only awkward part, and worth recording:
+        <code>ibm.com/docs</code> returns 403 to a plain fetch, but the
+        V6R1 PDF is mirrored at
+        <code>public.dhe.ibm.com/systems/power/docs/systemi/v6r1/en_US/sc415715.pdf</code>.
+        Download it and run <code>pdftotext -layout</code> over it — the
+        result greps well, which a 700-page PDF does not.</p>
         <h3 id="71-two-programs-no-compile-time-link">7.1 Two programs,
         no compile-time link</h3>
         <p>A work-with panel is a <strong>driver</strong> and an
