@@ -2203,9 +2203,11 @@ MODE   = *RSTD</code></pre>
         needed in practice:</p>
         <pre class="text"><code>:P.:HP2.Example 1: Simple Command Example:EHP2.
 :P.:HP3.*ESCAPE &amp;msg(CPX0006,QCPFMSG).:EHP3.</code></pre>
-        <p>Getting the invalid nesting wrong compiles nowhere, and it is
-        easy to write by analogy from HTML or Markdown, where nesting
-        emphasis inside anything is fine:</p>
+        <p>Getting the invalid nesting wrong compiles nowhere —
+        <code>CRTPNLGRP</code> rejects it with</p>
+        <pre class="text"><code>CPD5A92  PK tag not allowed in text for DT tag.</code></pre>
+        <p>— and it is easy to write by analogy from HTML or Markdown,
+        where nesting emphasis inside anything is fine:</p>
         <table>
         <thead>
         <tr>
@@ -2260,6 +2262,14 @@ MODE   = *RSTD</code></pre>
         <code>ERROR/MESSAGES</code> section, where <code>:DT.</code>
         carries a bare message id and <code>:DD.</code> its
         <code>&amp;msg(...)</code> — and that one stays as it is.</p>
+        <p><strong>The restriction is on the TERM, not on the whole
+        list.</strong> <code>:DT.</code> is the tag that refuses;
+        <code>:DD.</code> is running text and takes <code>:HPn.</code>
+        quite happily — <code>BLDOBJ.PNLGRP</code> has
+        <code>:DD.The specified :HP2.ALWCMDRTV:EHP2. parameter value</code>
+        and compiles in all three repos. So a <code>:DL</code> carrying
+        emphasis in its descriptions is not the defect this rule is
+        about; do not &quot;fix&quot; one.</p>
         <p><code>:PV.</code> is a <em>variable</em> — something the user
         substitutes, like <code>environment-name</code>.
         <code>:PK.</code> is a <em>keyword</em> — a literal special

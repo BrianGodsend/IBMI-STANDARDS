@@ -1554,8 +1554,15 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   :P.:HP3.*ESCAPE &msg(CPX0006,QCPFMSG).:EHP3.
   ```
 
-  Getting the invalid nesting wrong compiles nowhere, and it is easy to write by
-  analogy from HTML or Markdown, where nesting emphasis inside anything is fine:
+  Getting the invalid nesting wrong compiles nowhere — `CRTPNLGRP` rejects it
+  with
+
+  ```text
+  CPD5A92  PK tag not allowed in text for DT tag.
+  ```
+
+  — and it is easy to write by analogy from HTML or Markdown, where nesting
+  emphasis inside anything is fine:
 
   | Want | Write | Not |
   | --- | --- | --- |
@@ -1576,6 +1583,12 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   `:DL`/`:DT`/`:DD` is for plain terms with no value tagging. In practice that
   is the `ERROR/MESSAGES` section, where `:DT.` carries a bare message id and
   `:DD.` its `&msg(...)` — and that one stays as it is.
+
+  **The restriction is on the TERM, not on the whole list.** `:DT.` is the
+  tag that refuses; `:DD.` is running text and takes `:HPn.` quite happily —
+  `BLDOBJ.PNLGRP` has `:DD.The specified :HP2.ALWCMDRTV:EHP2. parameter value`
+  and compiles in all three repos. So a `:DL` carrying emphasis in its
+  descriptions is not the defect this rule is about; do not "fix" one.
 
   `:PV.` is a *variable* — something the user substitutes, like
   `environment-name`. `:PK.` is a *keyword* — a literal special value such as
