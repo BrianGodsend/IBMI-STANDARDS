@@ -2167,7 +2167,24 @@ MODE   = *RSTD</code></pre>
         in order:</p>
         <ol type="1">
         <li><p><code>&#39;&lt;CMD&gt;/ALL&#39;</code> — aggregate of all
-        sections (for full-command help)</p></li>
+        sections (for full-command help). <strong>It carries no title
+        text and no prose of its own</strong> — just
+        <code>:IMHELP</code> for each section, in the order below:</p>
+        <pre class="text"><code>:HELP NAME=&#39;DSPENVXF/ALL&#39;.
+:IMHELP NAME=&#39;DSPENVXF&#39;.
+:IMHELP NAME=&#39;DSPENVXF/ENV&#39;.
+:IMHELP NAME=&#39;DSPENVXF/OUTPUT&#39;.
+:IMHELP NAME=&#39;DSPENVXF/COMMAND/EXAMPLES&#39;.
+:IMHELP NAME=&#39;DSPENVXF/ERROR/MESSAGES&#39;.
+:EHELP.</code></pre>
+        <p><code>:IMHELP</code> is the only way to pull one help module
+        into another — there is no include tag. Put a title after the
+        <code>.</code> on the <code>ALL</code> tag and
+        <code>CRTPNLGRP</code> answers:</p>
+        <pre class="text"><code>CPD5A8F  More than one line of text specified for HELP tag.</code></pre>
+        <p>which names the symptom rather than the cause: the title is
+        one line of text and whatever follows becomes a second, so any
+        stray line under the tag surfaces as this message.</p></li>
         <li><p><code>&#39;&lt;CMD&gt;&#39;</code> — extended
         description</p></li>
         <li><p><code>&#39;&lt;CMD&gt;/&lt;PARM&gt;&#39;</code> — one per

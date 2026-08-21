@@ -1519,7 +1519,31 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   fit — let the line run long (up to the 134 hard limit) rather than shorten the
   wording.
 - Command-help members define this fixed set of help IDs, in order:
-  1. `'<CMD>/ALL'` — aggregate of all sections (for full-command help)
+  1. `'<CMD>/ALL'` — aggregate of all sections (for full-command help).
+     **It carries no title text and no prose of its own** — just `:IMHELP`
+     for each section, in the order below:
+
+     ```text
+     :HELP NAME='DSPENVXF/ALL'.
+     :IMHELP NAME='DSPENVXF'.
+     :IMHELP NAME='DSPENVXF/ENV'.
+     :IMHELP NAME='DSPENVXF/OUTPUT'.
+     :IMHELP NAME='DSPENVXF/COMMAND/EXAMPLES'.
+     :IMHELP NAME='DSPENVXF/ERROR/MESSAGES'.
+     :EHELP.
+     ```
+
+     `:IMHELP` is the only way to pull one help module into another — there
+     is no include tag. Put a title after the `.` on the `ALL` tag and
+     `CRTPNLGRP` answers:
+
+     ```text
+     CPD5A8F  More than one line of text specified for HELP tag.
+     ```
+
+     which names the symptom rather than the cause: the title is one line of
+     text and whatever follows becomes a second, so any stray line under the
+     tag surfaces as this message.
   2. `'<CMD>'` — extended description
   3. `'<CMD>/<PARM>'` — one per parameter, titled
      `<Prompt> (<KWD>) - Help`
