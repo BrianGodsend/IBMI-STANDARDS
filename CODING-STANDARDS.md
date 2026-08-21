@@ -17,6 +17,41 @@ Legacy and scratch code).
 document for new code. When this document is silent, match the closest RBUTL
 sibling of the same member type.
 
+**The IBM manuals are on this machine. Read them before reasoning from first
+principles.** A local, maintained set lives in:
+
+```text
+C:\Users\Public\Documents\Programming\IBM i Manuals
+```
+
+Around eighty PDFs, covering nearly everything this document touches — *ILE RPG
+Language Reference* and *Programmer's Guide*, *CL Overview and Concepts*, the
+three DDS manuals, *SQL Reference*, *SQL Programming*, *Embedded SQL
+Programming*, *API Overview and Concepts*, *ILE Concepts*, *Application Display
+Programming* (the UIM tag reference behind section 7), the REXX pair, and a
+shelf of Redbooks.
+
+**Some of it IBM no longer publishes, so treat the directory as irreplaceable
+rather than merely convenient.** The ADTS set is the clearest case — *Source
+Entry Utility*, *Programming Development Manager*, *Screen Design Aid*, *Report
+Layout Utility*, *Data File Utility* — documenting tools this shop uses daily
+and for which there is no current edition to download. The RPG/400 pair is
+there for the same reason: fixed-form OPM code still exists in these libraries
+(section 11) and nothing current describes it. Do not assume a manual can be
+re-fetched; back the directory up as source, not as cache.
+
+**A PDF that size does not read, it greps.** Extract once and search the text:
+
+```text
+pdftotext -layout "IBM i Manuals\Application Display Programming [sc415715].pdf" adp.txt
+```
+
+Several rules in sections 6 and 7 were worked out the expensive way and then
+found stated plainly in that manual. One was corrected only after the manual
+was finally consulted — the standard had recorded a formatting *default* as
+though it were a constraint. **Check the manual first; it is faster than the
+experiment and it is right.**
+
 ---
 
 ## 1. Universal member conventions
@@ -1598,12 +1633,7 @@ Display Programming*, SC41-5715, is the panel group tag reference — every tag,
 every attribute, with the formatting rules that are otherwise discovered by
 compile error. It answers most of what this section had to work out the hard
 way, including several things assumed impossible here before it was consulted.
-
-Getting a copy is the only awkward part, and worth recording: `ibm.com/docs`
-returns 403 to a plain fetch, but the V6R1 PDF is mirrored at
-`public.dhe.ibm.com/systems/power/docs/systemi/v6r1/en_US/sc415715.pdf`.
-Download it and run `pdftotext -layout` over it — the result greps well, which
-a 700-page PDF does not.
+It is in the local manual directory named at the top of this document.
 
 ### 7.1 Two programs, no compile-time link
 
