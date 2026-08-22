@@ -2061,6 +2061,29 @@ MODE   = *RSTD</code></pre>
         something it can recognize as &quot;the user said nothing&quot; rather
         than a number in the valid range that has to double as a
         flag.</p></li>
+        <li><p><strong><code>VALUES</code> is the parameter&#39;s real
+        domain. Anything that is not a member of it goes in
+        <code>SPCVAL</code></strong> — even when it looks like it
+        belongs, and IBM special values look like they belong.</p>
+        <p>An object type parameter is the clean example.
+        <code>*CMD</code>, <code>*DTAARA</code>, <code>*FILE</code>,
+        <code>*PGM</code> and <code>*SRVPGM</code> are IBM object types:
+        a subset of a real enumeration, so they are <code>VALUES</code>.
+        A <code>*DFT</code> or <code>*ALL</code> meaning <em>do not
+        filter on type</em> is not an object type at all, however much
+        the asterisk makes it look like one — it is a pseudo-value, and
+        it belongs in <code>SPCVAL</code> where it can resolve to the
+        blank the CPP actually wants.</p>
+        <p>The tell is not the leading asterisk, which both kinds carry.
+        Ask whether the value <strong>names a member of the set the
+        parameter is about</strong>. <code>*FILE</code> names an object
+        type. <code>*DFT</code> names a decision about filtering.</p>
+        <p>Getting it wrong compiles and works, which is why it persists
+        — <code>IPOXINQ</code> carried <code>*OBJ</code> in
+        <code>VALUES</code> for twenty years. The cost is that the
+        prompt and the help present a pseudo-value as though it were one
+        more object type, and the parameter stops documenting its own
+        domain.</p></li>
         <li><p><strong><code>CONSTANT</code> requires
         <code>MAX(1)</code></strong> — <code>CPD6228</code>. A list
         parameter cannot be locked with it, so a shared-CPP command that

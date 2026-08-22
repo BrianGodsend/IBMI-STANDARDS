@@ -1449,6 +1449,25 @@ CREATE OR REPLACE TABLE ... (
     them — it is a reason to name the value in `SPCVAL`, which is also how the
     CPP ends up receiving something it can recognize as "the user said nothing"
     rather than a number in the valid range that has to double as a flag.
+  - **`VALUES` is the parameter's real domain. Anything that is not a member of
+    it goes in `SPCVAL`** — even when it looks like it belongs, and IBM special
+    values look like they belong.
+
+    An object type parameter is the clean example. `*CMD`, `*DTAARA`, `*FILE`,
+    `*PGM` and `*SRVPGM` are IBM object types: a subset of a real enumeration,
+    so they are `VALUES`. A `*DFT` or `*ALL` meaning *do not filter on type* is
+    not an object type at all, however much the asterisk makes it look like one
+    — it is a pseudo-value, and it belongs in `SPCVAL` where it can resolve to
+    the blank the CPP actually wants.
+
+    The tell is not the leading asterisk, which both kinds carry. Ask whether
+    the value **names a member of the set the parameter is about**. `*FILE`
+    names an object type. `*DFT` names a decision about filtering.
+
+    Getting it wrong compiles and works, which is why it persists — `IPOXINQ`
+    carried `*OBJ` in `VALUES` for twenty years. The cost is that the prompt and
+    the help present a pseudo-value as though it were one more object type, and
+    the parameter stops documenting its own domain.
   - **`CONSTANT` requires `MAX(1)`** — `CPD6228`. A list parameter cannot be
     locked with it, so a shared-CPP command that must pass a list parameter it
     has no use for declares it with `SNGVAL` and a `DFT` instead.
