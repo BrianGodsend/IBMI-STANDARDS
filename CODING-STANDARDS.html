@@ -2038,6 +2038,29 @@ MODE   = *RSTD</code></pre>
         are accepted, not how many</strong>, so it is no substitute for
         <code>SNGVAL</code> — <code>MAX()</code> governs the count
         independently.</p></li>
+        <li><p><strong>What <code>DFT</code> may be, in order.</strong>
+        A default has to be:</p>
+        <ol type="1">
+        <li>valid for the data type — length and precision;</li>
+        <li>inside <code>RANGE</code> and any other restriction;</li>
+        <li>one of <code>VALUES</code>, where <code>RSTD(*YES)</code> is
+        specified;</li>
+        </ol>
+        <p><strong>…or one of <code>SPCVAL</code>, which overrides all
+        of it.</strong> <code>SPCVAL</code> is special in the literal
+        sense: a value declared there is available to <code>DFT</code>
+        whatever else the parameter says, including when it resolves to
+        something the restrictions would reject.</p>
+        <pre class="text"><code>PARM  KWD(NBR) TYPE(*INT) RANGE(11 22) SPCVAL((*JUNK -1)) DFT(*JUNK)</code></pre>
+        <p>That is legal and passes <code>-1</code> to the CPP.
+        <code>DFT(-1)</code> on the same parameter is not, because
+        <code>RANGE</code> governs values written literally.</p>
+        <p>So a default that will not fit the restrictions is not a
+        reason to loosen them — it is a reason to name the value in
+        <code>SPCVAL</code>, which is also how the CPP ends up receiving
+        something it can recognize as &quot;the user said nothing&quot; rather
+        than a number in the valid range that has to double as a
+        flag.</p></li>
         <li><p><strong><code>CONSTANT</code> requires
         <code>MAX(1)</code></strong> — <code>CPD6228</code>. A list
         parameter cannot be locked with it, so a shared-CPP command that

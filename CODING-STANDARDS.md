@@ -1427,6 +1427,28 @@ CREATE OR REPLACE TABLE ... (
     changes with the caller.
   - **`RSTD(*YES)` restricts which values are accepted, not how many**, so it is
     no substitute for `SNGVAL` — `MAX()` governs the count independently.
+  - **What `DFT` may be, in order.** A default has to be:
+
+    1. valid for the data type — length and precision;
+    2. inside `RANGE` and any other restriction;
+    3. one of `VALUES`, where `RSTD(*YES)` is specified;
+
+    **…or one of `SPCVAL`, which overrides all of it.** `SPCVAL` is special in
+    the literal sense: a value declared there is available to `DFT` whatever
+    else the parameter says, including when it resolves to something the
+    restrictions would reject.
+
+    ```text
+    PARM  KWD(NBR) TYPE(*INT) RANGE(11 22) SPCVAL((*JUNK -1)) DFT(*JUNK)
+    ```
+
+    That is legal and passes `-1` to the CPP. `DFT(-1)` on the same parameter
+    is not, because `RANGE` governs values written literally.
+
+    So a default that will not fit the restrictions is not a reason to loosen
+    them — it is a reason to name the value in `SPCVAL`, which is also how the
+    CPP ends up receiving something it can recognize as "the user said nothing"
+    rather than a number in the valid range that has to double as a flag.
   - **`CONSTANT` requires `MAX(1)`** — `CPD6228`. A list parameter cannot be
     locked with it, so a shared-CPP command that must pass a list parameter it
     has no use for declares it with `SNGVAL` and a `DFT` instead.
