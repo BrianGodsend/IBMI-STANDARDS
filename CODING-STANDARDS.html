@@ -2392,6 +2392,45 @@ MODE   = *RSTD</code></pre>
         one line of text, <code>BOTSEP=space</code>,
         <code>DEPTH=2</code>. It looks like it has a spare line and it
         does not.</p>
+        <p><strong><code>COMPACT</code> is not cosmetic — without it
+        every item costs two lines.</strong> The manual: <em>&quot;If COMPACT
+        is specified, no blank lines are left between column headings
+        and all items and outer groups in the area. If COMPACT is not
+        specified, a blank line appears after the area column headings
+        and between all items and outer groups.&quot;</em> So a
+        <code>LAYOUT=1</code> area holding four items needs seven lines
+        without it and four with it, and <code>CRTPNLGRP</code> reports
+        the shortfall as</p>
+        <pre class="text"><code>CPD5B99  No space left in this DATA area for remaining items.</code></pre>
+        <p>naming neither the blank lines nor the keyword that would
+        remove them. <strong>Put <code>compact</code> on every data
+        area</strong> unless the spacing is wanted, and then count the
+        depth as one line per row.</p>
+        <p>The arithmetic, once and for all — an area needs:</p>
+        <table>
+        <tbody>
+        <tr>
+        <td>rows</td>
+        <td>items ÷ <code>LAYOUT</code>, rounded up</td>
+        </tr>
+        <tr>
+        <td>+ gaps</td>
+        <td>rows − 1, unless <code>compact</code></td>
+        </tr>
+        <tr>
+        <td>+ 1</td>
+        <td>if <code>MAXHEAD=1</code></td>
+        </tr>
+        <tr>
+        <td>+ 1</td>
+        <td>per <code>:TOPINST</code></td>
+        </tr>
+        <tr>
+        <td>+ 1</td>
+        <td>if <code>BOTSEP=space</code></td>
+        </tr>
+        </tbody>
+        </table>
         <p>Only one area on a panel may code <code>DEPTH=&#39;*&#39;</code>, and
         <code>DEPTH</code> is <strong>not allowed at all on a print
         panel</strong> — there the areas simply flow onto the

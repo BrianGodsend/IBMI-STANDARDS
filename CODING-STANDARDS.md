@@ -1705,6 +1705,31 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   `BOTSEP=space`, `DEPTH=2`. It looks like it has a spare line and it does
   not.
 
+  **`COMPACT` is not cosmetic — without it every item costs two lines.** The
+  manual: *"If COMPACT is specified, no blank lines are left between column
+  headings and all items and outer groups in the area. If COMPACT is not
+  specified, a blank line appears after the area column headings and between all
+  items and outer groups."* So a `LAYOUT=1` area holding four items needs seven
+  lines without it and four with it, and `CRTPNLGRP` reports the shortfall as
+
+  ```text
+  CPD5B99  No space left in this DATA area for remaining items.
+  ```
+
+  naming neither the blank lines nor the keyword that would remove them. **Put
+  `compact` on every data area** unless the spacing is wanted, and then count
+  the depth as one line per row.
+
+  The arithmetic, once and for all — an area needs:
+
+  | | |
+  | --- | --- |
+  | rows | items ÷ `LAYOUT`, rounded up |
+  | + gaps | rows − 1, unless `compact` |
+  | + 1 | if `MAXHEAD=1` |
+  | + 1 | per `:TOPINST` |
+  | + 1 | if `BOTSEP=space` |
+
   Only one area on a panel may code `DEPTH='*'`, and `DEPTH` is **not allowed
   at all on a print panel** — there the areas simply flow onto the page.
 - **`MAXWIDTH` sizes the column, not the data** — it must cover the *wider* of
