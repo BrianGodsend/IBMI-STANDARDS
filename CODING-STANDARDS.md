@@ -1338,31 +1338,44 @@ CREATE OR REPLACE TABLE ... (
   wrong place entirely. Escape with the operation and the `SQLCODE` in the text;
   `CPF9898` carries arbitrary text and needs no message file of your own.
 
-- **Match names with `LIKE`, not `REGEXP_LIKE`.** A regular expression is the
-  better-looking tool — it anchors with `^`, ignores trailing blanks without
-  help, and needs no padding — and it is the wrong one here, for three reasons
-  in descending order of importance:
+- **`LIKE` and `REGEXP_LIKE` trade an index against a readable predicate.**
+  Both match a name; the choice is not a matter of taste and it is worth making
+  deliberately.
 
-  - **`LIKE` can drive an index and `REGEXP_LIKE` cannot.** The *Database
-    Performance and Query Optimization* manual lists the predicates the
-    optimizer will match against an existing index — `=`, `<>`, **`LIKE`**,
-    `IN` — and `REGEXP_LIKE` appears nowhere in that book at all. It is a
-    predicate over the column, so it defeats a keyed index exactly the way
-    `TRIM(column)` does. A derived key index cannot rescue it either: the
-    pattern is a run-time value, so there is no fixed expression to index.
-  - **It needs ICU installed.** From the *SQL Reference*: *"In order to use the
-    REGEXP_LIKE predicate, the International Components for Unicode (ICU)
-    option must be installed."* That is a deployment prerequisite for what is
-    otherwise a name comparison.
-  - **The anchoring is not the win it looks like.** `'^NAME'` also matches
-    `NAMEX`, so an exact match needs `'^NAME *$'` — the same padding logic in a
-    different notation.
+  **`LIKE` can drive an index.** The *Database Performance and Query
+  Optimization* manual lists the predicates the optimizer will match against an
+  existing index — `=`, `<>`, **`LIKE`**, `IN`. `REGEXP_LIKE` appears nowhere
+  in that book, and as a predicate over the column it defeats a keyed index the
+  way `TRIM(column)` does. A derived key index cannot rescue it: the pattern is
+  a run-time value, so there is no fixed expression to index.
 
-  So: exact name, pad the pattern to the column width and use `LIKE`, because
-  `LIKE` does not ignore trailing blanks the way `=` does. Generic name,
-  translate the trailing `*` to `%` and leave it unpadded — a leading constant
-  keeps the index. Reach for `REGEXP_LIKE` when the pattern genuinely needs
-  more than `%` and `_` can express, and expect to pay for the scan.
+  **`REGEXP_LIKE` says what it means.** `LIKE` does not ignore trailing blanks
+  the way `=` does, so matching an exact name against an untrimmed `CHAR(n)`
+  means padding the pattern out to the column width — correct, fast, and
+  opaque six months later. The regular expression anchors instead:
+
+  | | `LIKE` | `REGEXP_LIKE` |
+  | --- | --- | --- |
+  | exact | pattern padded to the column width | `'^NAME *$'` |
+  | generic | `'NAME%'` | `'^NAME'` |
+
+  `REGEXP_LIKE` *searches* rather than matches — the *SQL Reference* says it
+  "searches for a regular expression pattern in a string" — so `^` is what
+  makes the name mean the start of the column, and an unanchored end is what
+  makes a generic name generic. `'^NAME.*$'` adds nothing to `'^NAME'`. On the
+  exact form the quantifier matters: `' *$'` allows the blanks the column
+  carries, while `' ?$'` allows one and matches nothing.
+
+  Two things to know before choosing it. It requires ICU — *"In order to use
+  the REGEXP_LIKE predicate, the International Components for Unicode (ICU)
+  option must be installed"* — and a bare parameter marker as the pattern has
+  no type for Db2 to infer, so cast it: `REGEXP_LIKE(col, CAST(? AS
+  VARCHAR(20)))`.
+
+  **Decide on the row count, not the principle.** Against a few thousand rows
+  per selection the scan is free and the clearer predicate wins outright.
+  Against a few hundred thousand the index is the difference between a list and
+  a wait. Measure the table before assuming either.
 
 ### 4.7 NULL handling
 
