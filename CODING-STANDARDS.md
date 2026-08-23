@@ -1320,6 +1320,28 @@ CREATE OR REPLACE TABLE ... (
   controls. That asymmetry is why the guard goes in by default rather than
   after the first failure.
 
+- **`NULLS FIRST` and `NULLS LAST` do not exist on `ORDER BY` here, and are not
+  needed.** The *SQL Reference* gives the statement-level `order-by-clause` as a
+  `sort-key-expression` with `ASC` or `DESC` and nothing else. The two keywords
+  are real, which is what makes this worth writing down — they belong to **OLAP
+  window ordering** and to **partitioning keys**, so they are findable in the
+  manual, in a syntax diagram that is not the one you want.
+
+  The behaviour is already what a `NULLS LAST` would ask for. From the Queries
+  chapter: **"Null values are sorted high."** So ascending puts nulls last and
+  descending puts them first, with nothing to write.
+
+  Where a sort has to treat a value as "no position" rather than as a low one,
+  `NULLIF(column, 0)` does it on its own:
+
+  ```sql
+  ORDER BY NULLIF(a.libl_position, 0), a.name
+  ```
+
+  Rows with `0` sort to the end because they became null, and the rest sort
+  normally. Adding `NULLS LAST` to that is a syntax error, and adding `ASC`
+  first does not rescue it — the clause is not accepted in this position at all.
+
 ---
 
 ## 5. Commands (QCMDSRC)

@@ -1876,6 +1876,29 @@ DELETE +
         error, a single unguarded row takes down the entire run — on
         data nobody controls. That asymmetry is why the guard goes in by
         default rather than after the first failure.</p></li>
+        <li><p><strong><code>NULLS FIRST</code> and
+        <code>NULLS LAST</code> do not exist on <code>ORDER BY</code>
+        here, and are not needed.</strong> The <em>SQL Reference</em>
+        gives the statement-level <code>order-by-clause</code> as a
+        <code>sort-key-expression</code> with <code>ASC</code> or
+        <code>DESC</code> and nothing else. The two keywords are real,
+        which is what makes this worth writing down — they belong to
+        <strong>OLAP window ordering</strong> and to
+        <strong>partitioning keys</strong>, so they are findable in the
+        manual, in a syntax diagram that is not the one you want.</p>
+        <p>The behaviour is already what a <code>NULLS LAST</code> would
+        ask for. From the Queries chapter: <strong>&quot;Null values are
+        sorted high.&quot;</strong> So ascending puts nulls last and
+        descending puts them first, with nothing to write.</p>
+        <p>Where a sort has to treat a value as &quot;no position&quot; rather
+        than as a low one, <code>NULLIF(column, 0)</code> does it on its
+        own:</p>
+        <div class="sourceCode" id="cb32"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> <span class="fu">NULLIF</span>(a.libl_position, <span class="dv">0</span>), a.name</span></code></pre></div>
+        <p>Rows with <code>0</code> sort to the end because they became
+        null, and the rest sort normally. Adding <code>NULLS LAST</code>
+        to that is a syntax error, and adding <code>ASC</code> first
+        does not rescue it — the clause is not accepted in this position
+        at all.</p></li>
         </ul>
         <hr />
         <h2 id="5-commands-qcmdsrc">5. Commands (QCMDSRC)</h2>
