@@ -1366,11 +1366,10 @@ CREATE OR REPLACE TABLE ... (
   exact form the quantifier matters: `' *$'` allows the blanks the column
   carries, while `' ?$'` allows one and matches nothing.
 
-  Two things to know before choosing it. It requires ICU — *"In order to use
-  the REGEXP_LIKE predicate, the International Components for Unicode (ICU)
-  option must be installed"* — and a bare parameter marker as the pattern has
-  no type for Db2 to infer, so cast it: `REGEXP_LIKE(col, CAST(? AS
-  VARCHAR(20)))`.
+  One thing to know before choosing it: it requires ICU — *"In order to use the
+  REGEXP_LIKE predicate, the International Components for Unicode (ICU) option
+  must be installed."* A parameter marker needs no `CAST`; function resolution
+  types an untyped argument from the parameter it maps to.
 
   **Decide on the row count, not the principle.** Against a few thousand rows
   per selection the scan is free and the clearer predicate wins outright.

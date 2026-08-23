@@ -1941,12 +1941,12 @@ DELETE +
         the exact form the quantifier matters: <code>&#39; *$&#39;</code> allows
         the blanks the column carries, while <code>&#39; ?$&#39;</code> allows
         one and matches nothing.</p>
-        <p>Two things to know before choosing it. It requires ICU —
+        <p>One thing to know before choosing it: it requires ICU —
         <em>&quot;In order to use the REGEXP_LIKE predicate, the
         International Components for Unicode (ICU) option must be
-        installed&quot;</em> — and a bare parameter marker as the pattern has
-        no type for Db2 to infer, so cast it:
-        <code>REGEXP_LIKE(col, CAST(? AS VARCHAR(20)))</code>.</p>
+        installed.&quot;</em> A parameter marker needs no <code>CAST</code>;
+        function resolution types an untyped argument from the parameter
+        it maps to.</p>
         <p><strong>Decide on the row count, not the principle.</strong>
         Against a few thousand rows per selection the scan is free and
         the clearer predicate wins outright. Against a few hundred
