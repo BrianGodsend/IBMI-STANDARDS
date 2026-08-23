@@ -2485,51 +2485,66 @@ MODE   = *RSTD</code></pre>
         <code>Merge Environment</code>. A two-line heading costs a list
         line, which at <code>LAYOUT=6</code> is six entries a
         page.</p></li>
-        <li><p><strong><code>COLSEP</code> on a <code>:LISTGRP</code> is
-        the only way to set the gap between list columns.</strong> Left
-        alone, UIM calculates it — the manual says the result is
-        &quot;between 2 and 5 spaces&quot; — and a panel of narrow columns gets
-        the wide end, strung right across the screen. Nothing on
-        <code>:LIST</code> or <code>:LISTCOL</code> overrides it, so a
-        group is how the columns get told, and the group needs no
-        heading to do its job.</p>
-        <p>Two columns cannot go inside the group, both by rules the
-        manual states outright, and both worth knowing before the group
-        is written rather than after:</p>
+        <li><p><strong>Size every list column, and oversize the last one
+        on purpose.</strong> UIM maintains a separator of <em>&quot;two to
+        five characters&quot;</em> between list columns and chooses the width
+        itself, spending whatever is left after the columns are placed.
+        On a list of narrow columns that means wide gaps and a row
+        strung right across the panel.</p>
+        <p>The lever is the arithmetic, not an attribute. Give the last
+        column more width than the row can hold and there is no slack to
+        spend: every separator falls to its two-character minimum and
+        that column truncates at the right margin. <code>WRKOBJTM</code>
+        and <code>WRKTSKTM</code> are the worked examples — text columns
+        at 48, 50, 92 and 100 characters on an eighty-column list,
+        <code>WRKTSKTM</code>&#39;s first view asking for 121 characters of
+        column before separators.</p></li>
+        <li><p><strong><code>MAXWIDTH=&#39;*&#39;</code> does the opposite of
+        what it reads like.</strong> <em>&quot;If &#39;*&#39; is coded, the remainder
+        of the area width is used for the column&quot;</em> — but the
+        remainder is what is left <strong>after</strong> UIM has placed
+        the separators, so the <code>&#39;*&#39;</code> column hands UIM the
+        slack rather than denying it. The gaps go wide and the column
+        absorbs the loss. No panel in these repos uses it.</p>
+        <p>It has a second cost that only shows up later: a
+        <code>&#39;*&#39;</code> column may not sit inside a
+        <code>:LISTGRP</code>, and the compiler says so at the point you
+        reach for a group to fix the spacing <code>&#39;*&#39;</code>
+        caused.</p></li>
+        <li><p><strong><code>:LISTGRP</code> is not the answer to column
+        spacing, and is rarely the answer to anything here.</strong> It
+        carries <code>COLSEP=N</code>, which is the only
+        <em>attribute</em> that sets a separator width, so it looks like
+        the fix — but it is the expensive route to what the paragraph
+        above gets for free, and it is worth knowing why before reaching
+        for it:</p>
         <ul>
-        <li><strong>the action column</strong> — the <code>Opt</code>
-        field of a work-with panel;</li>
-        <li><strong>any column with <code>MAXWIDTH=&#39;*&#39;</code></strong> —
-        which is usually the text column, the one already there to soak
-        up the remainder.</li>
-        </ul>
-        <p>So the typical work-with list ends up <code>Opt</code>, then
-        the group, then <code>Text</code>, and <code>COLSEP</code>
-        governs only the gaps <em>inside</em> the group: &quot;This attribute
-        does not affect the space between list column groups and other
-        list columns.&quot;</p>
-        <p><strong>Grouping moves the help up to the group — it does not
+        <li><strong>Grouping moves the help up to the group; it does not
         add a level.</strong> <code>HELP=</code> is required on
         <code>:LISTGRP</code> and <strong>forbidden</strong> on a
-        <code>:LISTCOL</code> inside one; outside a group it is required
-        on the column. From the manual: <em>&quot;The HELP attribute is not
+        <code>:LISTCOL</code> inside one: <em>&quot;The HELP attribute is not
         allowed if the column is part of a list column group defined by
         the LISTGRP tag, but is required if the column is not part of a
-        group.&quot;</em></p>
-        <p>So the four columns pulled into a group to fix their spacing
-        lose the four help modules they had, and share one. <strong>That
-        is the real price of <code>COLSEP</code></strong>, and it is
-        worth weighing before grouping: a wide separator costs screen, a
-        group costs contextual help. The compiler charges it in two
-        instalments — first the missing <code>HELP</code> on the group,
-        then
+        group.&quot;</em> So four columns pulled into a group to fix their
+        spacing lose their four help modules and share one.</li>
+        <li><strong>Neither the action column nor a
+        <code>MAXWIDTH=&#39;*&#39;</code> column may be in a group</strong>, so
+        <code>Opt</code> and the text column stay outside it either
+        way.</li>
+        <li><strong><code>COLSEP</code> governs only the gaps
+        <em>inside</em> the group.</strong> <em>&quot;This attribute does not
+        affect the space between list column groups and other list
+        columns.&quot;</em> The gaps on either side are still UIM&#39;s to
+        choose.</li>
+        </ul>
+        <p>The compiler charges the help rules in two instalments —
+        first the missing <code>HELP</code> on the group, then
         <code>HELP attribute on LISTCOL tag already specified on LISTGRP tag</code>
-        on the first column — so a fix that only answers the first
+        on the first column — so a fix that answers only the first
         message is not finished.</p>
-        <p>Fold the columns&#39; text into the group module rather than
-        dropping it. A <code>:DL COMPACT.</code> with the column heading
-        as <code>:DT.</code> and its prose as <code>:DD.</code> reads as
-        one panel covering the group, and no wording is lost.</p></li>
+        <p>Use a group when the columns genuinely belong under one
+        heading and one help panel. Do not use one to control
+        spacing.</p></li>
         </ul>
         <hr />
         <h2 id="7-application-display-programming-uim">7. Application

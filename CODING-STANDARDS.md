@@ -1772,43 +1772,54 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   `Merge Env` over `Merge Environment`. A two-line heading costs a list line,
   which at `LAYOUT=6` is six entries a page.
 
-- **`COLSEP` on a `:LISTGRP` is the only way to set the gap between list
-  columns.** Left alone, UIM calculates it — the manual says the result is
-  "between 2 and 5 spaces" — and a panel of narrow columns gets the wide end,
-  strung right across the screen. Nothing on `:LIST` or `:LISTCOL` overrides
-  it, so a group is how the columns get told, and the group needs no heading to
-  do its job.
+- **Size every list column, and oversize the last one on purpose.** UIM
+  maintains a separator of *"two to five characters"* between list columns and
+  chooses the width itself, spending whatever is left after the columns are
+  placed. On a list of narrow columns that means wide gaps and a row strung
+  right across the panel.
 
-  Two columns cannot go inside the group, both by rules the manual states
-  outright, and both worth knowing before the group is written rather than
-  after:
+  The lever is the arithmetic, not an attribute. Give the last column more
+  width than the row can hold and there is no slack to spend: every separator
+  falls to its two-character minimum and that column truncates at the right
+  margin. `WRKOBJTM` and `WRKTSKTM` are the worked examples — text columns at
+  48, 50, 92 and 100 characters on an eighty-column list, `WRKTSKTM`'s first
+  view asking for 121 characters of column before separators.
 
-  - **the action column** — the `Opt` field of a work-with panel;
-  - **any column with `MAXWIDTH='*'`** — which is usually the text column, the
-    one already there to soak up the remainder.
+- **`MAXWIDTH='*'` does the opposite of what it reads like.** *"If '\*' is
+  coded, the remainder of the area width is used for the column"* — but the
+  remainder is what is left **after** UIM has placed the separators, so the
+  `'*'` column hands UIM the slack rather than denying it. The gaps go wide and
+  the column absorbs the loss. No panel in these repos uses it.
 
-  So the typical work-with list ends up `Opt`, then the group, then `Text`, and
-  `COLSEP` governs only the gaps *inside* the group: "This attribute does not
-  affect the space between list column groups and other list columns."
+  It has a second cost that only shows up later: a `'*'` column may not sit
+  inside a `:LISTGRP`, and the compiler says so at the point you reach for a
+  group to fix the spacing `'*'` caused.
 
-  **Grouping moves the help up to the group — it does not add a level.**
-  `HELP=` is required on `:LISTGRP` and **forbidden** on a `:LISTCOL` inside
-  one; outside a group it is required on the column. From the manual: *"The
-  HELP attribute is not allowed if the column is part of a list column group
-  defined by the LISTGRP tag, but is required if the column is not part of a
-  group."*
+- **`:LISTGRP` is not the answer to column spacing, and is rarely the answer
+  to anything here.** It carries `COLSEP=N`, which is the only *attribute* that
+  sets a separator width, so it looks like the fix — but it is the expensive
+  route to what the paragraph above gets for free, and it is worth knowing why
+  before reaching for it:
 
-  So the four columns pulled into a group to fix their spacing lose the four
-  help modules they had, and share one. **That is the real price of `COLSEP`**,
-  and it is worth weighing before grouping: a wide separator costs screen, a
-  group costs contextual help. The compiler charges it in two instalments —
-  first the missing `HELP` on the group, then `HELP attribute on LISTCOL tag
-  already specified on LISTGRP tag` on the first column — so a fix that only
-  answers the first message is not finished.
+  - **Grouping moves the help up to the group; it does not add a level.**
+    `HELP=` is required on `:LISTGRP` and **forbidden** on a `:LISTCOL` inside
+    one: *"The HELP attribute is not allowed if the column is part of a list
+    column group defined by the LISTGRP tag, but is required if the column is
+    not part of a group."* So four columns pulled into a group to fix their
+    spacing lose their four help modules and share one.
+  - **Neither the action column nor a `MAXWIDTH='*'` column may be in a
+    group**, so `Opt` and the text column stay outside it either way.
+  - **`COLSEP` governs only the gaps *inside* the group.** *"This attribute
+    does not affect the space between list column groups and other list
+    columns."* The gaps on either side are still UIM's to choose.
 
-  Fold the columns' text into the group module rather than dropping it. A
-  `:DL COMPACT.` with the column heading as `:DT.` and its prose as `:DD.`
-  reads as one panel covering the group, and no wording is lost.
+  The compiler charges the help rules in two instalments — first the missing
+  `HELP` on the group, then `HELP attribute on LISTCOL tag already specified on
+  LISTGRP tag` on the first column — so a fix that answers only the first
+  message is not finished.
+
+  Use a group when the columns genuinely belong under one heading and one help
+  panel. Do not use one to control spacing.
 
 ---
 
