@@ -1891,6 +1891,42 @@ DELETE +
         wrong place entirely. Escape with the operation and the
         <code>SQLCODE</code> in the text; <code>CPF9898</code> carries
         arbitrary text and needs no message file of your own.</p></li>
+        <li><p><strong>Match names with <code>LIKE</code>, not
+        <code>REGEXP_LIKE</code>.</strong> A regular expression is the
+        better-looking tool — it anchors with <code>^</code>, ignores
+        trailing blanks without help, and needs no padding — and it is
+        the wrong one here, for three reasons in descending order of
+        importance:</p>
+        <ul>
+        <li><strong><code>LIKE</code> can drive an index and
+        <code>REGEXP_LIKE</code> cannot.</strong> The <em>Database
+        Performance and Query Optimization</em> manual lists the
+        predicates the optimizer will match against an existing index —
+        <code>=</code>, <code>&lt;&gt;</code>,
+        <strong><code>LIKE</code></strong>, <code>IN</code> — and
+        <code>REGEXP_LIKE</code> appears nowhere in that book at all. It
+        is a predicate over the column, so it defeats a keyed index
+        exactly the way <code>TRIM(column)</code> does. A derived key
+        index cannot rescue it either: the pattern is a run-time value,
+        so there is no fixed expression to index.</li>
+        <li><strong>It needs ICU installed.</strong> From the <em>SQL
+        Reference</em>: <em>&quot;In order to use the REGEXP_LIKE predicate,
+        the International Components for Unicode (ICU) option must be
+        installed.&quot;</em> That is a deployment prerequisite for what is
+        otherwise a name comparison.</li>
+        <li><strong>The anchoring is not the win it looks like.</strong>
+        <code>&#39;^NAME&#39;</code> also matches <code>NAMEX</code>, so an
+        exact match needs <code>&#39;^NAME *$&#39;</code> — the same padding
+        logic in a different notation.</li>
+        </ul>
+        <p>So: exact name, pad the pattern to the column width and use
+        <code>LIKE</code>, because <code>LIKE</code> does not ignore
+        trailing blanks the way <code>=</code> does. Generic name,
+        translate the trailing <code>*</code> to <code>%</code> and
+        leave it unpadded — a leading constant keeps the index. Reach
+        for <code>REGEXP_LIKE</code> when the pattern genuinely needs
+        more than <code>%</code> and <code>_</code> can express, and
+        expect to pay for the scan.</p></li>
         </ul>
         <h3 id="47-null-handling">4.7 NULL handling</h3>
         <ul>
