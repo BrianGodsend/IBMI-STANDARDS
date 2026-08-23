@@ -1772,6 +1772,32 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   `Merge Env` over `Merge Environment`. A two-line heading costs a list line,
   which at `LAYOUT=6` is six entries a page.
 
+- **`COLSEP` on a `:LISTGRP` is the only way to set the gap between list
+  columns.** Left alone, UIM calculates it — the manual says the result is
+  "between 2 and 5 spaces" — and a panel of narrow columns gets the wide end,
+  strung right across the screen. Nothing on `:LIST` or `:LISTCOL` overrides
+  it, so a group is how the columns get told, and the group needs no heading to
+  do its job.
+
+  Two columns cannot go inside the group, both by rules the manual states
+  outright, and both worth knowing before the group is written rather than
+  after:
+
+  - **the action column** — the `Opt` field of a work-with panel;
+  - **any column with `MAXWIDTH='*'`** — which is usually the text column, the
+    one already there to soak up the remainder.
+
+  So the typical work-with list ends up `Opt`, then the group, then `Text`, and
+  `COLSEP` governs only the gaps *inside* the group: "This attribute does not
+  affect the space between list column groups and other list columns."
+
+  **`HELP=` is required on `:LISTGRP` for a display panel** — not optional the
+  way it is for the group heading text, and not waived when the group has no
+  heading. A group carrying no heading has nothing on the panel for the cursor
+  to sit on, so that help module is unreachable in practice and is written to
+  satisfy the compiler. Write it anyway and keep it honest; the alternative is
+  a member that will not compile.
+
 ---
 
 ## 7. Application display programming (UIM)

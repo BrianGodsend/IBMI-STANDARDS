@@ -2485,6 +2485,37 @@ MODE   = *RSTD</code></pre>
         <code>Merge Environment</code>. A two-line heading costs a list
         line, which at <code>LAYOUT=6</code> is six entries a
         page.</p></li>
+        <li><p><strong><code>COLSEP</code> on a <code>:LISTGRP</code> is
+        the only way to set the gap between list columns.</strong> Left
+        alone, UIM calculates it — the manual says the result is
+        &quot;between 2 and 5 spaces&quot; — and a panel of narrow columns gets
+        the wide end, strung right across the screen. Nothing on
+        <code>:LIST</code> or <code>:LISTCOL</code> overrides it, so a
+        group is how the columns get told, and the group needs no
+        heading to do its job.</p>
+        <p>Two columns cannot go inside the group, both by rules the
+        manual states outright, and both worth knowing before the group
+        is written rather than after:</p>
+        <ul>
+        <li><strong>the action column</strong> — the <code>Opt</code>
+        field of a work-with panel;</li>
+        <li><strong>any column with <code>MAXWIDTH=&#39;*&#39;</code></strong> —
+        which is usually the text column, the one already there to soak
+        up the remainder.</li>
+        </ul>
+        <p>So the typical work-with list ends up <code>Opt</code>, then
+        the group, then <code>Text</code>, and <code>COLSEP</code>
+        governs only the gaps <em>inside</em> the group: &quot;This attribute
+        does not affect the space between list column groups and other
+        list columns.&quot;</p>
+        <p><strong><code>HELP=</code> is required on
+        <code>:LISTGRP</code> for a display panel</strong> — not
+        optional the way it is for the group heading text, and not
+        waived when the group has no heading. A group carrying no
+        heading has nothing on the panel for the cursor to sit on, so
+        that help module is unreachable in practice and is written to
+        satisfy the compiler. Write it anyway and keep it honest; the
+        alternative is a member that will not compile.</p></li>
         </ul>
         <hr />
         <h2 id="7-application-display-programming-uim">7. Application
