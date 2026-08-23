@@ -1791,12 +1791,24 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   `COLSEP` governs only the gaps *inside* the group: "This attribute does not
   affect the space between list column groups and other list columns."
 
-  **`HELP=` is required on `:LISTGRP` for a display panel** — not optional the
-  way it is for the group heading text, and not waived when the group has no
-  heading. A group carrying no heading has nothing on the panel for the cursor
-  to sit on, so that help module is unreachable in practice and is written to
-  satisfy the compiler. Write it anyway and keep it honest; the alternative is
-  a member that will not compile.
+  **Grouping moves the help up to the group — it does not add a level.**
+  `HELP=` is required on `:LISTGRP` and **forbidden** on a `:LISTCOL` inside
+  one; outside a group it is required on the column. From the manual: *"The
+  HELP attribute is not allowed if the column is part of a list column group
+  defined by the LISTGRP tag, but is required if the column is not part of a
+  group."*
+
+  So the four columns pulled into a group to fix their spacing lose the four
+  help modules they had, and share one. **That is the real price of `COLSEP`**,
+  and it is worth weighing before grouping: a wide separator costs screen, a
+  group costs contextual help. The compiler charges it in two instalments —
+  first the missing `HELP` on the group, then `HELP attribute on LISTCOL tag
+  already specified on LISTGRP tag` on the first column — so a fix that only
+  answers the first message is not finished.
+
+  Fold the columns' text into the group module rather than dropping it. A
+  `:DL COMPACT.` with the column heading as `:DT.` and its prose as `:DD.`
+  reads as one panel covering the group, and no wording is lost.
 
 ---
 
