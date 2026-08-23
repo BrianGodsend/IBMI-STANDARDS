@@ -2308,6 +2308,22 @@ rule.
 
   `&STSTXT` is declared at the `FMT` width, so the total is right whatever the
   text inside it happens to be.
+- **No apostrophe in message text.** A `QREXSRC` message-file builder hands
+  `MSG` and `SECLVL` to `ADDMSGD` inside CL quotes, so an apostrophe in the text
+  closes the CL string early and the command fails with
+
+  ```text
+  CPF0001  Error found on ADDMSGD command.
+  ```
+
+  which names the command and says nothing about quoting. It surfaces on the
+  *one* message that has one, so a file of forty builds thirty-nine and stops.
+
+  Doubling it for CL does work, and costs **four** apostrophes in a REXX
+  literal — `job''''s` yields `job''s`, which CL renders as `job's`. Reword
+  instead: "the job library list", not "the job's library list". The
+  possessive earns nothing in message text and the quadruple apostrophe is a
+  trap for whoever edits the line next.
 - Escapes propagate (FWDMSGH pattern / `%target('*PGMBDY': 1)`) so the original
   failure reaches the user.
 

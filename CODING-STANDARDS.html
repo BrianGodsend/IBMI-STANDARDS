@@ -3255,6 +3255,22 @@ sltCri.dlgVarNam = @XFENVWRK_VAR_ENV;</code></pre>
         <p><code>&amp;STSTXT</code> is declared at the <code>FMT</code>
         width, so the total is right whatever the text inside it happens
         to be.</p></li>
+        <li><p><strong>No apostrophe in message text.</strong> A
+        <code>QREXSRC</code> message-file builder hands <code>MSG</code>
+        and <code>SECLVL</code> to <code>ADDMSGD</code> inside CL
+        quotes, so an apostrophe in the text closes the CL string early
+        and the command fails with</p>
+        <pre class="text"><code>CPF0001  Error found on ADDMSGD command.</code></pre>
+        <p>which names the command and says nothing about quoting. It
+        surfaces on the <em>one</em> message that has one, so a file of
+        forty builds thirty-nine and stops.</p>
+        <p>Doubling it for CL does work, and costs <strong>four</strong>
+        apostrophes in a REXX literal — <code>job&#39;&#39;&#39;&#39;s</code> yields
+        <code>job&#39;&#39;s</code>, which CL renders as <code>job&#39;s</code>.
+        Reword instead: &quot;the job library list&quot;, not &quot;the job&#39;s library
+        list&quot;. The possessive earns nothing in message text and the
+        quadruple apostrophe is a trap for whoever edits the line
+        next.</p></li>
         <li><p>Escapes propagate (FWDMSGH pattern /
         <code>%target(&#39;*PGMBDY&#39;: 1)</code>) so the original failure
         reaches the user.</p></li>
