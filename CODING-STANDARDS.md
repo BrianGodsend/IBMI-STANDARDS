@@ -1288,6 +1288,56 @@ CREATE OR REPLACE TABLE ... (
 - Alias every table; qualify every column reference.
 - `--` for inline comments inside SQL bodies; `/* */` for the member header.
 
+- **A `CASE` search-condition may not contain a subquery.** From the *SQL
+  Reference*, under `search-condition` in the CASE expression syntax:
+
+  > The search-condition must not include a subquery in an EXISTS or IN
+  > predicate.
+
+  So `CASE WHEN EXISTS (SELECT …) THEN … END` — idiomatic in most dialects and
+  the obvious way to flag a row — is simply not available here. Neither is
+  `CASE WHEN x IN (SELECT …)`.
+
+  **The diagnostic names the wrong thing, which is what makes this expensive.**
+  Db2 reports it as `SQL0104`:
+
+  ```text
+  Token EXISTS was not valid. Valid tokens: <IDENTIFIER> <INTEGER>
+    <CHARSTRING> <GRAPHSTRING>.
+  ```
+
+  Nothing about CASE, nothing about subqueries — just a token the parser did
+  not want, and a list of value-expression starters that reads as though the
+  `EXISTS` keyword itself were unrecognized. In **dynamic** SQL there is no
+  precompile to catch it either, so the first sign is a `PREPARE` that fails at
+  run time.
+
+  Rewrite as a `LEFT JOIN` against a derived table and test the joined column
+  for `NULL`:
+
+  ```sql
+  SELECT a.name
+       , CASE WHEN d.nam IS NULL THEN '1' ELSE '0' END
+    FROM xfxrf a
+    LEFT JOIN (SELECT DISTINCT z.environment AS env
+                    , TRIM(z.WHFNAM) AS nam
+                 FROM xfxrf z WHERE z.environment = ?) d
+      ON d.env = a.environment
+     AND d.nam = TRIM(a.WHPNAM)
+  ```
+
+  This is usually the better plan anyway — one pass instead of a correlated
+  subquery per row — so it is not a workaround being tolerated. Restrict the
+  derived table by the same predicate the outer query uses, and remember the
+  marker it adds comes **first**, because `FROM` is parsed before `WHERE`.
+
+- **Test `sqlcode` after `PREPARE` and `OPEN`, and treat a failure as a
+  failure.** A dynamic statement that will not prepare fetches no rows, so code
+  that only checks the `FETCH` reports a broken query as an empty result — and
+  an empty result looks like a data problem, which sends the next person to the
+  wrong place entirely. Escape with the operation and the `SQLCODE` in the text;
+  `CPF9898` carries arbitrary text and needs no message file of your own.
+
 ### 4.7 NULL handling
 
 - **Use `COALESCE`, not `IFNULL`.** Db2 documents them as equivalent for the

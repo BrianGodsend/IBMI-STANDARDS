@@ -1836,12 +1836,61 @@ DELETE +
         </ul>
         <h3 id="46-style">4.6 Style</h3>
         <ul>
-        <li>Keywords UPPERCASE; identifiers lowercase; 2-space indent;
-        leading commas on continuation lines (both column lists and
-        select lists).</li>
-        <li>Alias every table; qualify every column reference.</li>
-        <li><code>--</code> for inline comments inside SQL bodies;
-        <code>/* */</code> for the member header.</li>
+        <li><p>Keywords UPPERCASE; identifiers lowercase; 2-space
+        indent; leading commas on continuation lines (both column lists
+        and select lists).</p></li>
+        <li><p>Alias every table; qualify every column
+        reference.</p></li>
+        <li><p><code>--</code> for inline comments inside SQL bodies;
+        <code>/* */</code> for the member header.</p></li>
+        <li><p><strong>A <code>CASE</code> search-condition may not
+        contain a subquery.</strong> From the <em>SQL Reference</em>,
+        under <code>search-condition</code> in the CASE expression
+        syntax:</p>
+        <blockquote>
+        <p>The search-condition must not include a subquery in an EXISTS
+        or IN predicate.</p>
+        </blockquote>
+        <p>So <code>CASE WHEN EXISTS (SELECT …) THEN … END</code> —
+        idiomatic in most dialects and the obvious way to flag a row —
+        is simply not available here. Neither is
+        <code>CASE WHEN x IN (SELECT …)</code>.</p>
+        <p><strong>The diagnostic names the wrong thing, which is what
+        makes this expensive.</strong> Db2 reports it as
+        <code>SQL0104</code>:</p>
+        <pre class="text"><code>Token EXISTS was not valid. Valid tokens: &lt;IDENTIFIER&gt; &lt;INTEGER&gt;
+  &lt;CHARSTRING&gt; &lt;GRAPHSTRING&gt;.</code></pre>
+        <p>Nothing about CASE, nothing about subqueries — just a token
+        the parser did not want, and a list of value-expression starters
+        that reads as though the <code>EXISTS</code> keyword itself were
+        unrecognized. In <strong>dynamic</strong> SQL there is no
+        precompile to catch it either, so the first sign is a
+        <code>PREPARE</code> that fails at run time.</p>
+        <p>Rewrite as a <code>LEFT JOIN</code> against a derived table
+        and test the joined column for <code>NULL</code>:</p>
+        <div class="sourceCode" id="cb32"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> a.name</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>     , <span class="cf">CASE</span> <span class="cf">WHEN</span> d.nam <span class="kw">IS</span> <span class="kw">NULL</span> <span class="cf">THEN</span> <span class="st">&#39;1&#39;</span> <span class="cf">ELSE</span> <span class="st">&#39;0&#39;</span> <span class="cf">END</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> xfxrf a</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">LEFT</span> <span class="kw">JOIN</span> (<span class="kw">SELECT</span> <span class="kw">DISTINCT</span> z.environment <span class="kw">AS</span> env</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>                  , <span class="fu">TRIM</span>(z.WHFNAM) <span class="kw">AS</span> nam</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>               <span class="kw">FROM</span> xfxrf z <span class="kw">WHERE</span> z.environment <span class="op">=</span> ?) d</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">ON</span> d.env <span class="op">=</span> a.environment</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">AND</span> d.nam <span class="op">=</span> <span class="fu">TRIM</span>(a.WHPNAM)</span></code></pre></div>
+        <p>This is usually the better plan anyway — one pass instead of
+        a correlated subquery per row — so it is not a workaround being
+        tolerated. Restrict the derived table by the same predicate the
+        outer query uses, and remember the marker it adds comes
+        <strong>first</strong>, because <code>FROM</code> is parsed
+        before <code>WHERE</code>.</p></li>
+        <li><p><strong>Test <code>sqlcode</code> after
+        <code>PREPARE</code> and <code>OPEN</code>, and treat a failure
+        as a failure.</strong> A dynamic statement that will not prepare
+        fetches no rows, so code that only checks the <code>FETCH</code>
+        reports a broken query as an empty result — and an empty result
+        looks like a data problem, which sends the next person to the
+        wrong place entirely. Escape with the operation and the
+        <code>SQLCODE</code> in the text; <code>CPF9898</code> carries
+        arbitrary text and needs no message file of your own.</p></li>
         </ul>
         <h3 id="47-null-handling">4.7 NULL handling</h3>
         <ul>
@@ -1868,8 +1917,8 @@ DELETE +
         <li><p><strong>Test for null and blank together</strong> when a
         value is &quot;missing or empty&quot;, because a service may express the
         same idea either way:</p>
-        <div class="sourceCode" id="cb31"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="cf">CASE</span> <span class="cf">WHEN</span> <span class="fu">COALESCE</span>(<span class="fu">TRIM</span>(a.text), <span class="st">&#39;&#39;</span>) <span class="op">&lt;&gt;</span> <span class="st">&#39;&#39;</span> <span class="cf">THEN</span> a.text</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>     <span class="cf">ELSE</span> <span class="fu">COALESCE</span>(b.text, <span class="st">&#39;&#39;</span>) <span class="cf">END</span></span></code></pre></div></li>
+        <div class="sourceCode" id="cb33"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="cf">CASE</span> <span class="cf">WHEN</span> <span class="fu">COALESCE</span>(<span class="fu">TRIM</span>(a.text), <span class="st">&#39;&#39;</span>) <span class="op">&lt;&gt;</span> <span class="st">&#39;&#39;</span> <span class="cf">THEN</span> a.text</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>     <span class="cf">ELSE</span> <span class="fu">COALESCE</span>(b.text, <span class="st">&#39;&#39;</span>) <span class="cf">END</span></span></code></pre></div></li>
         <li><p>Weigh the blast radius, not the row. A
         <code>NOT NULL</code> violation fails the whole statement, and
         where that statement is one step of a build that escapes on
@@ -1893,7 +1942,7 @@ DELETE +
         <p>Where a sort has to treat a value as &quot;no position&quot; rather
         than as a low one, <code>NULLIF(column, 0)</code> does it on its
         own:</p>
-        <div class="sourceCode" id="cb32"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> <span class="fu">NULLIF</span>(a.libl_position, <span class="dv">0</span>), a.name</span></code></pre></div>
+        <div class="sourceCode" id="cb34"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> <span class="fu">NULLIF</span>(a.libl_position, <span class="dv">0</span>), a.name</span></code></pre></div>
         <p>Rows with <code>0</code> sort to the end because they became
         null, and the rest sort normally. Adding <code>NULLS LAST</code>
         to that is a syntax error, and adding <code>ASC</code> first
