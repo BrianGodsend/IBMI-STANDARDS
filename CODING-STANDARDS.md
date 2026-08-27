@@ -1742,10 +1742,15 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   **Where the text is a list, tag it as one and the question does not arise.**
   A run of values in an `:XMP.` block is the usual way a column-one period
   gets written in the first place, and the block was rarely the right tag for
-  it: an `:OL.`/`:LI.` puts the text after the tag, so no item starts in
-  column one, and it numbers the items — which is worth having where the
-  order is load-bearing rather than incidental. Reach for `&period.` when the
-  text genuinely is a sample.
+  it: a `:UL.`/`:LI.` puts the text after the tag, so no item starts in
+  column one. Reach for `&period.` when the text genuinely is a sample.
+
+  **Prefer `:UL.` to `:OL.`.** The numbers an ordered list draws are a claim
+  that the position of an item means something — a step, a rank, a count the
+  prose refers back to. A list that is merely *in* an order does not need
+  them, and getting that wrong is not neutral: it invites the reader to look
+  for a significance that is not there. Order the items and say so in the
+  lead-in sentence instead.
 
   Picking the list is the same test as everywhere else in this section.
   `:PARML.` is for the values a **parameter** may be set to, so a list of
