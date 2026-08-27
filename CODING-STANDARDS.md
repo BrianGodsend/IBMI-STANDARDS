@@ -1712,6 +1712,54 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
      :EDL.
      ```
 
+- **A period in column one is a control word — use `&period.` instead.** UIM
+  reads column one for markup before it reads the line as text, so a line
+  beginning with `.` is a control word (`.im`, and `.*` for a comment). The
+  compiler rejects the rest of the word as one it does not know:
+
+  ```text
+  .savf    .bin    .    .svf    .dta    .data
+  CPD5A02  Control word SAVF not defined.
+  ```
+
+  Which names a control word nobody wrote, on a line that is plainly text —
+  and inside an `:XMP.` block, where literal text is exactly what was asked
+  for. The block does not suspend control word processing; nothing does.
+
+  The manual supplies a symbol for precisely this: `&period.` *"Creates a
+  period (.) in the text. This symbol is used when a period is needed in column
+  one of the text without triggering control word processing."* Only the
+  leading period needs it, and it resolves to one character, so the column
+  alignment of a sample survives:
+
+  ```text
+  &period.savf    .bin    .    .svf    .dta    .data
+  ```
+
+  Prefer this to indenting the line, which fixes the compile by changing the
+  text.
+
+  **Where the text is a list, tag it as one and the question does not arise.**
+  A run of values in an `:XMP.` block is the usual way a column-one period
+  gets written in the first place, and the block was rarely the right tag for
+  it: an `:OL.`/`:LI.` puts the text after the tag, so no item starts in
+  column one, and it numbers the items — which is worth having where the
+  order is load-bearing rather than incidental. Reach for `&period.` when the
+  text genuinely is a sample.
+
+  Picking the list is the same test as everywhere else in this section.
+  `:PARML.` is for the values a **parameter** may be set to, so a list of
+  things the user never types is not one, however value-like it looks.
+  `:DL.` pairs a term with a description, so it earns its place only where
+  the descriptions are real — a list whose items are self-explanatory would
+  need five invented `:DD.`s to carry one that is not, which is worse than
+  the plainer tag.
+
+  **`&slr.` is the same thing for a right slash**, and it is worth knowing
+  before it is needed: a `/` in column one *compiles*, then breaks the member
+  when the source is part of a batch input stream, because the reader takes it
+  for `/*` or `//`. That failure arrives nowhere near the panel group.
+
 - **Let the tags do the formatting.** UIM renders text according to the tag that
   contains it — lists, definition terms, parameter values and keywords all carry
   their own appearance. **Tag the text correctly and the highlighting takes care
