@@ -1191,16 +1191,50 @@ BEGIN
   DECLARE sqlStmt VARCHAR(5000);
 
   --Resolve the DFTRDBCOL/CURRENT SCHEMA/*CURLIB reference
-  CREATE OR REPLACE TABLE bldobj_temp_resolve_dftrdbcol_schema (fld1 char(1));
+  CREATE OR REPLACE TABLE bldobj_temp_resolve_dftrdbcol_schema_tmtsk
+      (fld1 char(1));
   GET DIAGNOSTICS CONDITION 1 tblLib = DB2_ORDINAL_TOKEN_2;
   SET tblLib = TRIM(tblLib);
   SET sqlStmt = '
-      DROP TABLE ' || tblLib || '.bldobj_temp_resolve_dftrdbcol_schema';
+      DROP TABLE ' || tblLib
+          || '.bldobj_temp_resolve_dftrdbcol_schema_tmtsk';
   EXECUTE IMMEDIATE sqlStmt;
   SET tblRef = tblLib || '.' || tblNam;
   ...
 END;
 ```
+
+- **The probe table's name ends with the MEMBER's name, and that is not
+  optional.** The trick above works by creating a throwaway table with no
+  schema qualifier, letting the resolved schema come back in the diagnostic,
+  and dropping it again — so the name is a literal, and for years it was the
+  *same* literal in every member.
+
+  **Two members building at once in one library collide on it.** The window is
+  small and the failure is not: the second `CREATE OR REPLACE` replaces the
+  first member's probe table, and the first member's `DROP` then removes a
+  table the second is still relying on. Neither member did anything wrong and
+  neither names the other in its error.
+
+  Append the member name — `bldobj_temp_resolve_dftrdbcol_schema_xfbld` — and
+  the collision is impossible rather than unlikely. There is nothing to
+  coordinate and no lock to take.
+
+  **Break both statements across two lines while you are there.** The base
+  `CREATE` line is already 78 characters in an 80-column file, so any suffix
+  at all truncates it (§1.4), and a truncated `CREATE OR REPLACE TABLE` is
+  exactly the balanced-quotes/C-compile-error signature described there. The
+  two-line form is used in every member regardless of how short its name is,
+  so nobody has to measure:
+
+  ```sql
+  CREATE OR REPLACE TABLE bldobj_temp_resolve_dftrdbcol_schema_xfbld
+      (fld1 char(1));
+  ...
+  SET sqlStmt = '
+      DROP TABLE ' || tblLib
+          || '.bldobj_temp_resolve_dftrdbcol_schema_xfbld';
+  ```
 
 - Build each statement into `sqlStmt` and `EXECUTE IMMEDIATE` it.
 - Before re-creating a table, loop the `qsys2.sysindexes` / `qsys2.systrigger`
