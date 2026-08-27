@@ -1996,6 +1996,55 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   Use a group when the columns genuinely belong under one heading and one help
   panel. Do not use one to control spacing.
 
+- **A function key whose legend changes is two `:KEYI` tags for the one key,
+  each with a complementary `COND=`.** This is the only way to do it, and the
+  obvious way does not exist: the manual is explicit that key-description text
+  *"must appear on the same or next line as the tag and can only contain the
+  reverse text (RT) tag"* — so no `&variable.` substitution, and the legend
+  cannot be built by the program.
+
+  ```text
+  :KEYI    KEY=f14
+           COND=notexcl
+           PRIORITY=1
+           HELP='WRKXRFXF/HLPF14'
+           ACTION='return 14'
+           VARUPD=no
+           .F14=Exclude duplicates
+
+  :KEYI    KEY=f14
+           COND=isexcl
+           …
+           .F14=Include duplicates
+  ```
+
+  with a dialog variable the program writes on the panel's header record, and
+  two conditions over it:
+
+  ```text
+  :COND    NAME=notexcl
+           EXPR='hexcl *EQ "0"'.
+  :COND    NAME=isexcl
+           EXPR='hexcl *EQ "1"'.
+  ```
+
+  **Naming the same key twice in one `:KEYL` is accepted** — `COND=` says the
+  key *"is in effect on the panel only if the condition specified is true"*,
+  and complementary conditions mean exactly one tag is ever in effect, so
+  exactly one legend is drawn. The manual does not say in so many words that a
+  key may appear twice; `WRKXRFXF` compiles and runs this way, which is the
+  evidence for it.
+
+  **Word the legend as what pressing it WILL do, not as what the state is.**
+  `F14=Exclude duplicates` on an expanded list and `F14=Include duplicates` on
+  a collapsed one. A legend naming the current state reads as a label rather
+  than an action, and leaves the user to work out which way the key goes.
+
+  The state variable is a dialog variable like any other, so it belongs in a
+  `:VARRCD` and in the matching RPG structure — even though nothing displays
+  it. Say so in a comment at both ends; a field in a header record that never
+  appears on the panel looks like a leftover.
+
 ---
 
 ## 7. Application display programming (UIM)
