@@ -1365,6 +1365,40 @@ CREATE OR REPLACE TABLE ... (
   derived table by the same predicate the outer query uses, and remember the
   marker it adds comes **first**, because `FROM` is parsed before `WHERE`.
 
+  **The other rewrite is a scalar subquery in the SELECT list, tested by the
+  `CASE` as a column.** The restriction is on a subquery *inside* the
+  search-condition, not on subqueries in the statement, so lifting it one level
+  out is enough:
+
+  ```sql
+  WITH r (name, hasref) AS (
+    SELECT a.name
+         , (SELECT 1 FROM xfxrf z
+             WHERE z.environment = a.environment
+               AND z.WHFNAM = a.WHPNAM
+             FETCH FIRST 1 ROWS ONLY)
+      FROM xfxrf a
+     WHERE a.environment = ? )
+  SELECT a.name
+       , CASE WHEN a.hasref IS NOT NULL THEN '1' ELSE '0' END
+    FROM r a
+  ```
+
+  **Which of the two depends on how many rows the OUTER query returns, not on
+  how big the table is.** The `LEFT JOIN` reads its derived table once, whole,
+  before the first row can be returned — a fixed cost paid even when the outer
+  query returns four rows. The correlated subquery runs once per returned row
+  and probes an index each time.
+
+  So: a **join** where the outer query returns a large fraction of the derived
+  table, and a **scalar subquery** where it returns a handful of rows out of
+  many and the correlation is on an indexed column. An inquiry that reads one
+  object's references out of a hundred thousand is squarely the second, and
+  the `DISTINCT` the join needs is a sort on top of the scan.
+
+  Both forms are correct; the wrong one is a full read and a sort before the
+  panel draws.
+
 - **Test `sqlcode` after `PREPARE` and `OPEN`, and treat a failure as a
   failure.** A dynamic statement that will not prepare fetches no rows, so code
   that only checks the `FETCH` reports a broken query as an empty result — and
@@ -1409,6 +1443,52 @@ CREATE OR REPLACE TABLE ... (
   per selection the scan is free and the clearer predicate wins outright.
   Against a few hundred thousand the index is the difference between a list and
   a wait. Measure the table before assuming either.
+
+  **For a NAME, `BETWEEN` beats both — it settles the trade instead of making
+  it.** Exact or generic-prefix, a name match *is* a range, and a range over
+  the bare column is the strongest thing the optimizer can be handed:
+
+  | | `LIKE` | `REGEXP_LIKE` | `BETWEEN` |
+  | --- | --- | --- | --- |
+  | exact | pattern padded to the column width | `'^NAME *$'` | both ends `NAME` |
+  | generic | `'NAME%'` | `'^NAME'` | `NAME`+x'00' … `NAME`+x'FF' |
+  | drives an index | yes | **no** | yes |
+
+  It wins on all three of the things the paragraphs above are weighing:
+
+  - **No padding, so no opacity.** `BETWEEN` compares blank-padded like `=`
+    does, so an exact name against an untrimmed `CHAR(n)` is just the name at
+    both ends. That was the whole reason to reach for the regular expression.
+  - **No metacharacters, so no hazard.** An underscore in a `LIKE` pattern
+    matches *any single character*, so a name containing one silently
+    over-selects — and nothing about the result says so. A range has no
+    pattern to escape.
+  - **One predicate in static and dynamic SQL alike.** `=` for exact and
+    `LIKE` for generic means an operator that changes at run time, which a
+    built statement can do and an embedded one cannot without being written
+    twice. `BETWEEN` is the same text either way.
+
+  Seed the ends and move the prefix over the top:
+
+  ```rpgle
+  //  Generic - prefix, then the low and high seeds
+  objLo = *LOVAL;
+  objHi = *HIVAL;
+  %subst(objLo: 1: prefixLen) = %subst(nam: 1: prefixLen);
+  %subst(objHi: 1: prefixLen) = %subst(nam: 1: prefixLen);
+
+  //  Exact - a range of one
+  objLo = nam;
+  objHi = nam;
+  ```
+
+  Type both ends as the column's own type and length, so the comparison needs
+  no cast.
+
+  **Reach for `LIKE` or `REGEXP_LIKE` where the match is genuinely not a
+  prefix** — text embedded anywhere in the value, alternation, a character
+  class. Those are not ranges and no index was going to help.
+
 
 ### 4.7 NULL handling
 

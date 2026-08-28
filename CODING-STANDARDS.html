@@ -1914,7 +1914,38 @@ DELETE +
         tolerated. Restrict the derived table by the same predicate the
         outer query uses, and remember the marker it adds comes
         <strong>first</strong>, because <code>FROM</code> is parsed
-        before <code>WHERE</code>.</p></li>
+        before <code>WHERE</code>.</p>
+        <p><strong>The other rewrite is a scalar subquery in the SELECT
+        list, tested by the <code>CASE</code> as a column.</strong> The
+        restriction is on a subquery <em>inside</em> the
+        search-condition, not on subqueries in the statement, so lifting
+        it one level out is enough:</p>
+        <div class="sourceCode" id="cb34"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">WITH</span> r (name, hasref) <span class="kw">AS</span> (</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SELECT</span> a.name</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>       , (<span class="kw">SELECT</span> <span class="dv">1</span> <span class="kw">FROM</span> xfxrf z</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>           <span class="kw">WHERE</span> z.environment <span class="op">=</span> a.environment</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>             <span class="kw">AND</span> z.WHFNAM <span class="op">=</span> a.WHPNAM</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>           FETCH <span class="fu">FIRST</span> <span class="dv">1</span> <span class="kw">ROWS</span> <span class="kw">ONLY</span>)</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span> xfxrf a</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">WHERE</span> a.environment <span class="op">=</span> ? )</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> a.name</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>     , <span class="cf">CASE</span> <span class="cf">WHEN</span> a.hasref <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="cf">THEN</span> <span class="st">&#39;1&#39;</span> <span class="cf">ELSE</span> <span class="st">&#39;0&#39;</span> <span class="cf">END</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> r a</span></code></pre></div>
+        <p><strong>Which of the two depends on how many rows the OUTER
+        query returns, not on how big the table is.</strong> The
+        <code>LEFT JOIN</code> reads its derived table once, whole,
+        before the first row can be returned — a fixed cost paid even
+        when the outer query returns four rows. The correlated subquery
+        runs once per returned row and probes an index each time.</p>
+        <p>So: a <strong>join</strong> where the outer query returns a
+        large fraction of the derived table, and a <strong>scalar
+        subquery</strong> where it returns a handful of rows out of many
+        and the correlation is on an indexed column. An inquiry that
+        reads one object&#39;s references out of a hundred thousand is
+        squarely the second, and the <code>DISTINCT</code> the join
+        needs is a sort on top of the scan.</p>
+        <p>Both forms are correct; the wrong one is a full read and a
+        sort before the panel draws.</p></li>
         <li><p><strong>Test <code>sqlcode</code> after
         <code>PREPARE</code> and <code>OPEN</code>, and treat a failure
         as a failure.</strong> A dynamic statement that will not prepare
@@ -1984,7 +2015,79 @@ DELETE +
         Against a few thousand rows per selection the scan is free and
         the clearer predicate wins outright. Against a few hundred
         thousand the index is the difference between a list and a wait.
-        Measure the table before assuming either.</p></li>
+        Measure the table before assuming either.</p>
+        <p><strong>For a NAME, <code>BETWEEN</code> beats both — it
+        settles the trade instead of making it.</strong> Exact or
+        generic-prefix, a name match <em>is</em> a range, and a range
+        over the bare column is the strongest thing the optimizer can be
+        handed:</p>
+        <table>
+        <thead>
+        <tr>
+        <th></th>
+        <th><code>LIKE</code></th>
+        <th><code>REGEXP_LIKE</code></th>
+        <th><code>BETWEEN</code></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>exact</td>
+        <td>pattern padded to the column width</td>
+        <td><code>&#39;^NAME *$&#39;</code></td>
+        <td>both ends <code>NAME</code></td>
+        </tr>
+        <tr>
+        <td>generic</td>
+        <td><code>&#39;NAME%&#39;</code></td>
+        <td><code>&#39;^NAME&#39;</code></td>
+        <td><code>NAME</code>+x&#39;00&#39; … <code>NAME</code>+x&#39;FF&#39;</td>
+        </tr>
+        <tr>
+        <td>drives an index</td>
+        <td>yes</td>
+        <td><strong>no</strong></td>
+        <td>yes</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>It wins on all three of the things the paragraphs above are
+        weighing:</p>
+        <ul>
+        <li><strong>No padding, so no opacity.</strong>
+        <code>BETWEEN</code> compares blank-padded like <code>=</code>
+        does, so an exact name against an untrimmed <code>CHAR(n)</code>
+        is just the name at both ends. That was the whole reason to
+        reach for the regular expression.</li>
+        <li><strong>No metacharacters, so no hazard.</strong> An
+        underscore in a <code>LIKE</code> pattern matches <em>any single
+        character</em>, so a name containing one silently over-selects —
+        and nothing about the result says so. A range has no pattern to
+        escape.</li>
+        <li><strong>One predicate in static and dynamic SQL
+        alike.</strong> <code>=</code> for exact and <code>LIKE</code>
+        for generic means an operator that changes at run time, which a
+        built statement can do and an embedded one cannot without being
+        written twice. <code>BETWEEN</code> is the same text either
+        way.</li>
+        </ul>
+        <p>Seed the ends and move the prefix over the top:</p>
+        <pre class="rpgle"><code>//  Generic - prefix, then the low and high seeds
+objLo = *LOVAL;
+objHi = *HIVAL;
+%subst(objLo: 1: prefixLen) = %subst(nam: 1: prefixLen);
+%subst(objHi: 1: prefixLen) = %subst(nam: 1: prefixLen);
+
+//  Exact - a range of one
+objLo = nam;
+objHi = nam;</code></pre>
+        <p>Type both ends as the column&#39;s own type and length, so the
+        comparison needs no cast.</p>
+        <p><strong>Reach for <code>LIKE</code> or
+        <code>REGEXP_LIKE</code> where the match is genuinely not a
+        prefix</strong> — text embedded anywhere in the value,
+        alternation, a character class. Those are not ranges and no
+        index was going to help.</p></li>
         </ul>
         <h3 id="47-null-handling">4.7 NULL handling</h3>
         <ul>
@@ -2011,8 +2114,8 @@ DELETE +
         <li><p><strong>Test for null and blank together</strong> when a
         value is &quot;missing or empty&quot;, because a service may express the
         same idea either way:</p>
-        <div class="sourceCode" id="cb34"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="cf">CASE</span> <span class="cf">WHEN</span> <span class="fu">COALESCE</span>(<span class="fu">TRIM</span>(a.text), <span class="st">&#39;&#39;</span>) <span class="op">&lt;&gt;</span> <span class="st">&#39;&#39;</span> <span class="cf">THEN</span> a.text</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>     <span class="cf">ELSE</span> <span class="fu">COALESCE</span>(b.text, <span class="st">&#39;&#39;</span>) <span class="cf">END</span></span></code></pre></div></li>
+        <div class="sourceCode" id="cb36"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="cf">CASE</span> <span class="cf">WHEN</span> <span class="fu">COALESCE</span>(<span class="fu">TRIM</span>(a.text), <span class="st">&#39;&#39;</span>) <span class="op">&lt;&gt;</span> <span class="st">&#39;&#39;</span> <span class="cf">THEN</span> a.text</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>     <span class="cf">ELSE</span> <span class="fu">COALESCE</span>(b.text, <span class="st">&#39;&#39;</span>) <span class="cf">END</span></span></code></pre></div></li>
         <li><p>Weigh the blast radius, not the row. A
         <code>NOT NULL</code> violation fails the whole statement, and
         where that statement is one step of a build that escapes on
@@ -2036,7 +2139,7 @@ DELETE +
         <p>Where a sort has to treat a value as &quot;no position&quot; rather
         than as a low one, <code>NULLIF(column, 0)</code> does it on its
         own:</p>
-        <div class="sourceCode" id="cb35"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> <span class="fu">NULLIF</span>(a.libl_position, <span class="dv">0</span>), a.name</span></code></pre></div>
+        <div class="sourceCode" id="cb37"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> <span class="fu">NULLIF</span>(a.libl_position, <span class="dv">0</span>), a.name</span></code></pre></div>
         <p>Rows with <code>0</code> sort to the end because they became
         null, and the rest sort normally. Adding <code>NULLS LAST</code>
         to that is a syntax error, and adding <code>ASC</code> first
