@@ -76,6 +76,24 @@ Comment syntax per language:
 | --- | --- | --- |
 | RPGLE (**FREE) | `///` doc block / `//` | `//  *>  <BLDOBJ CRTDFT/>` |
 | CL, CMD | `/* ... */` with floating `+` continuation | `/*> CRTCMD ... <*/` |
+
+**In CL and CMD, EVERY line of a multi-line comment ends with `+`.** The
+continuation is not decoration on the `MODIFICATIONS` entries — it is what makes
+the comment one statement. Without it the compiler takes each line as its own,
+and the ones that do not open with `/*` are not comments at all:
+
+```text
+/*  Copies a job schedule entry to a new job name. +
+ +
+    ENTRYNBR selects which entry when the job name is not unique - +
+     the same job name may hold several entries. +
+*/
+```
+
+A blank separator line inside the block is a bare `+`, as above. **A hyphen at
+the end of a line is lost**, because the `+` takes that position — so end a line
+on a word and put the dash mid-line, or the sentence reads as a run-on after the
+next edit.
 | SQL | `/* ... */`, `--` inline | `/*> RUNSQLSTM ... <*/` |
 | PNLGRP | `.*` | `.*> <BLDOBJ CRTDFT/>` |
 | DDS (DSPF) | `␣*` doc block / `A*` | `*> CRTDSPF FILE(&O/&N) ... -` |
@@ -150,8 +168,38 @@ them on the IBM i (see `QRPGLESRC/BLDOBJ.SQLRPGLE` header for the full reference
 
 - Prefix a command with `IGN:` when its failure must not stop the build
   (e.g. `IGN:DLTF QTEMP/OUTPUT`).
-- Always end with `<BLDOBJ EOF/>` so scanning stops.
+- Always end with `<BLDOBJ EOF/>` so scanning stops. **Without it BLDOBJ reads
+  the whole member** looking for directives it will not find, on every build.
+  That is the entire job of the tag — it bounds the scan and nothing else.
+- **`CRTDFT` and `EOF` are not the same kind of tag.** `CRTDFT` inserts the
+  default create command for the member type; `EOF` stops the scan. A member
+  with neither still builds, because BLDOBJ derives the same default once it has
+  read to the end and found nothing — so `CRTDFT` buys clarity and `EOF` buys
+  the read.
 - Keep directives correct when copying a member — that *is* its build script.
+
+**Declare in the source whatever the source can declare, and the directive stays
+`CRTDFT`.** Most of what looks like it needs a spelled-out create command does
+not, because the same attribute has a source form:
+
+| Attribute | Source form | Not |
+| --- | --- | --- |
+| help panel group, help id | `HLPID` / `HLPPNLGRP` on the `CMD` statement | `CRTCMD` parameters |
+| validity checker | `VLDCKR` on the `CMD` statement | a `CRTCMD` parameter |
+| choice program | `CHOICEPGM` on the `PARM` | anything at create time |
+| bound service program | `BNDSRVPGM` on `DCLPRCOPT` (CL) | a spelled-out `CRTBNDCL` |
+| binding directory | `BNDDIR` on `DCLPRCOPT` or `ctl-opt` | a spelled-out create |
+| activation group | `ACTGRP` on `DCLPRCOPT` | a create parameter |
+
+A custom command is forced only by something with **no** source equivalent —
+`PGM()` on a command whose CPP is named differently, or the `CRTPF` keywords a
+DDS member cannot carry. Everything else belongs in the member, where a reader
+finds it.
+
+**The failure mode is silent.** An attribute that lived only on a hand-written
+build script disappears when the script is replaced by `CRTDFT`, and the object
+is created without it. A command whose `HLPPNLGRP` was on its old `CRTCMD` builds
+perfectly and has no help.
 
 **Member text lives in the source.** Source edited off-platform round-trips
 through the IFS, and a source physical file member's **text description does not
@@ -628,6 +676,20 @@ ctl-opt actgrp(*CALLER);
   compiles as either a bound program or a module.
 - Activation group: `*CALLER` for called/service-style programs; `*NEW` for
   top-level interactive programs (work-with panels, menus).
+
+**`ctl-opt` takes `BNDDIR`. It has never taken `BNDSRVPGM`.** CL's `DCLPRCOPT`
+takes both, so a CL program names a service program it binds and keeps its
+build directive at `CRTDFT` (§1.3). **An RPG member cannot** — there is no
+source form, so an RPG program or service program that must name what it binds
+needs either a binding directory or a spelled-out create command.
+
+Reach for the binding directory. A spelled-out create is a second place the
+build lives, and it is the place nobody looks.
+
+**Most of the time nothing needs naming at all.** The `Q*` system service
+programs resolve on their own — the per-program binding directories that used to
+be built for them are legacy practice, and finding one in an old build script is
+not evidence that it is still required.
 
 ### 2.3 Copybooks (`…H` members)
 
@@ -2684,6 +2746,36 @@ rule.
   This is worth a check rather than a habit, since nothing surfaces it: a byte
   scan for anything above 127 across the source directories catches it before
   the member ever reaches the system.
+
+- **Control codes in DATA you are about to display: replace the whole
+  x'00'–x'3E' range with x'3F', mark the positions, and restore after the
+  read.** This is the same byte range and the same substitution character as
+  above, in the other direction — not characters that arrived in source, but
+  characters a program is about to send to a 5250.
+
+  **The failure is worse than a bad character.** Writing a control code to the
+  display can end the program in error, and has been seen to drop the session
+  outright. So this is not a cosmetic rule; it is what keeps a display program
+  alive when it meets data it did not expect.
+
+  **The data does not have to be text for this to happen.** The case that
+  produced this was a display of an Island Pacific formatted LDA, whose program
+  option areas are *supposed* to hold character and signed numeric data and
+  overwhelmingly do. The fraction of procedures putting packed or binary values
+  there is small — a couple of percent — and depending on the value, those bytes
+  land in the control range. A display that works on almost everything is one
+  unusual caller away from killing a session.
+
+  **x'3F' is the replacement because it round-trips.** It reaches the display
+  and comes back to the program unchanged, which is what makes the substitution
+  reversible. Marking each replaced position and restoring the original after
+  reading the screen is what keeps it lossless — without that step the
+  substitution corrupts the data it was protecting.
+
+  **Replace the range, do not filter it.** The obvious instinct is to substitute
+  only the codes that actually misbehave, and it has been measured: too few of
+  x'00'–x'3E' can be displayed safely for selectivity to be worth the logic.
+  Take the whole range. The experiment is not worth running again.
 - **The standard applies to each repository on its own merit.** It travels to
   every Godsend IBM i repo, but says nothing about the relationship *between*
   them. Nothing here requires two repos to hold identical members, and
