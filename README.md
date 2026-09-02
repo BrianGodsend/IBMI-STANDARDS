@@ -58,10 +58,10 @@ Canonical home of the Godsend Consulting IBM i coding standards.
   rule after it is silently dropped. That failure looks exactly like the file
   not being found.
 
-- [check-iledoc.ps1](check-iledoc.ps1)
- — checks ILEDoc `@param` tags against
-  the declarations they document, across every sibling IBM i repo (same
-  discovery rule as `sync-standards.ps1`). Reports `UNNAMED` where a tag omits
+- [check-iledoc.ps1](check-iledoc.ps1) — checks ILEDoc `@param` tags against
+  the declarations they document. Defaults to the current repo; `-All` scans
+  every sibling (same discovery rule as `sync-standards.ps1`), and `-Path`
+  names one. Reports `UNNAMED` where a tag omits
   the variable name section 2.3 requires, and `MISMATCH` where a doc block's
   tag count differs from its parameter count — which means descriptions are
   attached to the wrong parameters *today*. `-Fix` names and reflows the
@@ -71,6 +71,11 @@ Canonical home of the Godsend Consulting IBM i coding standards.
   This exists because the drift is silent. Code for i binds tags to parameters
   by position and compares nothing, so a block out of step with its parameter
   list reads perfectly well while documenting the wrong things.
+
+  **`-All` is a report, not a work list.** BSLIB is developer scratch and
+  RBUTL is production; a documentation-only change there means either a mass
+  recompile nobody will run for a comment, or source left drifted from the
+  objects for the next developer to stumble onto. Read it and stop.
 
 ## Workflow
 
