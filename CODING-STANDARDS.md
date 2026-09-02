@@ -763,6 +763,27 @@ not evidence that it is still required.
   returned. Doc commands are lowercase (`@param`, `@return`); use `@return` —
   `@returns` (with an s) is not supported.
 
+  **`@param` names the variable — `@param var Description`.** That is the
+  ILEDocs syntax, and it stays.
+
+  **Code for i renders the name twice.** Its hover supplies the declared name
+  and then prints the whole tag body after it, so a tag written to the syntax
+  comes out as:
+
+  ```text
+  @param pxForce pxForce Retrieve again even though it has been retrieved
+  ```
+
+  **That is a defect in the extension, not a reason to drop the name** — and
+  dropping it is the poor practice the doubling invites. The extension binds
+  tags to parameters **by position** and compares nothing, so a block that
+  falls out of step with the parameter list silently re-attaches every later
+  description to the wrong parameter. The name in the tag is the only thing
+  that makes that findable. A feature request is open with the extension to
+  strip a leading token when it matches the parameter, and to leave it alone
+  when it does not — which would keep the clean hover *and* the mismatch
+  visible.
+
 ### 2.4 Declarations
 
 - **Constants:** SCREAMING_SNAKE_CASE prefixed with `@` (C-style), grouped by
