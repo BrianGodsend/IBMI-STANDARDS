@@ -752,12 +752,16 @@ not evidence that it is still required.
   constants, data-structure templates, then prototypes. Terminate each group with
   a separator rule.
 
-  **That is the `…H`. The `…P` copies nothing, its own `…H` included.** So the
-  `…H` carries the dependencies of the **pair** — an API prototype that only the
-  `…P`'s body calls is still copied by the `…H`.
+  **That is the `…H`. The `…P` does not copy it at the top** — there it lands
+  after the procedures. So the `…H` carries the dependencies of the **pair**: an
+  API prototype that only the `…P`'s body calls is still copied by the `…H`.
 
-  A guard on the `…H` masks the error wherever the consumer copied it first, so
-  a clean compile is not evidence the nesting is allowed.
+  A guard on the `…H` masks a top-of-member copy wherever the consumer copied
+  the `…H` first, so a clean compile is not evidence of correct placement.
+
+  **Inside a `dcl-proc` is a different position and a legal one**, and would
+  need `/UNDEFINE` to get past the guard. Nothing here does it and no need for
+  it has come up; read one as deliberate rather than as the mistake above.
 - Everything a copybook publishes carries the copybook's **full** name as its
   namespace — `@GUSQCPY_*`, `gusqcpy_*_t`, `gusqcpy_*` — including the `…P`
   member's procedure bodies. See section 1.5 for the rule and its two

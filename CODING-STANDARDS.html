@@ -1169,15 +1169,20 @@ ctl-opt actgrp(*CALLER);
         <li><p>A copybook contains, in order: nested <code>/copy</code>
         of its dependencies, named constants, data-structure templates,
         then prototypes. Terminate each group with a separator rule.</p>
-        <p><strong>That is the <code>…H</code>. The <code>…P</code>
-        copies nothing, its own <code>…H</code> included.</strong> So
-        the <code>…H</code> carries the dependencies of the
-        <strong>pair</strong> — an API prototype that only the
+        <p><strong>That is the <code>…H</code>. The <code>…P</code> does
+        not copy it at the top</strong> — there it lands after the
+        procedures. So the <code>…H</code> carries the dependencies of
+        the <strong>pair</strong>: an API prototype that only the
         <code>…P</code>&#39;s body calls is still copied by the
         <code>…H</code>.</p>
-        <p>A guard on the <code>…H</code> masks the error wherever the
-        consumer copied it first, so a clean compile is not evidence the
-        nesting is allowed.</p></li>
+        <p>A guard on the <code>…H</code> masks a top-of-member copy
+        wherever the consumer copied the <code>…H</code> first, so a
+        clean compile is not evidence of correct placement.</p>
+        <p><strong>Inside a <code>dcl-proc</code> is a different
+        position and a legal one</strong>, and would need
+        <code>/UNDEFINE</code> to get past the guard. Nothing here does
+        it and no need for it has come up; read one as deliberate rather
+        than as the mistake above.</p></li>
         <li><p>Everything a copybook publishes carries the copybook&#39;s
         <strong>full</strong> name as its namespace —
         <code>@GUSQCPY_*</code>, <code>gusqcpy_*_t</code>,
