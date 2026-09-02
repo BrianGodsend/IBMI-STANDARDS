@@ -752,12 +752,9 @@ not evidence that it is still required.
   constants, data-structure templates, then prototypes. Terminate each group with
   a separator rule.
 
-  **That is the `…H`. The `…P` copies nothing, including its own `…H`** — it is
-  included among the procedures, so anything it pulls in arrives after them.
-
-  So the `…H` carries the dependencies of the **pair**: an API prototype that
-  only the `…P`'s body calls is still copied by the `…H`, because that is the
-  member with a legal place to put it.
+  **That is the `…H`. The `…P` copies nothing, its own `…H` included.** So the
+  `…H` carries the dependencies of the **pair** — an API prototype that only the
+  `…P`'s body calls is still copied by the `…H`.
 
   A guard on the `…H` masks the error wherever the consumer copied it first, so
   a clean compile is not evidence the nesting is allowed.

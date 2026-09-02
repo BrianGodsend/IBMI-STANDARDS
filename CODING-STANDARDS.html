@@ -1170,14 +1170,11 @@ ctl-opt actgrp(*CALLER);
         of its dependencies, named constants, data-structure templates,
         then prototypes. Terminate each group with a separator rule.</p>
         <p><strong>That is the <code>…H</code>. The <code>…P</code>
-        copies nothing, including its own <code>…H</code></strong> — it
-        is included among the procedures, so anything it pulls in
-        arrives after them.</p>
-        <p>So the <code>…H</code> carries the dependencies of the
-        <strong>pair</strong>: an API prototype that only the
+        copies nothing, its own <code>…H</code> included.</strong> So
+        the <code>…H</code> carries the dependencies of the
+        <strong>pair</strong> — an API prototype that only the
         <code>…P</code>&#39;s body calls is still copied by the
-        <code>…H</code>, because that is the member with a legal place
-        to put it.</p>
+        <code>…H</code>.</p>
         <p>A guard on the <code>…H</code> masks the error wherever the
         consumer copied it first, so a clean compile is not evidence the
         nesting is allowed.</p></li>
