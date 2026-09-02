@@ -3,3 +3,5 @@
 # temp/ holds its conversion smoke test.
 github-markdown.css
 temp/
+toP*.html
+probe.pdf
