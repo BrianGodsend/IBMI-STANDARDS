@@ -23,9 +23,17 @@ Only members whose first line is **FREE are read. Fixed-form source would
 parse wrong, and quietly.
 
 .PARAMETER Path
-One repo or directory to check. Omit to check every sibling IBM i repo, using
-the same rule as sync-standards.ps1: a directory beside this one containing
-QRPGLESRC, QCLSRC, or QSQLSRC and a .git.
+One repo or directory to check. Defaults to the current directory.
+
+.PARAMETER All
+Check every sibling IBM i repo instead, using the same rule as
+sync-standards.ps1: a directory beside this one containing QRPGLESRC, QCLSRC,
+or QSQLSRC and a .git.
+
+Reporting on them is fine; sweeping them is not. BSLIB is developer scratch,
+and RBUTL is production -- where a documentation-only change means either a
+mass recompile nobody will run for a comment, or source left drifted from the
+objects for the next developer to stumble onto. Read the report and stop.
 
 .PARAMETER Fix
 Insert the parameter name into every UNNAMED tag, and reflow that tag's text
@@ -35,13 +43,17 @@ the diff stays the size of the repair.
 
 .EXAMPLE
 ./check-iledoc.ps1
-Report unnamed tags and mismatches across every sibling IBM i repo.
+Report unnamed tags and mismatches in the current repo.
+
+.EXAMPLE
+./check-iledoc.ps1 -All
+Report across every sibling IBM i repo. A report, not a work list.
 
 .EXAMPLE
 ./check-iledoc.ps1 -Path ..\BSLIB -Fix
 Name and reflow the unnamed tags in one repo, holding back any mismatch.
 #>
-param([string]$Path, [switch]$Fix)
+param([string]$Path, [switch]$All, [switch]$Fix)
 
 $WIDTH = 76           # CODING-STANDARDS 1.4: RBUTL practice, well under 100
 $CONT  = '//      '   # the house continuation indent
@@ -202,9 +214,15 @@ function Test-Member([string]$file, [string]$label) {
 # What to check.
 # ---------------------------------------------------------------------------
 $targets = @()
-if ($Path) {
-    $targets += [pscustomobject]@{
-        Label = (Split-Path (Resolve-Path $Path) -Leaf); Root = (Resolve-Path $Path).Path }
+if (-not $All) {
+    #  ONE REPO BY DEFAULT.  Sweeping every sibling is the thing not to
+    #  do:  BSLIB is scratch and RBUTL is production, where a
+    #  documentation-only change means either a mass recompile nobody
+    #  will run for a comment, or source left drifted from the objects
+    #  for the next developer to find.  -All still reports on them; it
+    #  is the acting on it that is wrong.
+    $root = if ($Path) { (Resolve-Path $Path).Path } else { (Get-Location).Path }
+    $targets += [pscustomobject]@{ Label = (Split-Path $root -Leaf); Root = $root }
 } else {
     $parent = Split-Path -Parent $PSScriptRoot
     foreach ($d in Get-ChildItem $parent -Directory) {
@@ -220,7 +238,10 @@ $total = 0
 $script:mismatch = 0
 foreach ($t in $targets) {
     $src = Join-Path $t.Root 'QRPGLESRC'
-    if (-not (Test-Path $src)) { continue }
+    if (-not (Test-Path $src)) {
+        if (-not $All) { Write-Host ("SKIP     {0,-10} no QRPGLESRC" -f $t.Label) }
+        continue
+    }
     $n = 0
     foreach ($f in Get-ChildItem $src -File -Include *.RPGLE,*.SQLRPGLE -Recurse) {
         $r = Test-Member $f.FullName $t.Label
