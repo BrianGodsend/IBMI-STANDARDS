@@ -760,8 +760,19 @@ not evidence that it is still required.
   APIs inline.
 - Document every prototype with a `///` doc block in **ILEDoc format**:
   one-line summary, `@param` per parameter, `@return` when a value is
-  returned. Doc commands are lowercase (`@param`, `@return`); use `@return` —
-  `@returns` (with an s) is not supported.
+  returned.
+
+  **Two of these rules are Code for i's, not ILEDoc's** — and the spec is the
+  more permissive of the two, so reading it alone leads you wrong:
+
+  | | ILEDoc | Code for i |
+  | --- | --- | --- |
+  | tag case | any | **lowercase only** |
+  | return tag | `@return` or `@returns` | **`@return` only** |
+
+  Write lowercase, and write `@return` without the s. Code for i is the only
+  tool that reads any of this, so its restrictions are the effective standard
+  whatever the spec allows.
 
   **`@param` names the variable — `@param var Description`.** That is the
   ILEDocs syntax, and it stays.

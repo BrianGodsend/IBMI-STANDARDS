@@ -35,6 +35,19 @@ Canonical home of the Godsend Consulting IBM i coding standards.
   `.git` — reference-only checkouts such as `RBXREF` — are reported as `SKIP`
   and left alone. `-Check` reports drift without copying.
 
+- [check-iledoc.ps1](check-iledoc.ps1) — checks ILEDoc `@param` tags against
+  the declarations they document, across every sibling IBM i repo (same
+  discovery rule as `sync-standards.ps1`). Reports `UNNAMED` where a tag omits
+  the variable name section 2.3 requires, and `MISMATCH` where a doc block's
+  tag count differs from its parameter count — which means descriptions are
+  attached to the wrong parameters *today*. `-Fix` names and reflows the
+  unnamed ones; a mismatch is never repaired automatically, because the
+  alignment cannot be inferred. Only `**FREE` members are read.
+
+  This exists because the drift is silent. Code for i binds tags to parameters
+  by position and compares nothing, so a block out of step with its parameter
+  list reads perfectly well while documenting the wrong things.
+
 ## Workflow
 
 1. Edit `CODING-STANDARDS.md` in this repo and commit.

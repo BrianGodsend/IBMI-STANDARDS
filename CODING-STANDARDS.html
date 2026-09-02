@@ -1183,10 +1183,35 @@ ctl-opt actgrp(*CALLER);
         <li><p>Document every prototype with a <code>///</code> doc
         block in <strong>ILEDoc format</strong>: one-line summary,
         <code>@param</code> per parameter, <code>@return</code> when a
-        value is returned. Doc commands are lowercase
-        (<code>@param</code>, <code>@return</code>); use
-        <code>@return</code> — <code>@returns</code> (with an s) is not
-        supported.</p>
+        value is returned.</p>
+        <p><strong>Two of these rules are Code for i&#39;s, not
+        ILEDoc&#39;s</strong> — and the spec is the more permissive of the
+        two, so reading it alone leads you wrong:</p>
+        <table>
+        <thead>
+        <tr>
+        <th></th>
+        <th>ILEDoc</th>
+        <th>Code for i</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>tag case</td>
+        <td>any</td>
+        <td><strong>lowercase only</strong></td>
+        </tr>
+        <tr>
+        <td>return tag</td>
+        <td><code>@return</code> or <code>@returns</code></td>
+        <td><strong><code>@return</code> only</strong></td>
+        </tr>
+        </tbody>
+        </table>
+        <p>Write lowercase, and write <code>@return</code> without the
+        s. Code for i is the only tool that reads any of this, so its
+        restrictions are the effective standard whatever the spec
+        allows.</p>
         <p><strong><code>@param</code> names the variable —
         <code>@param var Description</code>.</strong> That is the
         ILEDocs syntax, and it stays.</p>
