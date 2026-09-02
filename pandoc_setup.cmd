@@ -31,6 +31,7 @@ ECHO Installing CSS and template for use with pandoc . . .
 >nul 2>&1 md "%APPDATA%\pandoc"
 >nul 2>&1 md "%APPDATA%\pandoc\templates"
 copy /Y github-markdown.css "%APPDATA%\pandoc\*"
+copy /Y github-markdown-print.html "%APPDATA%\pandoc\*"
 copy /Y github-markdown.html "%APPDATA%\pandoc\templates\*"
 
 :Testing markdown to GFM HTML . . .

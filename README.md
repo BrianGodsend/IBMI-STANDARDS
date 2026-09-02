@@ -35,7 +35,31 @@ Canonical home of the Godsend Consulting IBM i coding standards.
   `.git` — reference-only checkouts such as `RBXREF` — are reported as `SKIP`
   and left alone. `-Check` reports drift without copying.
 
-- [check-iledoc.ps1](check-iledoc.ps1) — checks ILEDoc `@param` tags against
+- [md2pdf.cmd](md2pdf.cmd) — renders any `.md` to a PDF beside it, GitHub
+  styled, through pandoc and weasyprint. `-Path` is required, `-Title`
+  defaults to the file's base name.
+
+  Two flags are load bearing. **`--to html5` selects the route, not the
+  output**: the `.pdf` extension is what makes pandoc produce a PDF, and
+  `--to html5` is what makes it get there through HTML rather than LaTeX —
+  remove it and pdflatex fails on the injected HTML. **`--pdf-engine
+  weasyprint`** names what pandoc would otherwise pick for itself, so the
+  render cannot change because something else appeared on the PATH.
+
+- [github-markdown-print.html](github-markdown-print.html) — print overrides
+  injected with `--include-in-header`, installed to `%APPDATA%\pandoc` by
+  `pandoc_setup.cmd`. The GitHub stylesheet has no `@page` rule, so without
+  this you get A4 with no page numbers; and the template's screen layout
+  (980px column, 45px padding) doubles the page margin and narrows the text.
+  `CODING-STANDARDS.md` is 69 pages without it and 57 with.
+
+  Nothing may contain the literal closing `style` tag, comments included —
+  HTML parsing wins over CSS comments, so it ends the element early and every
+  rule after it is silently dropped. That failure looks exactly like the file
+  not being found.
+
+- [check-iledoc.ps1](check-iledoc.ps1)
+ — checks ILEDoc `@param` tags against
   the declarations they document, across every sibling IBM i repo (same
   discovery rule as `sync-standards.ps1`). Reports `UNNAMED` where a tag omits
   the variable name section 2.3 requires, and `MISMATCH` where a doc block's
