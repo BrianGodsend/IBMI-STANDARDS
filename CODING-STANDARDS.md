@@ -817,9 +817,104 @@ not evidence that it is still required.
   copybooks may declare the same one behind an `/IF NOT DEFINED` guard:
 
   ```rpgle
-  dcl-ds tmusr_t  extname('TMUSR') inz(*EXTDFT) qualified template;
+  dcl-ds tmusr_t  extname('TMUSR') qualified template inz;
   end-ds;
   ```
+
+- **Do not use `inz(*EXTDFT)`.** Over a table built to section 4.3 this is not a
+  judgement call — such a table always holds at least one timestamp column that
+  cannot carry a default, and any date, time, or timestamp field lacking one
+  initializes to **the current date or time** instead of to `*LOVAL`,
+  permanently, since `reset` restores that same value. Over a foreign file the
+  keyword is legal only where every temporal field — hidden columns included —
+  carries a literal default. Plain `inz`, as above, is the standard form.
+
+  The reasoning below matters, because the failure is silent: the members
+  carrying it compile clean and read correctly.
+
+  The mechanism is documented on every side and no half of it is a bug. The
+  *ILE RPG Reference* on `INZ(*EXTDFT)`: "If no DFT or constant value is
+  specified, the DDS default value for the field type is used." And the
+  field-type default for these three types is not a low value:
+
+  | | Where it is stated | Value when no usable default is coded |
+  | --- | --- | --- |
+  | DDS `L`, `T`, `Z` | *DDS for Physical and Logical Files*, `DFT` keyword | "If the DFT keyword is not specified, the default value is the current date" — and the same sentence for time and timestamp |
+  | SQL `DATE`, `TIME`, `TIMESTAMP` | *SQL Reference*, `CREATE TABLE` default-value table | January 1, 0001 for rows that already exist; **the current date for added rows** |
+  | Any of the above, defaulting to null | *ILE RPG Reference*, notes under `INZ(*EXTDFT)` | "If `*NULL` is specified for a null-capable field in the DDS, the compiler will use the DDS default value for that field as the initial value" — which is the current date again |
+
+  **Two of those rows are traps, not merely facts.**
+
+  The SQL row reads as though the low value were in play. It is not: the
+  "existing rows" value applies only to rows already on disk when an
+  `ALTER TABLE` adds the column. The column *default* — the value
+  `INZ(*EXTDFT)` retrieves — is the added-rows one.
+
+  The null row is the one that survives a careful reading of section 4.3.
+  **A default of `NULL` lands in exactly the same place as no default at all**,
+  because there is no null for RPG to initialize the subfield with, so it falls
+  back to the field-type default. That closes both of the ways a column reaches
+  this state without anyone writing "current date" anywhere: an explicit
+  `DEFAULT NULL`, and the omission of both `NOT NULL` and `DEFAULT`, which the
+  *SQL Reference* calls "an implicit specification of DEFAULT NULL". Nullable is
+  not a hiding place. A nullable column still needs a literal default before
+  `*EXTDFT` may be used over it.
+
+  **Hidden columns are in the external description, and they count.** An
+  `IMPLICITLY HIDDEN` column is hidden from SQL — `SELECT *` skips it, per the
+  *SQL Reference* — and from nothing else. It is a real column in the record
+  format, RPG puts it in the data structure, and `INZ(*EXTDFT)` initializes it
+  from its default like every other subfield. A temporal column that no query
+  ever names is therefore exactly as dangerous as one on the panel, and harder
+  to find: the DDL reads as though the table has no dates in it at all.
+
+  **This is a behaviour change, and the code that predates it still looks
+  right.** DDS and DDL did not always agree here, and a member written when a
+  DDS date field initialized to `0001-01-01` compiles clean, reads correctly,
+  and now does something else. Nothing in the source marks the difference.
+
+  **`reset` restores the wrong value, not the right one.** The reference defines
+  the reset value as the value held at the end of the \*INIT phase — which is
+  the `*EXTDFT` value. A structure cleared between iterations comes back holding
+  the same current date it started with. There is no point in the program's life
+  at which the subfield is `*LOVAL`.
+
+  **The defect travels through `likeds`.** `INZ(*LIKEDS)` initializes subfields
+  "in the same way as the parent data structure", so an instance declared
+  `likeds(sometable_t) inz(*LIKEDS)` inherits the initialization from a template
+  it does not name, in a member that never writes `*EXTDFT`. Auditing the
+  `inz(*LIKEDS)` sites is wasted effort — each is correct exactly when its
+  parent is. Audit the `INZ(*EXTDFT)` declarations and the files behind them.
+
+  What breaks is any date used as a *not-set* sentinel: `if dueDate = *LOVAL`, a
+  `WHERE` predicate built only when a date was supplied, a `%diff()` against an
+  unset field. The structure that should read "no date" reads "today" — and
+  reads a different "today" tomorrow, which is why this surfaces as an
+  intermittent defect rather than as a failing compile.
+
+  **Which is why this shop does not use `inz(*EXTDFT)` over its own tables at
+  all.** Section 4.3 mandates an `audit_timestamp` column defined
+  `GENERATED ALWAYS FOR EACH ROW ON UPDATE AS ROW CHANGE TIMESTAMP`, and the
+  *SQL Reference* is explicit about that column: "A row change timestamp column
+  cannot have a DEFAULT clause and must be NOT NULL." It cannot be given one.
+  Every table built to this standard therefore carries a hidden timestamp column
+  that is permanently ineligible, and no amount of tidying the DDL will make
+  `INZ(*EXTDFT)` safe over it. The condition is unsatisfiable by construction —
+  which is the useful form of this rule, because it leaves nothing to check.
+
+  **Use plain `inz`.** RPG's own default initialization for these types is
+  `0001-01-01`, `00.00.00`, and `0001-01-01-00.00.00.000000` — identical to
+  `*LOVAL`, which is what the code was written against. It costs nothing, it is
+  what the rest of this section already mandates for templates, and it does not
+  depend on a file the member cannot show the reader.
+
+  That leaves `inz(*EXTDFT)` a keyword for foreign files only — ones this shop
+  neither owns nor built this way. Even there it has to be earned column by
+  column, hidden columns included, and the source still shows the reader nothing.
+  Prefer plain `inz` there too. If you keep it, put the justification in a
+  comment on the declaration naming the file and the columns that were checked;
+  otherwise the next reader has to redo the audit to find out whether it was ever
+  done.
 
 - Type fields with `like(...)`/`likeds(...)` against templates or other fields —
   avoid re-hardcoding lengths.
@@ -1376,9 +1471,47 @@ CREATE OR REPLACE TABLE ... (
 - Identity `BIGINT` primary key named `<entity>_id`.
 - `NOT NULL DEFAULT` on business columns; `CHECK` constraints where the domain
   is enumerable. Enumerated values are **numeric, not alpha** — see section 10.
+- **Every `DATE`, `TIME`, and `TIMESTAMP` column carries an explicit `DEFAULT`,
+  and `DEFAULT NULL` is not one of them.** There are three ways to write this
+  column and only one of them is defined:
+
+  ```sql
+   ,expiry_timestamp    FOR COLUMN exptms    TIMESTAMP
+       DEFAULT ''0001-01-01-00.00.00.000000''    -- the only defined form
+   ,expiry_timestamp    FOR COLUMN exptms    TIMESTAMP
+       DEFAULT NULL                              -- current timestamp
+   ,expiry_timestamp    FOR COLUMN exptms    TIMESTAMP
+                                                 -- current timestamp
+  ```
+
+  The last two are the same statement: omitting both `NOT NULL` and `DEFAULT` is,
+  in the *SQL Reference*'s words, "an implicit specification of DEFAULT NULL".
+  Db2 then records *the current timestamp* as the column's default for added
+  rows, and RPG reads that default back through `inz(*EXTDFT)` — so a structure
+  declared over this table initializes the subfield to today rather than to
+  `*LOVAL`. Section 2.4 has the mechanism and the citations.
+
+  Write what the column means: `DEFAULT '0001-01-01'` where the domain has a
+  *not-set* state, `DEFAULT CURRENT_DATE` where every row genuinely starts as
+  today. **Keeping the column nullable is fine** — nothing here argues for
+  `NOT NULL`. It is the *default* that has to be a literal, because the default
+  is the part that leaves the table and lands in a program.
 - **Audit columns**, all `IMPLICITLY HIDDEN`: `audit_timestamp` (row change
   timestamp), `audit_job_number/user/name`, `audit_current_user`, plus matching
   `create_*` columns.
+
+  `IMPLICITLY HIDDEN` hides these from SQL and from nothing else. They are in
+  the record format, so an externally described RPG data structure gets them —
+  which is why `create_timestamp` takes a literal `DEFAULT` under the rule
+  above even though the `<table>T1` trigger always overwrites it, and it is why
+  the rule says *every* temporal column rather than every one a query names.
+
+  **`audit_timestamp` is the exception that cannot be fixed, and it is
+  deliberate.** A row change timestamp column "cannot have a DEFAULT clause and
+  must be NOT NULL" (*SQL Reference*), so this one column can never satisfy the
+  rule above. That is not a defect in the standard; it is what makes section
+  2.4's prohibition on `inz(*EXTDFT)` absolute for house tables rather than a
+  per-table audit somebody has to repeat.
 - A `BEFORE INSERT OR UPDATE … FOR EACH ROW MODE DB2ROW` trigger, named
   `<table>T1`, normalizes keys (`LTRIM(UPPER(...))`), fills defaults, and
   populates the audit/create columns; new rows are detected by the identity

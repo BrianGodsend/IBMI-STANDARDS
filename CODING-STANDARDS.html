@@ -1253,8 +1253,151 @@ end-ds;</code></pre>
         namespaced by the table, not by the copybook, so two copybooks
         may declare the same one behind an <code>/IF NOT DEFINED</code>
         guard:</p>
-        <pre class="rpgle"><code>dcl-ds tmusr_t  extname(&#39;TMUSR&#39;) inz(*EXTDFT) qualified template;
+        <pre class="rpgle"><code>dcl-ds tmusr_t  extname(&#39;TMUSR&#39;) qualified template inz;
 end-ds;</code></pre></li>
+        <li><p><strong>Do not use <code>inz(*EXTDFT)</code>.</strong>
+        Over a table built to section 4.3 this is not a judgement call —
+        such a table always holds at least one timestamp column that
+        cannot carry a default, and any date, time, or timestamp field
+        lacking one initializes to <strong>the current date or
+        time</strong> instead of to <code>*LOVAL</code>, permanently,
+        since <code>reset</code> restores that same value. Over a
+        foreign file the keyword is legal only where every temporal
+        field — hidden columns included — carries a literal default.
+        Plain <code>inz</code>, as above, is the standard form.</p>
+        <p>The reasoning below matters, because the failure is silent:
+        the members carrying it compile clean and read correctly.</p>
+        <p>The mechanism is documented on every side and no half of it
+        is a bug. The <em>ILE RPG Reference</em> on
+        <code>INZ(*EXTDFT)</code>: &quot;If no DFT or constant value is
+        specified, the DDS default value for the field type is used.&quot;
+        And the field-type default for these three types is not a low
+        value:</p>
+        <table>
+        <thead>
+        <tr>
+        <th></th>
+        <th>Where it is stated</th>
+        <th>Value when no usable default is coded</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>DDS <code>L</code>, <code>T</code>, <code>Z</code></td>
+        <td><em>DDS for Physical and Logical Files</em>,
+        <code>DFT</code> keyword</td>
+        <td>&quot;If the DFT keyword is not specified, the default value is
+        the current date&quot; — and the same sentence for time and
+        timestamp</td>
+        </tr>
+        <tr>
+        <td>SQL <code>DATE</code>, <code>TIME</code>,
+        <code>TIMESTAMP</code></td>
+        <td><em>SQL Reference</em>, <code>CREATE TABLE</code>
+        default-value table</td>
+        <td>January 1, 0001 for rows that already exist; <strong>the
+        current date for added rows</strong></td>
+        </tr>
+        <tr>
+        <td>Any of the above, defaulting to null</td>
+        <td><em>ILE RPG Reference</em>, notes under
+        <code>INZ(*EXTDFT)</code></td>
+        <td>&quot;If <code>*NULL</code> is specified for a null-capable field
+        in the DDS, the compiler will use the DDS default value for that
+        field as the initial value&quot; — which is the current date
+        again</td>
+        </tr>
+        </tbody>
+        </table>
+        <p><strong>Two of those rows are traps, not merely
+        facts.</strong></p>
+        <p>The SQL row reads as though the low value were in play. It is
+        not: the &quot;existing rows&quot; value applies only to rows already on
+        disk when an <code>ALTER TABLE</code> adds the column. The
+        column <em>default</em> — the value <code>INZ(*EXTDFT)</code>
+        retrieves — is the added-rows one.</p>
+        <p>The null row is the one that survives a careful reading of
+        section 4.3. <strong>A default of <code>NULL</code> lands in
+        exactly the same place as no default at all</strong>, because
+        there is no null for RPG to initialize the subfield with, so it
+        falls back to the field-type default. That closes both of the
+        ways a column reaches this state without anyone writing &quot;current
+        date&quot; anywhere: an explicit <code>DEFAULT NULL</code>, and the
+        omission of both <code>NOT NULL</code> and <code>DEFAULT</code>,
+        which the <em>SQL Reference</em> calls &quot;an implicit
+        specification of DEFAULT NULL&quot;. Nullable is not a hiding place.
+        A nullable column still needs a literal default before
+        <code>*EXTDFT</code> may be used over it.</p>
+        <p><strong>Hidden columns are in the external description, and
+        they count.</strong> An <code>IMPLICITLY HIDDEN</code> column is
+        hidden from SQL — <code>SELECT *</code> skips it, per the
+        <em>SQL Reference</em> — and from nothing else. It is a real
+        column in the record format, RPG puts it in the data structure,
+        and <code>INZ(*EXTDFT)</code> initializes it from its default
+        like every other subfield. A temporal column that no query ever
+        names is therefore exactly as dangerous as one on the panel, and
+        harder to find: the DDL reads as though the table has no dates
+        in it at all.</p>
+        <p><strong>This is a behaviour change, and the code that
+        predates it still looks right.</strong> DDS and DDL did not
+        always agree here, and a member written when a DDS date field
+        initialized to <code>0001-01-01</code> compiles clean, reads
+        correctly, and now does something else. Nothing in the source
+        marks the difference.</p>
+        <p><strong><code>reset</code> restores the wrong value, not the
+        right one.</strong> The reference defines the reset value as the
+        value held at the end of the *INIT phase — which is the
+        <code>*EXTDFT</code> value. A structure cleared between
+        iterations comes back holding the same current date it started
+        with. There is no point in the program&#39;s life at which the
+        subfield is <code>*LOVAL</code>.</p>
+        <p><strong>The defect travels through
+        <code>likeds</code>.</strong> <code>INZ(*LIKEDS)</code>
+        initializes subfields &quot;in the same way as the parent data
+        structure&quot;, so an instance declared
+        <code>likeds(sometable_t) inz(*LIKEDS)</code> inherits the
+        initialization from a template it does not name, in a member
+        that never writes <code>*EXTDFT</code>. Auditing the
+        <code>inz(*LIKEDS)</code> sites is wasted effort — each is
+        correct exactly when its parent is. Audit the
+        <code>INZ(*EXTDFT)</code> declarations and the files behind
+        them.</p>
+        <p>What breaks is any date used as a <em>not-set</em> sentinel:
+        <code>if dueDate = *LOVAL</code>, a <code>WHERE</code> predicate
+        built only when a date was supplied, a <code>%diff()</code>
+        against an unset field. The structure that should read &quot;no date&quot;
+        reads &quot;today&quot; — and reads a different &quot;today&quot; tomorrow, which is
+        why this surfaces as an intermittent defect rather than as a
+        failing compile.</p>
+        <p><strong>Which is why this shop does not use
+        <code>inz(*EXTDFT)</code> over its own tables at all.</strong>
+        Section 4.3 mandates an <code>audit_timestamp</code> column
+        defined
+        <code>GENERATED ALWAYS FOR EACH ROW ON UPDATE AS ROW CHANGE TIMESTAMP</code>,
+        and the <em>SQL Reference</em> is explicit about that column: &quot;A
+        row change timestamp column cannot have a DEFAULT clause and
+        must be NOT NULL.&quot; It cannot be given one. Every table built to
+        this standard therefore carries a hidden timestamp column that
+        is permanently ineligible, and no amount of tidying the DDL will
+        make <code>INZ(*EXTDFT)</code> safe over it. The condition is
+        unsatisfiable by construction — which is the useful form of this
+        rule, because it leaves nothing to check.</p>
+        <p><strong>Use plain <code>inz</code>.</strong> RPG&#39;s own
+        default initialization for these types is
+        <code>0001-01-01</code>, <code>00.00.00</code>, and
+        <code>0001-01-01-00.00.00.000000</code> — identical to
+        <code>*LOVAL</code>, which is what the code was written against.
+        It costs nothing, it is what the rest of this section already
+        mandates for templates, and it does not depend on a file the
+        member cannot show the reader.</p>
+        <p>That leaves <code>inz(*EXTDFT)</code> a keyword for foreign
+        files only — ones this shop neither owns nor built this way.
+        Even there it has to be earned column by column, hidden columns
+        included, and the source still shows the reader nothing. Prefer
+        plain <code>inz</code> there too. If you keep it, put the
+        justification in a comment on the declaration naming the file
+        and the columns that were checked; otherwise the next reader has
+        to redo the audit to find out whether it was ever done.</p></li>
         <li><p>Type fields with
         <code>like(...)</code>/<code>likeds(...)</code> against
         templates or other fields — avoid re-hardcoding
@@ -1917,19 +2060,20 @@ DELETE +
 <span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>   <span class="op">..</span>.</span>
 <span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>) RCDFMT r<span class="st">&#39; || tblNam;</span></span></code></pre></div>
         <ul>
-        <li><strong>Long descriptive names</strong> with
+        <li><p><strong>Long descriptive names</strong> with
         <code>FOR COLUMN</code> short (≤10) system names, both
-        lowercase.</li>
-        <li><strong>Avoid SQL reserved words as column names, even where
-        they compile.</strong> Db2 enforces the <a href="https://www.ibm.com/docs/en/i/7.6.0?topic=words-reserved">reserved
+        lowercase.</p></li>
+        <li><p><strong>Avoid SQL reserved words as column names, even
+        where they compile.</strong> Db2 enforces the <a href="https://www.ibm.com/docs/en/i/7.6.0?topic=words-reserved">reserved
         word list</a> <em>by context</em>, so a column named
         <code>SEQUENCE</code> or <code>POSITION</code> is accepted today
         — the word has no meaning in that position, so the parser allows
         it. Do not rely on that. IBM reserves the right to add to the
         list at any time, including in PTFs against a GA release, and
         has done so in ways that broke working code. A name that
-        compiles this year is not a name that compiles next year.</li>
-        <li><strong>The defence is a domain prefix, not the
+        compiles this year is not a name that compiles next
+        year.</p></li>
+        <li><p><strong>The defence is a domain prefix, not the
         list.</strong> You cannot keep up with the list, so make the
         question moot: name every column for what it belongs to —
         <code>libl_position</code>, <code>merge_sequence</code>,
@@ -1942,34 +2086,78 @@ DELETE +
         reserved — it is the domain prefix that makes a collision
         implausible. Prefer this to a delimited identifier, which merely
         postpones the problem into every statement that reads the
-        column.</li>
-        <li>Identity <code>BIGINT</code> primary key named
-        <code>&lt;entity&gt;_id</code>.</li>
-        <li><code>NOT NULL DEFAULT</code> on business columns;
+        column.</p></li>
+        <li><p>Identity <code>BIGINT</code> primary key named
+        <code>&lt;entity&gt;_id</code>.</p></li>
+        <li><p><code>NOT NULL DEFAULT</code> on business columns;
         <code>CHECK</code> constraints where the domain is enumerable.
         Enumerated values are <strong>numeric, not alpha</strong> — see
-        section 10.</li>
-        <li><strong>Audit columns</strong>, all
+        section 10.</p></li>
+        <li><p><strong>Every <code>DATE</code>, <code>TIME</code>, and
+        <code>TIMESTAMP</code> column carries an explicit
+        <code>DEFAULT</code>, and <code>DEFAULT NULL</code> is not one
+        of them.</strong> There are three ways to write this column and
+        only one of them is defined:</p>
+        <div class="sourceCode" id="cb34"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a> ,expiry_timestamp    <span class="cf">FOR</span> <span class="kw">COLUMN</span> exptms    <span class="dt">TIMESTAMP</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>     <span class="kw">DEFAULT</span> <span class="st">&#39;&#39;</span><span class="dv">0001</span><span class="op">-</span><span class="dv">01</span><span class="op">-</span><span class="dv">01</span><span class="op">-</span><span class="dv">00</span>.<span class="dv">00</span>.<span class="fl">00.000000</span><span class="st">&#39;&#39;</span>    <span class="co">-- the only defined form</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a> ,expiry_timestamp    <span class="cf">FOR</span> <span class="kw">COLUMN</span> exptms    <span class="dt">TIMESTAMP</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>     <span class="kw">DEFAULT</span> <span class="kw">NULL</span>                              <span class="co">-- current timestamp</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a> ,expiry_timestamp    <span class="cf">FOR</span> <span class="kw">COLUMN</span> exptms    <span class="dt">TIMESTAMP</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>                                               <span class="co">-- current timestamp</span></span></code></pre></div>
+        <p>The last two are the same statement: omitting both
+        <code>NOT NULL</code> and <code>DEFAULT</code> is, in the
+        <em>SQL Reference</em>&#39;s words, &quot;an implicit specification of
+        DEFAULT NULL&quot;. Db2 then records <em>the current timestamp</em>
+        as the column&#39;s default for added rows, and RPG reads that
+        default back through <code>inz(*EXTDFT)</code> — so a structure
+        declared over this table initializes the subfield to today
+        rather than to <code>*LOVAL</code>. Section 2.4 has the
+        mechanism and the citations.</p>
+        <p>Write what the column means:
+        <code>DEFAULT &#39;0001-01-01&#39;</code> where the domain has a
+        <em>not-set</em> state, <code>DEFAULT CURRENT_DATE</code> where
+        every row genuinely starts as today. <strong>Keeping the column
+        nullable is fine</strong> — nothing here argues for
+        <code>NOT NULL</code>. It is the <em>default</em> that has to be
+        a literal, because the default is the part that leaves the table
+        and lands in a program.</p></li>
+        <li><p><strong>Audit columns</strong>, all
         <code>IMPLICITLY HIDDEN</code>: <code>audit_timestamp</code>
         (row change timestamp), <code>audit_job_number/user/name</code>,
         <code>audit_current_user</code>, plus matching
-        <code>create_*</code> columns.</li>
-        <li>A
+        <code>create_*</code> columns.</p>
+        <p><code>IMPLICITLY HIDDEN</code> hides these from SQL and from
+        nothing else. They are in the record format, so an externally
+        described RPG data structure gets them — which is why
+        <code>create_timestamp</code> takes a literal
+        <code>DEFAULT</code> under the rule above even though the
+        <code>&lt;table&gt;T1</code> trigger always overwrites it, and
+        it is why the rule says <em>every</em> temporal column rather
+        than every one a query names.</p>
+        <p><strong><code>audit_timestamp</code> is the exception that
+        cannot be fixed, and it is deliberate.</strong> A row change
+        timestamp column &quot;cannot have a DEFAULT clause and must be NOT
+        NULL&quot; (<em>SQL Reference</em>), so this one column can never
+        satisfy the rule above. That is not a defect in the standard; it
+        is what makes section 2.4&#39;s prohibition on
+        <code>inz(*EXTDFT)</code> absolute for house tables rather than
+        a per-table audit somebody has to repeat.</p></li>
+        <li><p>A
         <code>BEFORE INSERT OR UPDATE … FOR EACH ROW MODE DB2ROW</code>
         trigger, named <code>&lt;table&gt;T1</code>, normalizes keys
         (<code>LTRIM(UPPER(...))</code>), fills defaults, and populates
         the audit/create columns; new rows are detected by the identity
-        column being NULL in the OLD row.</li>
-        <li><code>RCDFMT r&lt;table&gt;</code> so record-level access
-        sees a stable format name.</li>
-        <li><code>LABEL ON TABLE</code>,
+        column being NULL in the OLD row.</p></li>
+        <li><p><code>RCDFMT r&lt;table&gt;</code> so record-level access
+        sees a stable format name.</p></li>
+        <li><p><code>LABEL ON TABLE</code>,
         <code>LABEL ON COLUMN ... TEXT IS</code> (full text)
         <strong>and</strong> <code>LABEL ON COLUMN ... IS</code> (column
-        headings) for every column.</li>
-        <li>Indexes named <code>&lt;table&gt;9</code>,
+        headings) for every column.</p></li>
+        <li><p>Indexes named <code>&lt;table&gt;9</code>,
         <code>&lt;table&gt;8</code>, … (9 = unique/primary alternate
         key, descending from there), each with
-        <code>LABEL ON INDEX ... IS &#39;By &lt;keys&gt; (u)&#39;</code>.</li>
+        <code>LABEL ON INDEX ... IS &#39;By &lt;keys&gt; (u)&#39;</code>.</p></li>
         </ul>
         <h3 id="44-views-sqlv">4.4 Views (<code>.SQLV</code>)</h3>
         <ul>
@@ -2036,14 +2224,14 @@ DELETE +
         <code>PREPARE</code> that fails at run time.</p>
         <p>Rewrite as a <code>LEFT JOIN</code> against a derived table
         and test the joined column for <code>NULL</code>:</p>
-        <div class="sourceCode" id="cb35"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> a.name</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>     , <span class="cf">CASE</span> <span class="cf">WHEN</span> d.nam <span class="kw">IS</span> <span class="kw">NULL</span> <span class="cf">THEN</span> <span class="st">&#39;1&#39;</span> <span class="cf">ELSE</span> <span class="st">&#39;0&#39;</span> <span class="cf">END</span></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> xfxrf a</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">LEFT</span> <span class="kw">JOIN</span> (<span class="kw">SELECT</span> <span class="kw">DISTINCT</span> z.environment <span class="kw">AS</span> env</span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>                  , <span class="fu">TRIM</span>(z.WHFNAM) <span class="kw">AS</span> nam</span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>               <span class="kw">FROM</span> xfxrf z <span class="kw">WHERE</span> z.environment <span class="op">=</span> ?) d</span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">ON</span> d.env <span class="op">=</span> a.environment</span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">AND</span> d.nam <span class="op">=</span> <span class="fu">TRIM</span>(a.WHPNAM)</span></code></pre></div>
+        <div class="sourceCode" id="cb36"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> a.name</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>     , <span class="cf">CASE</span> <span class="cf">WHEN</span> d.nam <span class="kw">IS</span> <span class="kw">NULL</span> <span class="cf">THEN</span> <span class="st">&#39;1&#39;</span> <span class="cf">ELSE</span> <span class="st">&#39;0&#39;</span> <span class="cf">END</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> xfxrf a</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">LEFT</span> <span class="kw">JOIN</span> (<span class="kw">SELECT</span> <span class="kw">DISTINCT</span> z.environment <span class="kw">AS</span> env</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>                  , <span class="fu">TRIM</span>(z.WHFNAM) <span class="kw">AS</span> nam</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>               <span class="kw">FROM</span> xfxrf z <span class="kw">WHERE</span> z.environment <span class="op">=</span> ?) d</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">ON</span> d.env <span class="op">=</span> a.environment</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">AND</span> d.nam <span class="op">=</span> <span class="fu">TRIM</span>(a.WHPNAM)</span></code></pre></div>
         <p>This is usually the better plan anyway — one pass instead of
         a correlated subquery per row — so it is not a workaround being
         tolerated. Restrict the derived table by the same predicate the
@@ -2055,17 +2243,17 @@ DELETE +
         restriction is on a subquery <em>inside</em> the
         search-condition, not on subqueries in the statement, so lifting
         it one level out is enough:</p>
-        <div class="sourceCode" id="cb36"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">WITH</span> r (name, hasref) <span class="kw">AS</span> (</span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SELECT</span> a.name</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>       , (<span class="kw">SELECT</span> <span class="dv">1</span> <span class="kw">FROM</span> xfxrf z</span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>           <span class="kw">WHERE</span> z.environment <span class="op">=</span> a.environment</span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>             <span class="kw">AND</span> z.WHFNAM <span class="op">=</span> a.WHPNAM</span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>           FETCH <span class="fu">FIRST</span> <span class="dv">1</span> <span class="kw">ROWS</span> <span class="kw">ONLY</span>)</span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span> xfxrf a</span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">WHERE</span> a.environment <span class="op">=</span> ? )</span>
-<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> a.name</span>
-<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>     , <span class="cf">CASE</span> <span class="cf">WHEN</span> a.hasref <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="cf">THEN</span> <span class="st">&#39;1&#39;</span> <span class="cf">ELSE</span> <span class="st">&#39;0&#39;</span> <span class="cf">END</span></span>
-<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> r a</span></code></pre></div>
+        <div class="sourceCode" id="cb37"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">WITH</span> r (name, hasref) <span class="kw">AS</span> (</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SELECT</span> a.name</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>       , (<span class="kw">SELECT</span> <span class="dv">1</span> <span class="kw">FROM</span> xfxrf z</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>           <span class="kw">WHERE</span> z.environment <span class="op">=</span> a.environment</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>             <span class="kw">AND</span> z.WHFNAM <span class="op">=</span> a.WHPNAM</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>           FETCH <span class="fu">FIRST</span> <span class="dv">1</span> <span class="kw">ROWS</span> <span class="kw">ONLY</span>)</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span> xfxrf a</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">WHERE</span> a.environment <span class="op">=</span> ? )</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> a.name</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>     , <span class="cf">CASE</span> <span class="cf">WHEN</span> a.hasref <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="cf">THEN</span> <span class="st">&#39;1&#39;</span> <span class="cf">ELSE</span> <span class="st">&#39;0&#39;</span> <span class="cf">END</span></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> r a</span></code></pre></div>
         <p><strong>Which of the two depends on how many rows the OUTER
         query returns, not on how big the table is.</strong> The
         <code>LEFT JOIN</code> reads its derived table once, whole,
@@ -2249,8 +2437,8 @@ objHi = nam;</code></pre>
         <li><p><strong>Test for null and blank together</strong> when a
         value is &quot;missing or empty&quot;, because a service may express the
         same idea either way:</p>
-        <div class="sourceCode" id="cb38"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="cf">CASE</span> <span class="cf">WHEN</span> <span class="fu">COALESCE</span>(<span class="fu">TRIM</span>(a.text), <span class="st">&#39;&#39;</span>) <span class="op">&lt;&gt;</span> <span class="st">&#39;&#39;</span> <span class="cf">THEN</span> a.text</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>     <span class="cf">ELSE</span> <span class="fu">COALESCE</span>(b.text, <span class="st">&#39;&#39;</span>) <span class="cf">END</span></span></code></pre></div></li>
+        <div class="sourceCode" id="cb39"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="cf">CASE</span> <span class="cf">WHEN</span> <span class="fu">COALESCE</span>(<span class="fu">TRIM</span>(a.text), <span class="st">&#39;&#39;</span>) <span class="op">&lt;&gt;</span> <span class="st">&#39;&#39;</span> <span class="cf">THEN</span> a.text</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>     <span class="cf">ELSE</span> <span class="fu">COALESCE</span>(b.text, <span class="st">&#39;&#39;</span>) <span class="cf">END</span></span></code></pre></div></li>
         <li><p>Weigh the blast radius, not the row. A
         <code>NOT NULL</code> violation fails the whole statement, and
         where that statement is one step of a build that escapes on
@@ -2274,7 +2462,7 @@ objHi = nam;</code></pre>
         <p>Where a sort has to treat a value as &quot;no position&quot; rather
         than as a low one, <code>NULLIF(column, 0)</code> does it on its
         own:</p>
-        <div class="sourceCode" id="cb39"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> <span class="fu">NULLIF</span>(a.libl_position, <span class="dv">0</span>), a.name</span></code></pre></div>
+        <div class="sourceCode" id="cb40"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> <span class="fu">NULLIF</span>(a.libl_position, <span class="dv">0</span>), a.name</span></code></pre></div>
         <p>Rows with <code>0</code> sort to the end because they became
         null, and the rest sort normally. Adding <code>NULLS LAST</code>
         to that is a syntax error, and adding <code>ASC</code> first
