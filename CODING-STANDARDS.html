@@ -1670,7 +1670,32 @@ if (objType = @OBJTYPE_FILE)
   FETCH csrUsrs FOR :@WRKUSRTM_USRS_MAX ROWS INTO :recUsrs;</code></pre></li>
         <li><p><code>DECLARE CURSOR</code> belongs in the
         mainline/<code>*inzsr</code>, <strong>not</strong> in a
-        subprocedure (activation-group/scoping surprises).</p></li>
+        subprocedure (activation-group/scoping surprises).</p>
+        <p><strong>A <code>NOMAIN</code> service program has no
+        mainline, and therefore no <code>*inzsr</code> either</strong>,
+        so that rule points nowhere — which reads as a flat prohibition,
+        because there is no legal place left to put the cursor. There is
+        one:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Used by</th>
+        <th>Declare it in</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>one procedure</td>
+        <td>that procedure</td>
+        </tr>
+        <tr>
+        <td>several procedures</td>
+        <td>a common <code>init()</code></td>
+        </tr>
+        </tbody>
+        </table>
+        <p>This is not an exception to the rule above; it is where the
+        rule lands when there is no mainline to point at.</p></li>
         <li><p>Test <code>sqlcode</code> against named constants —
         <code>@GUSQCPY_SQLCODE_SUCCESS</code>,
         <code>@GUSQCPY_SQLCODE_NODATA</code> from <code>GUSQCPYH</code>

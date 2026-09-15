@@ -1120,6 +1120,18 @@ not evidence that it is still required.
 
 - `DECLARE CURSOR` belongs in the mainline/`*inzsr`, **not** in a subprocedure
   (activation-group/scoping surprises).
+
+  **A `NOMAIN` service program has no mainline, and therefore no `*inzsr`
+  either**, so that rule points nowhere — which reads as a flat prohibition,
+  because there is no legal place left to put the cursor. There is one:
+
+  | Used by | Declare it in |
+  | --- | --- |
+  | one procedure | that procedure |
+  | several procedures | a common `init()` |
+
+  This is not an exception to the rule above; it is where the rule lands when
+  there is no mainline to point at.
 - Test `sqlcode` against named constants — `@GUSQCPY_SQLCODE_SUCCESS`,
   `@GUSQCPY_SQLCODE_NODATA` from `GUSQCPYH` —
   right after each statement; reset stale state (e.g. counts) before reuse.
