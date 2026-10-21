@@ -17,6 +17,10 @@ Legacy and scratch code).
 document for new code. When this document is silent, match the closest RBUTL
 sibling of the same member type.
 
+**Section 12 is broader than the rest.** It governs *changing* any member of
+any source physical file, in any library, whether or not that member is
+covered by this document.
+
 **The IBM manuals are on this machine. Read them before reasoning from first
 principles.** A local, maintained set lives in:
 
@@ -72,10 +76,13 @@ Every member begins with, in order:
 
 Comment syntax per language:
 
-| Language | Block comment | Build directive line |
-| --- | --- | --- |
-| RPGLE (**FREE) | `///` doc block / `//` | `//  *>  <BLDOBJ CRTDFT/>` |
-| CL, CMD | `/* ... */` with floating `+` continuation | `/*> CRTCMD ... <*/` |
+| Language       | Block comment                              | Build directive line           |
+| -------------- | ------------------------------------------ | ------------------------------ |
+| RPGLE (**FREE) | `///` doc block / `//`                     | `//  *>  <BLDOBJ CRTDFT/>`     |
+| CL, CMD        | `/* ... */` with floating `+` continuation | `/*> CRTCMD ... <*/`           |
+| SQL            | `/* ... */`, `--` inline                   | `/*> RUNSQLSTM ... <*/`        |
+| PNLGRP         | `.*`                                       | `.*> <BLDOBJ CRTDFT/>`         |
+| DDS (DSPF)     | `␣*` doc block / `A*`                      | `*> CRTDSPF FILE(&O/&N) ... -` |
 
 **In CL and CMD, EVERY line of a multi-line comment ends with `+`.** The
 continuation is not decoration on the `MODIFICATIONS` entries — it is what makes
@@ -94,9 +101,6 @@ A blank separator line inside the block is a bare `+`, as above. **A hyphen at
 the end of a line is lost**, because the `+` takes that position — so end a line
 on a word and put the dash mid-line, or the sentence reads as a run-on after the
 next edit.
-| SQL | `/* ... */`, `--` inline | `/*> RUNSQLSTM ... <*/` |
-| PNLGRP | `.*` | `.*> <BLDOBJ CRTDFT/>` |
-| DDS (DSPF) | `␣*` doc block / `A*` | `*> CRTDSPF FILE(&O/&N) ... -` |
 
 ### 1.2 MODIFICATIONS log
 
@@ -135,6 +139,7 @@ BS  06/15/26  Updated documentation to acknowledge that default
   MW  07/21/20  The last change
   @@
   ```
+
 - One entry may describe several changes made together; start each on its own
   continuation line.
 - The `@@` line terminates the log. Never remove it.
@@ -182,14 +187,14 @@ them on the IBM i (see `QRPGLESRC/BLDOBJ.SQLRPGLE` header for the full reference
 `CRTDFT`.** Most of what looks like it needs a spelled-out create command does
 not, because the same attribute has a source form:
 
-| Attribute | Source form | Not |
-| --- | --- | --- |
-| help panel group, help id | `HLPID` / `HLPPNLGRP` on the `CMD` statement | `CRTCMD` parameters |
-| validity checker | `VLDCKR` on the `CMD` statement | a `CRTCMD` parameter |
-| choice program | `CHOICEPGM` on the `PARM` | anything at create time |
-| bound service program | `BNDSRVPGM` on `DCLPRCOPT` (CL) | a spelled-out `CRTBNDCL` |
-| binding directory | `BNDDIR` on `DCLPRCOPT` or `ctl-opt` | a spelled-out create |
-| activation group | `ACTGRP` on `DCLPRCOPT` | a create parameter |
+| Attribute                 | Source form                                  | Not                      |
+| ------------------------- | -------------------------------------------- | ------------------------ |
+| help panel group, help id | `HLPID` / `HLPPNLGRP` on the `CMD` statement | `CRTCMD` parameters      |
+| validity checker          | `VLDCKR` on the `CMD` statement              | a `CRTCMD` parameter     |
+| choice program            | `CHOICEPGM` on the `PARM`                    | anything at create time  |
+| bound service program     | `BNDSRVPGM` on `DCLPRCOPT` (CL)              | a spelled-out `CRTBNDCL` |
+| binding directory         | `BNDDIR` on `DCLPRCOPT` or `ctl-opt`         | a spelled-out create     |
+| activation group          | `ACTGRP` on `DCLPRCOPT`                      | a create parameter       |
 
 A custom command is forced only by something with **no** source equivalent —
 `PGM()` on a command whose CPP is named differently, or the `CRTPF` keywords a
@@ -206,11 +211,11 @@ through the IFS, and a source physical file member's **text description does not
 survive that trip**. The only place it can be kept is the member itself, so every
 member carries its own:
 
-| Member type | Where the text goes |
-| --- | --- |
-| `.CMD` | `TEXT('…')` on the `CMD` statement |
-| CL (`.CLLE`, `.CLP`) | `TEXT('…')` on `DCLPRCOPT` |
-| Everything else | `*> <BLDOBJ TEXT="…"/>` |
+| Member type          | Where the text goes                |
+| -------------------- | ---------------------------------- |
+| `.CMD`               | `TEXT('…')` on the `CMD` statement |
+| CL (`.CLLE`, `.CLP`) | `TEXT('…')` on `DCLPRCOPT`         |
+| Everything else      | `*> <BLDOBJ TEXT="…"/>`            |
 
 So altering the source is what preserves the source. This applies even to
 members that are never built — a reference-only layout still has member text
@@ -270,12 +275,12 @@ whoever notices it next.
 - **Line width.** The hard maximum is the source file's **`SRCDTA` length** —
   the source line itself — and a longer line is **truncated silently**:
 
-  | Source file | Line (`SRCDTA`) | Record length |
-  | --- | --- | --- |
-  | `QRPGLESRC` | **100** | 112 |
-  | `QPNLSRC` | **134** | 146 |
-  | `QTXTSRC` | **132** | 144 |
-  | Everything else — `QCLSRC`, `QCMDSRC`, `QSQLSRC`, `QDDSSRC`, `QREXSRC`, `QMNUSRC`, … | **80** | 92 |
+  | Source file                                                                            | Line (`SRCDTA`) | Record length |
+  | -------------------------------------------------------------------------------------- | --------------- | ------------- |
+  | `QRPGLESRC`                                                                            | **100**         | 112           |
+  | `QPNLSRC`                                                                              | **134**         | 146           |
+  | `QTXTSRC`                                                                              | **132**         | 144           |
+  | Everything else — `QCLSRC`, `QCMDSRC`, `QSQLSRC`, `QDDSSRC`, `QREXSRC`, `QMNUSRC`, ... | **80**          | 92            |
 
   **Measure against the `SRCDTA` column, never the record length.** A source
   physical file record carries a 12-byte prefix — a 6-byte sequence number and a
@@ -363,11 +368,11 @@ whoever notices it next.
   but it is the bonus, not the reason. Do not weigh the bonus against the cost
   and conclude a namespace is optional; the requirement is not negotiable.
 
-  | Kind | Form | Example |
-  | --- | --- | --- |
-  | Constant | `@FULLNAME_SCREAMING_SNAKE` | `@GUXLINF_ATR_MAX` |
-  | Template | `fullname_lowercase_t` | `guxlinf_infatr_t` |
-  | Procedure | `fullname_camelCase` | `guxlinf_getSheetName` |
+  | Kind      | Form                        | Example                |
+  | --------- | --------------------------- | ---------------------- |
+  | Constant  | `@FULLNAME_SCREAMING_SNAKE` | `@GUXLINF_ATR_MAX`     |
+  | Template  | `fullname_lowercase_t`      | `guxlinf_infatr_t`     |
+  | Procedure | `fullname_camelCase`        | `guxlinf_getSheetName` |
 
   The namespace is the object name **in full**. An older IP convention dropped
   the two-character application id and namespaced on the remainder — `GUXLINF`
@@ -456,12 +461,12 @@ whoever notices it next.
   object is infrastructure rather than application, it names the object's
   **role** instead. These are reserved across all repos:
 
-  | Suffix | Object type | Role |
-  | --- | --- | --- |
-  | `…SRV` | `*SRVPGM` | Bound service program — the API other programs call |
-  | `…AGT` | `*PGM` | Agent — a never-ending job that processes queued work |
-  | `…REQ` | `*FILE` | The request table an agent drains |
-  | `…DTQ` | `*DTAQ` | Data queue, where one is used as a doorbell |
+  | Suffix | Object type | Role                                                  |
+  | ------ | ----------- | ----------------------------------------------------- |
+  | `…SRV` | `*SRVPGM`   | Bound service program — the API other programs call   |
+  | `…AGT` | `*PGM`      | Agent — a never-ending job that processes queued work |
+  | `…REQ` | `*FILE`     | The request table an agent drains                     |
+  | `…DTQ` | `*DTAQ`     | Data queue, where one is used as a doorbell           |
 
   `SVR` is **never** used for a service program. `SRV` and `SVR` sort adjacent
   in `WRKOBJ`, are one transposition apart when typing, and are
@@ -489,12 +494,12 @@ conceptual collision with a `…SRV` service program. The alternatives lose:
 
 A subsystem built this way is a **family of four**, named together:
 
-| Member | Type | Responsibility |
-| --- | --- | --- |
-| `xxSRV` | `*SRVPGM` | Validates and enqueues. What applications bind to. |
-| `xxREQ` | `*FILE` | The request rows. System of record. |
-| `xxAGT` | `*PGM` | Drains ready rows, dispatches, housekeeping, breaker. |
-| `xx<verb>` | `*PGM` | Performs one unit of work, records its disposition. |
+| Member     | Type      | Responsibility                                        |
+| ---------- | --------- | ----------------------------------------------------- |
+| `xxSRV`    | `*SRVPGM` | Validates and enqueues. What applications bind to.    |
+| `xxREQ`    | `*FILE`   | The request rows. System of record.                   |
+| `xxAGT`    | `*PGM`    | Drains ready rows, dispatches, housekeeping, breaker. |
+| `xx<verb>` | `*PGM`    | Performs one unit of work, records its disposition.   |
 
 Rules that keep the family honest:
 
@@ -765,9 +770,9 @@ not evidence that it is still required.
   **Two of these rules are Code for i's, not ILEDoc's** — and the spec is the
   more permissive of the two, so reading it alone leads you wrong:
 
-  | | ILEDoc | Code for i |
-  | --- | --- | --- |
-  | tag case | any | **lowercase only** |
+  |            | ILEDoc                  | Code for i         |
+  | ---------- | ----------------------- | ------------------ |
+  | tag case   | any                     | **lowercase only** |
   | return tag | `@return` or `@returns` | **`@return` only** |
 
   Write lowercase, and write `@return` without the s. Code for i is the only
@@ -837,11 +842,11 @@ not evidence that it is still required.
   specified, the DDS default value for the field type is used." And the
   field-type default for these three types is not a low value:
 
-  | | Where it is stated | Value when no usable default is coded |
-  | --- | --- | --- |
-  | DDS `L`, `T`, `Z` | *DDS for Physical and Logical Files*, `DFT` keyword | "If the DFT keyword is not specified, the default value is the current date" — and the same sentence for time and timestamp |
-  | SQL `DATE`, `TIME`, `TIMESTAMP` | *SQL Reference*, `CREATE TABLE` default-value table | January 1, 0001 for rows that already exist; **the current date for added rows** |
-  | Any of the above, defaulting to null | *ILE RPG Reference*, notes under `INZ(*EXTDFT)` | "If `*NULL` is specified for a null-capable field in the DDS, the compiler will use the DDS default value for that field as the initial value" — which is the current date again |
+  |                                      | Where it is stated                                  | Value when no usable default is coded                                                                                                                                            |
+  | ------------------------------------ | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | DDS `L`, `T`, `Z`                    | *DDS for Physical and Logical Files*, `DFT` keyword | "If the DFT keyword is not specified, the default value is the current date" — and the same sentence for time and timestamp                                                      |
+  | SQL `DATE`, `TIME`, `TIMESTAMP`      | *SQL Reference*, `CREATE TABLE` default-value table | January 1, 0001 for rows that already exist; **the current date for added rows**                                                                                                 |
+  | Any of the above, defaulting to null | *ILE RPG Reference*, notes under `INZ(*EXTDFT)`     | "If `*NULL` is specified for a null-capable field in the DDS, the compiler will use the DDS default value for that field as the initial value" — which is the current date again |
 
   **Two of those rows are traps, not merely facts.**
 
@@ -1057,10 +1062,10 @@ not evidence that it is still required.
   component order is reversed between them.** The terms differ by one word and
   are used in different contexts, which is the whole difficulty:
 
-  | Term | Bytes | Layout | Where it appears |
-  | --- | --- | --- | --- |
-  | **fully qualified** | up to 21 | `LIB/NAME` — library first, slash, name | what a user *types*; what `%msg` accepts |
-  | **qualified** | 20 | `NAME` in 1–10, `LIB` in 11–20 — name first, no slash | what a `QUAL` parameter *delivers to the CPP*; what the `QMH*` APIs take |
+  | Term                | Bytes    | Layout                                                | Where it appears                                                         |
+  | ------------------- | -------- | ----------------------------------------------------- | ------------------------------------------------------------------------ |
+  | **fully qualified** | up to 21 | `LIB/NAME` — library first, slash, name               | what a user *types*; what `%msg` accepts                                 |
+  | **qualified**       | 20       | `NAME` in 1–10, `LIB` in 11–20 — name first, no slash | what a `QUAL` parameter *delivers to the CPP*; what the `QMH*` APIs take |
 
   So typing `MSGF(MSGLIB/MSGF)` hands the CPP `'MSGF      MSGLIB    '`. The
   library leads on the way in and the name leads on the way out. This is the same
@@ -1081,10 +1086,10 @@ not evidence that it is still required.
   constant rather than a literal, and pick the right constant — `QAPIH` publishes
   two that look interchangeable and are not:
 
-  | Constant | Value | For |
-  | --- | --- | --- |
-  | `@QAPI_QCPF_MSGF_NAME` | `'QCPFMSG   '` | `%msg` — a 10-byte name, trailing blanks ignored |
-  | `@QAPI_QCPF_MSGF` | `'QCPFMSG   *LIBL     '` | `QMHSNDPM` and friends — the 20-byte qualified form |
+  | Constant               | Value                    | For                                                 |
+  | ---------------------- | ------------------------ | --------------------------------------------------- |
+  | `@QAPI_QCPF_MSGF_NAME` | `'QCPFMSG   '`           | `%msg` — a 10-byte name, trailing blanks ignored    |
+  | `@QAPI_QCPF_MSGF`      | `'QCPFMSG   *LIBL     '` | `QMHSNDPM` and friends — the 20-byte qualified form |
 
   Passing `@QAPI_QCPF_MSGF` to `%msg` is wrong even though it compiles and looks
   deliberate: `%msg` would read the whole 20 bytes as one name.
@@ -1125,9 +1130,9 @@ not evidence that it is still required.
   either**, so that rule points nowhere — which reads as a flat prohibition,
   because there is no legal place left to put the cursor. There is one:
 
-  | Used by | Declare it in |
-  | --- | --- |
-  | one procedure | that procedure |
+  | Used by            | Declare it in     |
+  | ------------------ | ----------------- |
+  | one procedure      | that procedure    |
   | several procedures | a common `init()` |
 
   This is not an exception to the rule above; it is where the rule lands when
@@ -1173,12 +1178,12 @@ not evidence that it is still required.
   field followed by one blank, so the keyword column is always the command
   column **+ 11**:
 
-  | | Command | Keywords | Wrapped keywords |
-  | --- | ---: | ---: | ---: |
-  | Top level | **14** | **25** | **27** |
-  | Inside one control block | 16 | 27 | 29 |
-  | Inside two | 18 | 29 | 31 |
-  | …each level | +2 | +2 | +2 |
+  |                            | Command | Keywords | Wrapped keywords |
+  | -------------------------- | ------: | -------: | ---------------: |
+  | Top level                  | **14**  | **25**   | **27**           |
+  | Inside one control block   | 16      | 27       | 29               |
+  | Inside two                 | 18      | 29       | 31               |
+  | …each level                | +2      | +2       | +2               |
 
   **A subroutine is a control block.** `SUBR`/`ENDSUBR` sit at column 14 and the
   body starts at 16 — which is a good reason to prefer `SUBR` over wrapping work
@@ -1365,10 +1370,10 @@ test members that are not exemplars).
 
 ### 4.1 Member types and build
 
-| Ext | Contents |
-| --- | --- |
-| `.SQLT` | One table: DDL + labels + audit trigger + indexes |
-| `.SQLV` | View(s) for one purpose |
+| Ext     | Contents                                                             |
+| ------- | -------------------------------------------------------------------- |
+| `.SQLT` | One table: DDL + labels + audit trigger + indexes                    |
+| `.SQLV` | View(s) for one purpose                                              |
 | `.SQLS` | Everything else run as a script (UDFs, sequences, fix-up statements) |
 
 Every member is built by `RUNSQLSTM` via its directive header:
@@ -1661,10 +1666,10 @@ CREATE OR REPLACE TABLE ... (
   means padding the pattern out to the column width — correct, fast, and
   opaque six months later. The regular expression anchors instead:
 
-  | | `LIKE` | `REGEXP_LIKE` |
-  | --- | --- | --- |
-  | exact | pattern padded to the column width | `'^NAME *$'` |
-  | generic | `'NAME%'` | `'^NAME'` |
+  |         | `LIKE`                             | `REGEXP_LIKE` |
+  | ------- | ---------------------------------- | ------------- |
+  | exact   | pattern padded to the column width | `'^NAME *$'`  |
+  | generic | `'NAME%'`                          | `'^NAME'`     |
 
   `REGEXP_LIKE` *searches* rather than matches — the *SQL Reference* says it
   "searches for a regular expression pattern in a string" — so `^` is what
@@ -1687,11 +1692,11 @@ CREATE OR REPLACE TABLE ... (
   it.** Exact or generic-prefix, a name match *is* a range, and a range over
   the bare column is the strongest thing the optimizer can be handed:
 
-  | | `LIKE` | `REGEXP_LIKE` | `BETWEEN` |
-  | --- | --- | --- | --- |
-  | exact | pattern padded to the column width | `'^NAME *$'` | both ends `NAME` |
-  | generic | `'NAME%'` | `'^NAME'` | `NAME`+x'00' … `NAME`+x'FF' |
-  | drives an index | yes | **no** | yes |
+  |                 | `LIKE`                             | `REGEXP_LIKE` | `BETWEEN`                   |
+  | --------------- | ---------------------------------- | ------------- | --------------------------- |
+  | exact           | pattern padded to the column width | `'^NAME *$'`  | both ends `NAME`            |
+  | generic         | `'NAME%'`                          | `'^NAME'`     | `NAME`+x'00' … `NAME`+x'FF' |
+  | drives an index | yes                                | **no**        | yes                         |
 
   It wins on all three of the things the paragraphs above are weighing:
 
@@ -1727,7 +1732,6 @@ CREATE OR REPLACE TABLE ... (
   **Reach for `LIKE` or `REGEXP_LIKE` where the match is genuinely not a
   prefix** — text embedded anywhere in the value, alternation, a character
   class. Those are not ranges and no index was going to help.
-
 
 ### 4.7 NULL handling
 
@@ -1814,11 +1818,11 @@ CREATE OR REPLACE TABLE ... (
     the element *is* the parameter, so `SNGVAL` has nothing to add. The
     distinction bites on every **compound** parameter:
 
-    | Parameter | Why it is compound |
-    | --- | --- |
-    | `MAX()` greater than 1 | a list of elements |
-    | `TYPE(ELEM-label)` | a list of parts, one `ELEM` each |
-    | `TYPE(QUAL-label)` | a qualified name, one `QUAL` each |
+    | Parameter              | Why it is compound                |
+    | ---------------------- | --------------------------------- |
+    | `MAX()` greater than 1 | a list of elements                |
+    | `TYPE(ELEM-label)`     | a list of parts, one `ELEM` each  |
+    | `TYPE(QUAL-label)`     | a qualified name, one `QUAL` each |
 
     On any of those, `SPCVAL((*SAME))` says *each entry may be `*SAME`*, so
     `LIBL(*SAME QGPL)` and `LIBL(*SAME *SAME)` are both accepted. `SNGVAL`
@@ -1844,10 +1848,10 @@ CREATE OR REPLACE TABLE ... (
     count and then an **offset table**, and each entry carries its own element
     count before its components:
 
-    | Offset | Content |
-    | --- | --- |
-    | 1–2 | number of entries passed (2-byte binary) |
-    | 3 … | one **2-byte offset** per entry, relative to the start of the parameter |
+    | Offset                     | Content                                                                          |
+    | -------------------------- | -------------------------------------------------------------------------------- |
+    | 1–2                        | number of entries passed (2-byte binary)                                         |
+    | 3 …                        | one **2-byte offset** per entry, relative to the start of the parameter          |
     | *per entry, at its offset* | 2-byte count of elements supplied, then the components at their declared lengths |
 
     `QCLSRC/INF2XLSX.CLLE` is the worked reference — `PARM KWD(ATR) TYPE(EATR)
@@ -1953,10 +1957,10 @@ overlays, and an `%SST` to extract:
 
 Three declarations per parameter, and most CPPs are CL. So:
 
-| Field | Form |
-| --- | --- |
-| Tens of bytes — a description, a name, a subject | fixed `TYPE(*CHAR) LEN(n) CASE(*MIXED)` |
-| Hundreds of bytes or more — a note body, a recipient list, an SQL statement | add `VARY(*YES *INT2)` |
+| Field                                                                                             | Form                                                     |
+| ------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Tens of bytes — a description, a name, a subject                                                  | fixed `TYPE(*CHAR) LEN(n) CASE(*MIXED)`                  |
+| Hundreds of bytes or more — a note body, a recipient list, an SQL statement                       | add `VARY(*YES *INT2)`                                   |
 | Any length, where the CPP is **RPG** and the value maps to a `VARCHAR` column typed with `like()` | add `VARY(*YES *INT2)` — one shape from command to table |
 
 The test is whether the CPP genuinely benefits from being **told** the length. At
@@ -2145,13 +2149,13 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
   — and it is easy to write by analogy from HTML or Markdown, where nesting
   emphasis inside anything is fine:
 
-  | Want | Write | Not |
-  | --- | --- | --- |
-  | A variable value | `:PT.:PV.environment-name:EPV.` | `:PV.:HP2.…:EHP2.:EPV.` |
-  | A special value | `:PT.:PK.*ALL:EPK.` | `:PT.:PV.*ALL:EPV.` |
-  | The **default** value | `:PT.:PK DEF.*YES:EPK.` | — |
-  | A list of the values a parameter takes | `:PARML.` with `:PT.`/`:PD.` | `:DL.` with `:DT.`/`:DD.` |
-  | A message-group heading | `:P.:HP3.*ESCAPE …:EHP3.` | `:DT.:HP4.…:EHP4.` |
+  | Want                                   | Write                           | Not                       |
+  | -------------------------------------- | ------------------------------- | ------------------------- |
+  | A variable value                       | `:PT.:PV.environment-name:EPV.` | `:PV.:HP2.…:EHP2.:EPV.`   |
+  | A special value                        | `:PT.:PK.*ALL:EPK.`             | `:PT.:PV.*ALL:EPV.`       |
+  | The **default** value                  | `:PT.:PK DEF.*YES:EPK.`         | —                         |
+  | A list of the values a parameter takes | `:PARML.` with `:PT.`/`:PD.`    | `:DL.` with `:DT.`/`:DD.` |
+  | A message-group heading                | `:P.:HP3.*ESCAPE …:EHP3.`       | `:DT.:HP4.…:EHP4.`        |
 
   **`:PARML` and `:DL` are two different lists, and only `:PARML` accepts value
   tags.** `:PT.` is a parameter *term* and takes `:PK.` and `:PV.`; `:DT.` is a
@@ -2216,13 +2220,13 @@ to receive three parameters. Meanwhile a dozen other commands already used fixed
 
   The arithmetic, once and for all — an area needs:
 
-  | | |
-  | --- | --- |
-  | rows | items ÷ `LAYOUT`, rounded up |
-  | + gaps | rows − 1, unless `compact` |
-  | + 1 | if `MAXHEAD=1` |
-  | + 1 | per `:TOPINST` |
-  | + 1 | if `BOTSEP=space` |
+  |        |                              |
+  | ------ | ---------------------------- |
+  | rows   | items ÷ `LAYOUT`, rounded up |
+  | + gaps | rows − 1, unless `compact`   |
+  | + 1    | if `MAXHEAD=1`               |
+  | + 1    | per `:TOPINST`               |
+  | + 1    | if `BOTSEP=space`            |
 
   Only one area on a panel may code `DEPTH='*'`, and `DEPTH` is **not allowed
   at all on a print panel** — there the areas simply flow onto the page.
@@ -2388,10 +2392,10 @@ It is in the local manual directory named at the top of this document.
 
 A work-with panel is a **driver** and an **exit program**:
 
-| | Responsibility |
-| --- | --- |
-| Driver (`xxxWRK`) | Opens the display application, builds the list, displays the panel in a loop, handles the function keys that `return nn` |
-| Exit program (`xxxEXT`) | Everything UIM calls back for — list options, panel checking, post-action |
+|                         | Responsibility                                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Driver (`xxxWRK`)       | Opens the display application, builds the list, displays the panel in a loop, handles the function keys that `return nn` |
+| Exit program (`xxxEXT`) | Everything UIM calls back for — list options, panel checking, post-action                                                |
 
 **Nothing binds a program to its panel group at compile time.** Unlike a display
 file, a panel group is resolved *by name at run time*: the panel id, the
@@ -2409,12 +2413,12 @@ and never a literal.
 The exit program's first act is to branch on `typCall`. **Name the call types** —
 `@QUIM_TYPCALL_*` in `QUIMH` — rather than testing bare numbers.
 
-| Declared on | Call type | Fires |
-| --- | --- | --- |
-| `:KEYI ACTION='CALL EXITPG'` | 1 `FNCKEY` | when that function key is pressed |
+| Declared on                              | Call type  | Fires                                            |
+| ---------------------------------------- | ---------- | ------------------------------------------------ |
+| `:KEYI ACTION='CALL EXITPG'`             | 1 `FNCKEY` | when that function key is pressed                |
 | `:LISTACT ENTER=`/`PROMPT='CALL EXITPG'` | 3 `LSTOPT` | once per selected entry, to *perform* the action |
-| `:PANEL USREXIT='CALL EXITPG'` | 4 `PNLCHK` | once for the panel, at **input validation** time |
-| `:LISTACT USREXIT='CALL EXITPG'` | 5 `LSTEXT` | once per selected entry, **after** the action |
+| `:PANEL USREXIT='CALL EXITPG'`           | 4 `PNLCHK` | once for the panel, at **input validation** time |
+| `:LISTACT USREXIT='CALL EXITPG'`         | 5 `LSTEXT` | once per selected entry, **after** the action    |
 
 Two of these are routinely confused, and the difference decides the design:
 
@@ -2449,10 +2453,10 @@ types. Section 7.5 is a direct consequence of that sentence.
 
 Both list variable names, and they are not interchangeable:
 
-| Tag | What it is |
-| --- | --- |
-| `:VARRCD` | An **I/O buffer layout**. Named on every get/put/add/update call, and a byte-for-byte match of the RPG data structure passed with it. |
-| `:LISTDEF` | The **set of per-entry variables** a list carries, plus its `EMPHASIS` slots. Not a buffer. |
+| Tag        | What it is                                                                                                                            |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `:VARRCD`  | An **I/O buffer layout**. Named on every get/put/add/update call, and a byte-for-byte match of the RPG data structure passed with it. |
+| `:LISTDEF` | The **set of per-entry variables** a list carries, plus its `EMPHASIS` slots. Not a buffer.                                           |
 
 Neither is a subset of the other. A variable may sit in a `:VARRCD` and not in
 the `:LISTDEF`, and — the case that matters — **in a `:LISTDEF` and in no
@@ -2510,11 +2514,11 @@ turns up, revisit before copying this again.
 
 `QUIGETLE` takes a **position option** saying which entry to return:
 
-| Option | Returns |
-| --- | --- |
-| `FRST` / `NEXT` / `PREV` / `LAST` | a plain walk |
-| `HNDL` | the entry named by a handle — what an exit program uses to read the entry it was called for |
-| `FSLT` / `NSLT` / `PSLT` / `LSLT` | the first/next entry **satisfying a selection criteria** |
+| Option                            | Returns                                                                                     |
+| --------------------------------- | ------------------------------------------------------------------------------------------- |
+| `FRST` / `NEXT` / `PREV` / `LAST` | a plain walk                                                                                |
+| `HNDL`                            | the entry named by a handle — what an exit program uses to read the entry it was called for |
+| `FSLT` / `NSLT` / `PSLT` / `LSLT` | the first/next entry **satisfying a selection criteria**                                    |
 
 **The `*SLT` options require the Selection Criteria parameter**, and it is not
 optional — omitting it is `CPF6A2D`, *Value for Selection Criteria parameter not
@@ -2543,10 +2547,10 @@ per action — invisible on a ten-row list, embarrassing on a long one.
 Every list change is an entry-level operation, performed by the exit program on
 the callback for that entry:
 
-| Option | Post-action does |
-| --- | --- |
-| Change | `QUIUPDLE` the entry |
-| Remove | `QUIRMVLE` the entry |
+| Option        | Post-action does                                              |
+| ------------- | ------------------------------------------------------------- |
+| Change        | `QUIUPDLE` the entry                                          |
+| Remove        | `QUIRMVLE` the entry                                          |
 | Copy / create | `QUIADDLE` the new entry, positioned to keep the list's order |
 
 **Do not look for an "after all list actions" hook. There is none.** UIM
@@ -2620,9 +2624,9 @@ undiscovered.
 
 **The option field is the tell**, and it is visible without checking any object:
 
-| | PDM | UIM |
-| --- | --- | --- |
-| Option value | alphanumeric | numeric |
+|                   | PDM                                                | UIM                                                    |
+| ----------------- | -------------------------------------------------- | ------------------------------------------------------ |
+| Option value      | alphanumeric                                       | numeric                                                |
 | Available options | extensible at run time through a user options file | every one declared in the panel source at compile time |
 
 A screen accepting user-defined two-character options is not a UIM list. Where a
@@ -2645,14 +2649,14 @@ with none is not one to copy from.
   (01–99), and a type suffix. Formats that work together (a subfile and its
   control, a window and the records displayed in it) share the same `nn`:
 
-  | Suffix | Format |
-  | --- | --- |
-  | *(none)* | Plain record |
-  | `S` | Subfile record (`SFL`) |
-  | `C` | Subfile control (`SFLCTL`) |
-  | `F` | Footer |
-  | `B` | Blank |
-  | `W` | Window |
+  | Suffix   | Format                     |
+  | -------- | -------------------------- |
+  | *(none)* | Plain record               |
+  | `S`      | Subfile record (`SFL`)     |
+  | `C`      | Subfile control (`SFLCTL`) |
+  | `F`      | Footer                     |
+  | `B`      | Blank                      |
+  | `W`      | Window                     |
 
 - Note: these repos hold only a handful of display files from a much larger
   code base, so local DSPF members are weak precedent. Follow the naming rule
@@ -2668,14 +2672,14 @@ A message id is a **3-character prefix and a 4-character number**. Compose the
 prefix as a **2-character module id plus a type letter**, following IBM's own
 scheme in `QCPFMSG`:
 
-| Letter | Type | IBM's |
-| --- | --- | --- |
-| `A` | Action — inquiry messages expecting a reply | `CPA` |
-| `C` | Completion | `CPC` |
-| `D` | Diagnostic | `CPD` |
-| `I` | Informational — including `*STATUS` | `CPI` |
-| `X` | Text — titles, help text, NLS and cultural values | `CPX` |
-| `F` | Everything else — escape, notify | `CPF` |
+| Letter | Type                                              | IBM's |
+| ------ | ------------------------------------------------- | ----- |
+| `A`    | Action — inquiry messages expecting a reply       | `CPA` |
+| `C`    | Completion                                        | `CPC` |
+| `D`    | Diagnostic                                        | `CPD` |
+| `I`    | Informational — including `*STATUS`               | `CPI` |
+| `X`    | Text — titles, help text, NLS and cultural values | `CPX` |
+| `F`    | Everything else — escape, notify                  | `CPF` |
 
 So the Cross Reference module sends `XFF*`, `XFC*`, `XFD*` and `XFI*`. (IBM's
 `F` stands for *facility*; `CPF` as a whole is System/38 compatibility. The
@@ -2968,3 +2972,167 @@ rule.
   everywhere it lands. How a particular pair of repositories relate — which is
   authoritative for what, what is being migrated where — is that project's
   business and belongs in that project's own documentation.
+
+---
+
+## 12. Changing source members
+
+**This section governs every change to a member of a source physical file** —
+by editor, by SQL, by program, in any library, whether or not the member
+belongs to one of these repositories. It is less a coding standard than a
+handling standard: the other sections say what the source should contain,
+this one says how to change it without damaging it.
+
+It exists so a member can be edited where it lives, instead of the round trip
+of copying it to the IFS, downloading the stream file, editing it locally,
+uploading it and copying it back. That round trip is also where the damage
+described below is most easily done.
+
+### 12.1 The member is its physical order
+
+**IBM reads a source member by relative record number, not by `SRCSEQ`.** The
+compilers and SEU both process records in arrival order; the sequence number
+is only a label. A member whose records are out of order *compiles out of
+order*. This was verified with a six-record CL member written in the wrong
+physical order:
+
+- every record whose `SRCSEQ` was lower than the one before it drew
+  **CPD0780 (severity 30) Source sequence numbers not valid**;
+- the misplaced `PGM` drew **CPD0728 PGM command cannot be nested** — the
+  order is not cosmetic, it changes what the compiler parses;
+- the record that sat physically after `ENDPGM` did not appear in the listing
+  at all.
+
+SEU, opening the same member, issued **EDT0304 Duplicate or non-ascending
+sequence number** and resequenced it **in RRN order**: starting from the
+`SRCSEQ` of the first record, incrementing by 1.00, leaving every `SRCDAT`
+as it was.
+
+**IBM tooling never leaves a deleted record in a source member.** SEU clears
+and rewrites the whole member on every save, so `REUSEDLT` is irrelevant and a
+member never carries a gap. Anything else that changes a member must leave it
+in the same state.
+
+Read a member in the order IBM does:
+
+```sql
+select rrn(a), a.srcseq, a.srcdat, a.srcdta
+  from mylib.myalias a
+ order by rrn(a)
+```
+
+Ordering by `srcseq` instead shows a different member from the one the
+compiler sees whenever the sequence is out of order — which makes the
+comparison a quick test for exactly that fault.
+
+### 12.2 Change in place; insert and delete by rewrite
+
+| Operation         | How                                                                 |
+| ----------------- | ------------------------------------------------------------------- |
+| **Change** a line | `UPDATE` that record in place: new `SRCDTA`, `SRCDAT` set to today. |
+| **Insert** lines  | Rewrite the whole member in order.                                  |
+| **Delete** lines  | Rewrite the whole member in order.                                  |
+
+A rewrite is: read every record in RRN order, apply the change and the
+sequence and date rules below, clear the member, and write every record back
+in order.
+
+- **Never `INSERT` into the middle of a member.** The new record lands at the
+  end of the physical file whatever `SRCSEQ` it is given, so it compiles in the
+  wrong place — or, after `ENDPGM`, is silently not compiled at all.
+- **Never `DELETE` a record in place.** It leaves a deleted record, a state IBM
+  tooling never produces (12.1).
+- `SRCSEQ` may be updated in place, but in practice it never is: it only
+  changes when resequencing, resequencing only follows an insert, and an insert
+  is already a rewrite.
+
+### 12.3 Sequence numbers
+
+`SRCSEQ` is `NUMERIC(6,2)`: 0.01 to 9999.99.
+
+- **Inserted lines** take the `SRCSEQ` of the line before the insert plus
+  **0.01**, and 0.01 more for each further line.
+- **Before the first line**, start at **0.01**.
+- **Collision:** if the last inserted line reaches or passes the next existing
+  line's `SRCSEQ`, increment that existing line's `SRCSEQ`, and each one after
+  it, until no duplicates remain. **Change only `SRCSEQ` on those lines** —
+  their `SRCDAT` records when their content last changed, and it did not.
+- **Appended lines** — added after the last line — start at the last
+  `SRCSEQ` rounded **up to the next whole number** (7.56 → 8.00) and increment
+  by **1.00**. Once 9999.00 has been assigned, drop back to 0.01.
+- **At 9999.99**, keep assigning 9999.99. SEU warns about the duplicates when
+  the member is next opened, but nothing fails. (The strict alternative is to
+  assign backwards from the last line at 9999.99, decrementing by 0.01 until a
+  line is reached that is already below its calculated value.) A member is
+  capped at 32,764 records, so this is theoretical: it has not been seen in
+  thirty years.
+
+**`SRCSEQ` is not unique by definition.** Nothing in the database enforces
+it. Before using a sequence number to identify a line, confirm it is unique in
+that member:
+
+```sql
+select a.srcseq, count(*)
+  from mylib.myalias a
+ group by a.srcseq
+having count(*) > 1
+```
+
+### 12.4 Source dates
+
+- A **changed** or **inserted** line gets today's date in `SRCDAT`
+  (`YYMMDD`).
+- An **unchanged** line keeps its `SRCDAT` — including a line whose `SRCSEQ`
+  was bumped by a collision.
+
+**Code for IBM i decides this per connection**, through `enableSourceDates` in
+that connection's entry in `code-for-ibmi.connectionSettings` (VS Code
+`settings.json`). On, it preserves both `SRCSEQ` and `SRCDAT`. **Off, saving
+the member zeroes `SRCDAT` on every line** — the whole change history of the
+member, not just the lines edited. Check the setting before saving a member
+through the editor.
+
+### 12.5 Concurrency: hash the whole member
+
+Between reading a member and writing it back, someone else may change it.
+**Capture an MD5 of the whole member when it is read, and compare it
+immediately before writing.** Hash every column that matters, in physical
+order:
+
+```sql
+select hex(hash_md5(xmlserialize(
+         xmlagg(xmltext(digits(a.srcseq) || digits(a.srcdat)
+                        || a.srcdta || x'25')
+                order by rrn(a))
+         as clob(8M))))
+  from mylib.myalias a
+```
+
+- `LISTAGG` cannot do this: it caps at roughly 32K, which a member of a few
+  hundred lines exceeds. `XMLAGG` into a CLOB has no practical limit.
+- The `x'25'` separator keeps two different sets of lines from concatenating
+  to the same string.
+- `QSYS2.SYSPSTAT.LAST_SOURCE_UPDATE_TIMESTAMP` is a cheap first check, but it
+  resolves only to the second. It does not replace the hash.
+
+**On any mismatch, reload the member and redo the change from the start** —
+including deciding whether it is still needed. The member is no longer the
+one the change was written against, and nothing about the change can be
+assumed to still apply.
+
+**Do not try to salvage by matching individual lines.** Legacy source is full
+of copied blocks, so a run of lines with identical hashes can be the block you
+meant or a copy of it, and there is no reliable way to tell which.
+
+### 12.6 Reading members with SQL
+
+A plain `select` against a source file reads its **first** member only. Reach
+a specific member through an alias:
+
+```sql
+create alias mylib.myalias for mylib.qrpglesrc (mymbr)
+```
+
+`QSYS2.IFS_READ` on the member's `/QSYS.LIB/…/…MBR` path also reads it, in
+RRN order, but returns only the source text — no `SRCSEQ` or `SRCDAT`. It is
+enough to read a member; it is not enough to change one.
