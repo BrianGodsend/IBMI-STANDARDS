@@ -2658,6 +2658,30 @@ with none is not one to copy from.
   | `B`      | Blank                      |
   | `W`      | Window                     |
 
+- **Number ranges — a loose convention, not a rule.** Where a display file has
+  enough formats for grouping to help, the higher numbers carry a role:
+
+  | Range  | Use                                                                       |
+  | ------ | ------------------------------------------------------------------------- |
+  | `FM8x` | Error handling — the error message subfile and its control                |
+  | `FM9x` | Utility formats, often never written: an `ASSUME` dummy, a mode switch    |
+
+  An `FM9x` format may display nothing at all. `GUIPMNU`'s `FM93` exists only
+  to put the display in 24 x 80 (`DSPMOD(*DS3)`, `FRCDTA`), so a format with
+  no fields is the point of it, not an omission.
+
+  **Fields take the number of their format** — `W3OPT` on `FM03C`, `S3TXT` on
+  `FM03S`, `S81PGM` on the message subfile `FM81`. Fields shared by a group of
+  formats take the group's round number.
+
+  **Where one display file carries both screen sizes in separate formats**, the
+  last digit may name the size: `FMx3` for `*DS3` (24 x 80), `FMx4` for `*DS4`
+  (27 x 132). This is an adaptation for that case, not a general scheme — most
+  display files state both sizes on one format and have no use for it.
+  `GUIPMNU` is the example: `FM03*` and `FM04*` are the narrow and wide menus.
+  Its heading `FM01` and message subfile `FM81` serve both sizes in one format
+  each, with a `*DS3` location on each field that moves.
+
 - Note: these repos hold only a handful of display files from a much larger
   code base, so local DSPF members are weak precedent. Follow the naming rule
   as stated here rather than patterns inferred from the few local examples.

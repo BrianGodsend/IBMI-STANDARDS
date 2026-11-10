@@ -3701,6 +3701,50 @@ sltCri.dlgVarNam = @XFENVWRK_VAR_ENV;</code></pre>
         </tr>
         </tbody>
         </table></li>
+        <li><p><strong>Number ranges — a loose convention, not a
+        rule.</strong> Where a display file has enough formats for
+        grouping to help, the higher numbers carry a role:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Range</th>
+        <th>Use</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td><code>FM8x</code></td>
+        <td>Error handling — the error message subfile and its
+        control</td>
+        </tr>
+        <tr>
+        <td><code>FM9x</code></td>
+        <td>Utility formats, often never written: an <code>ASSUME</code>
+        dummy, a mode switch</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>An <code>FM9x</code> format may display nothing at all.
+        <code>GUIPMNU</code>&#39;s <code>FM93</code> exists only to put the
+        display in 24 x 80 (<code>DSPMOD(*DS3)</code>,
+        <code>FRCDTA</code>), so a format with no fields is the point of
+        it, not an omission.</p>
+        <p><strong>Fields take the number of their format</strong> —
+        <code>W3OPT</code> on <code>FM03C</code>, <code>S3TXT</code> on
+        <code>FM03S</code>, <code>S81PGM</code> on the message subfile
+        <code>FM81</code>. Fields shared by a group of formats take the
+        group&#39;s round number.</p>
+        <p><strong>Where one display file carries both screen sizes in
+        separate formats</strong>, the last digit may name the size:
+        <code>FMx3</code> for <code>*DS3</code> (24 x 80),
+        <code>FMx4</code> for <code>*DS4</code> (27 x 132). This is an
+        adaptation for that case, not a general scheme — most display
+        files state both sizes on one format and have no use for it.
+        <code>GUIPMNU</code> is the example: <code>FM03*</code> and
+        <code>FM04*</code> are the narrow and wide menus. Its heading
+        <code>FM01</code> and message subfile <code>FM81</code> serve
+        both sizes in one format each, with a <code>*DS3</code> location
+        on each field that moves.</p></li>
         <li><p>Note: these repos hold only a handful of display files
         from a much larger code base, so local DSPF members are weak
         precedent. Follow the naming rule as stated here rather than
