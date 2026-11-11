@@ -80,7 +80,7 @@ Comment syntax per language:
 | -------------- | ------------------------------------------ | ------------------------------ |
 | RPGLE (**FREE) | `///` doc block / `//`                     | `//  *>  <BLDOBJ CRTDFT/>`     |
 | CL, CMD        | `/* ... */` with floating `+` continuation | `/*> CRTCMD ... <*/`           |
-| SQL            | `/* ... */`, `--` inline                   | `/*> RUNSQLSTM ... <*/`        |
+| SQL            | `/* ... */`                                | `/*> RUNSQLSTM ... <*/`        |
 | PNLGRP         | `.*`                                       | `.*> <BLDOBJ CRTDFT/>`         |
 | DDS (DSPF)     | `␣*` doc block / `A*`                      | `*> CRTDSPF FILE(&O/&N) ... -` |
 
@@ -181,6 +181,21 @@ them on the IBM i (see `QRPGLESRC/BLDOBJ.SQLRPGLE` header for the full reference
   with neither still builds, because BLDOBJ derives the same default once it has
   read to the end and found nothing — so `CRTDFT` buys clarity and `EOF` buys
   the read.
+- **A member that builds nothing carries `<BLDOBJ NOBUILD/>`** — a copybook
+  (`…H`, `…P`), a CL `INCLUDE` member (`FWDMSGH`), a reference layout, notes.
+  Without it, compiling a whole source file runs the default create command
+  over every one of them and each one fails. With it, BLDOBJ runs nothing
+  and completes with *Skipped
+  NOBUILD member &N file &F in &L* — a completion message, because nothing went
+  wrong. `NOBUILD` ends the scan as `EOF` does, so it needs no `EOF` with it.
+  Read it as **`EOF` that allows there to be no commands**. Commands coded
+  above it still run — `CRTDFT` then `NOBUILD` builds the object — and
+  BLDOBJ logs an informational message that `NOBUILD` was treated as `EOF`.
+  Only a member with no command before it is skipped.
+
+  It is a GCUTL `BLDOBJ` directive (11/11/26). A `BLDOBJ` that predates it
+  does not recognize the tag and falls through to the default create, so a
+  member marked `NOBUILD` behaves exactly as an unmarked one there.
 - Keep directives correct when copying a member — that *is* its build script.
 
 **Declare in the source whatever the source can declare, and the directive stays
@@ -717,6 +732,7 @@ not evidence that it is still required.
   //  BS  08/20/26  Created.
   //  @@
   //  *> <BLDOBJ TEXT="..."/>
+  //  *> <BLDOBJ NOBUILD/>
   ///
   ```
 
@@ -746,9 +762,10 @@ not evidence that it is still required.
   are already annotated rather than needing a retrofit. Cheap now, and the only
   version of this that is expensive is the one done later.
 
-  The `BLDOBJ` directive goes inside that block, after the `@@`, exactly as it
-  does in a program — see section 1.3. A copybook's header is not a different
-  kind of header.
+  The `BLDOBJ` directives go inside that block, after the `@@`, exactly as
+  they do in a program — see section 1.3. A copybook's header is not a
+  different kind of header. `TEXT` keeps the member text and `NOBUILD` keeps
+  a whole-file compile from trying to create an object from it.
 
   Copybooks whose header is plain `//` are not defects — convert one when you are
   in it for another reason.
@@ -1396,7 +1413,7 @@ BEGIN
   DECLARE tblRef  VARCHAR(21);
   DECLARE sqlStmt VARCHAR(5000);
 
-  --Resolve the DFTRDBCOL/CURRENT SCHEMA/*CURLIB reference
+  /* Resolve the DFTRDBCOL, CURRENT SCHEMA or *CURLIB reference */
   CREATE OR REPLACE TABLE bldobj_temp_resolve_dftrdbcol_schema_tmtsk
       (fld1 char(1));
   GET DIAGNOSTICS CONDITION 1 tblLib = DB2_ORDINAL_TOKEN_2;
@@ -1564,7 +1581,23 @@ CREATE OR REPLACE TABLE ... (
 - Keywords UPPERCASE; identifiers lowercase; 2-space indent; leading commas on
   continuation lines (both column lists and select lists).
 - Alias every table; qualify every column reference.
-- `--` for inline comments inside SQL bodies; `/* */` for the member header.
+- **Block comments only — `/* */`, never `--`.** That holds for the member
+  header and, above all, inside a `BEGIN … END`.
+
+  The reason is dynamic SQL. Under `RUNSQLSTM` a string literal that spans
+  source records reaches `EXECUTE IMMEDIATE` with **no line ends**: the
+  records run together, each padded to its full width. So the first `--`
+  inside a statement built for `EXECUTE IMMEDIATE` comments out everything
+  after it, and the failure is an `SQL0104` at `<END-OF-STATEMENT>` that
+  names nothing near the cause. A `/* */` closes itself and survives.
+
+  Keep comments out of the literal anyway — put them above the
+  `SET sqlStmt` that builds it — and keep blank lines out of it too, since
+  each one costs a full padded record. Size `sqlStmt` for record width
+  times line count, not for the text you can see.
+
+  Existing `--` comments outside a literal are not defects and are not worth
+  a sweep — convert them when you are in the member for another reason.
 
 - **A `CASE` search-condition may not contain a subquery.** From the *SQL
   Reference*, under `search-condition` in the CASE expression syntax:
@@ -2768,6 +2801,25 @@ rule.
   from a `QREXSRC` REXX member.
 - Programs send message IDs, not hardcoded text, wherever a message exists;
   status messages use `CPDA0FF`.
+- **Write message text the way IBM writes it, so ours reads like the
+  system's own.** Two patterns, both taken from `QCPFMSG`:
+
+  | Rule                                           | Write                                         | Not                                        |
+  | ---------------------------------------------- | --------------------------------------------- | ------------------------------------------ |
+  | Name a member as *member … file … in …*        | `Skipped NOBUILD member BLDDEPH file QRPGLESRC in GCUTL.` | `… member BLDDEPH in QRPGLESRC, GCUTL.` |
+  | A completion message is **past tense**         | `Skipped …`, `Created …`                       | `Skipping …`, `Creating …`                  |
+
+  *Member &N file &F in &L* is the predominant form across `QCPFMSG`, and
+  the comma form reads as a list of three things rather than one thing and
+  where it lives.
+
+  A completion message reports what has already happened, so it is past
+  tense, as IBM's are — *Program X created in library Y.* The present
+  participle belongs to a `*STATUS` message, sent while the work is still
+  going on; on a completion message it reads as though the program never
+  finished. Neither kind of message should sound like an error when nothing
+  went wrong: *Skipped* reports a decision, where *is not built* reads as a
+  failure.
 - **Keep a `*STATUS` message to 76 characters assembled.** That is the text plus
   the *declared width* of every replacement value, not the width of what a
   particular caller happens to pass. Longer messages are truncated, and possibly
