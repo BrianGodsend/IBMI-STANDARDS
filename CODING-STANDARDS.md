@@ -396,6 +396,10 @@ whoever notices it next.
     `// ----...----` (minor)
   - CL/SQL: `/* ****...**** */`
   - PNLGRP: `.* ****...****` with a `.* Title` + `.* -----` underline per section
+- **No end-of-line comments.** A comment goes on its own line above what it
+  describes. If it is worth saying, it is worth a full line, and related
+  remarks belong together in one block comment, not scattered along the right
+  margin.
 - **Blocks read top-down:** mainline first, error handling next, subroutines/
   procedures last. In RPG each routine is introduced by its ILEDoc block (2.5);
   elsewhere, by a one-line comment saying what it does.
@@ -868,6 +872,18 @@ not evidence that it is still required.
 
 - **Constants:** SCREAMING_SNAKE_CASE prefixed with `@` (C-style), grouped by
   topic: `dcl-c @QUIM_FNCKEY_ENTER 1;`, `dcl-c @GUSQCPY_SQLCODE_NODATA 100;`
+
+  A constant holds a value, not a calculation, because a constant cannot be
+  computed. A value that results from other figures belongs in a field set in
+  `*inzsr` — a **soft constant**, named like a constant but with `#` in place
+  of `@`: `#CELLS_PER_ELEMENT = @PLAN_YEARS * @PERIODS_PER_YEAR;`. The same
+  goes for any other value fixed for the run, such as a table of codes filled
+  in `*inzsr`. Declare soft constants as a group straight after the true
+  constants. The exception is a result needed to define something else — a
+  `dim()` can only take a constant — and then the constant is written out with
+  a comment showing what it is made of. Before adding one, check for a
+  built-in that gives the value directly: `%elem(@sdO)` instead of a constant
+  for the number of columns in a row.
 - **Templates:** all-lowercase name with a `_t` suffix — "My Template
   Variable" becomes `mytemplatevariable_t` — declared `template qualified inz`,
   and namespaced with the publishing member's full name (section 1.5):
@@ -890,29 +906,88 @@ not evidence that it is still required.
   end-ds;
   ```
 
-- **Declare a file externally whenever it has an external description.** Do not
-  code a program-described `disk(n)` file over a file that has one. Positions
-  inside a field are reached through the external field, not through
-  hard-coded record positions. The usual case is an array overlaid on a flag
-  string to divide it into its elements:
+- **Declare files externally. When in doubt, declare it externally.** A
+  program-described file is the exception, kept for a file that *must* be
+  described in the program — some printer files are the usual case — and never
+  coded over a file that has an external description.
+
+  No program reads or writes The Eye's datamart data files directly; it goes
+  through The Eye's own programs (Element Resolution, Plan Update). Its other
+  files, such as the datamart definitions in `IPSDDES`, are declared
+  externally like any other.
+
+  Positions inside a field are reached through the external field, not
+  through hard-coded record positions. The usual case is an array overlaid on
+  a flag string to divide it into its elements:
 
   ```rpgle
-  dcl-ds strTb extname('IPSTRTB') qualified inz;
-    selected       Char(1)    dim(@coStxMax) overlay(sarr);
+  dcl-ds dsStrTb extname('IPSTRTB') prefix(strtb) inz;
+    strtbSelected  Char(1)    dim(@coStxMax) overlay(strtbsArr);
   end-ds;
   ```
+
+  Legacy Island Pacific code is full of program-described files. Through the
+  1990s that was IP's standard, for performance; it changed around 2000. Those
+  members are not a model.
+
 - **An externally described file always takes `prefix()` with its base name:**
   the object name without its two-character application id. A logical takes
   its physical's base name.
 
-  | File                | Prefix  |
-  | ------------------- | ------- |
+  | File                  | Prefix  |
+  | --------------------- | ------- |
   | `IPSTORE`, `IPSTOREA` | `store` |
-  | `RBOTBPL`           | `otbpl` |
+  | `RBOTBPL`             | `otbpl` |
   | `RBW001A` (work file) | `w001a` |
 
   ```rpgle
   dcl-f ipstrtb keyed usage(*INPUT) prefix(strtb);
+  ```
+
+  **A data structure built from the file's description takes the same
+  prefix**, so its subfields are the file's fields and an input operation
+  fills it directly. **Its name must not be a record format name** — IPSTRTB's
+  format is `STRTB`, so a structure called `strTb` will not compile once the
+  file is declared. Name it `ds` plus the base name:
+
+  ```rpgle
+  dcl-ds dsStrTb extname('IPSTRTB') prefix(strtb) inz;
+    strtbSelected  Char(1)    dim(@coStxMax) overlay(strtbsArr);
+  end-ds;
+  ```
+
+  Where an IBM or vendor copybook insists on its own name for the structure,
+  use that name in place of the `ds` name — one structure, not two. If that
+  name is also the file's format name, rename the format on the file
+  declaration, prefixing it with `r` (or `rec`). Island Pacific's `@sdviw`
+  requires IPSDDES (format `SDDES`) in a structure named `sdDes`:
+
+  ```rpgle
+  dcl-f ipsddes keyed usage(*INPUT) prefix(sddes) rename(sddes: rsddes);
+
+  dcl-ds sdDes extname('IPSDDES') prefix(sddes) inz;
+  end-ds;
+  ```
+
+  **A logical file's format is renamed with the logical's suffix**, since it
+  usually shares its physical's format name. The prefix stays the physical's,
+  so both files fill the same fields — unless the program genuinely needs
+  separate fields for each, which is the exception:
+
+  ```rpgle
+  dcl-f ipithdr  keyed usage(*INPUT) prefix(ithdr);
+  dcl-f ipithdra keyed usage(*INPUT) prefix(ithdr) rename(ithdr: ithdra);
+  ```
+
+  **Key structures are `likerec(format: *KEY)`, named with the prefix plus
+  `Key`**, and the logical's suffix where there is one:
+
+  ```rpgle
+  dcl-ds ithdrKey  likerec(ithdr: *KEY);
+  dcl-ds ithdrAKey likerec(ithdra: *KEY);
+
+  ithdrAKey.ithdriSku = sku;
+  chain %kds(ithdrAKey) ipithdra;
   ```
 
 - **Do not use `inz(*EXTDFT)`.** Over a table built to section 4.3 this is not a
@@ -1019,6 +1094,13 @@ not evidence that it is still required.
   (`%scan`, `%char`, `%trim`); figurative constants and compiler values
   uppercase (`*ON`, `*OFF`, `*BLANK`, `*NULL`, `*VARSIZE`, `*ESCAPE`,
   `*LIKEDS`).
+
+  **External field names are cased by their parts.** Most Island Pacific
+  fields start with a one-character file prefix: keep it lowercase and
+  TitleCase the rest — `SKEY` is `sKey`, `CDIV` is `cDiv` — and a `prefix()`
+  goes in front unchanged: `strtbsKey`. Some IP files use a longer prefix,
+  often close to the base name but not always; case it the same way when you
+  can tell where it ends, and as one camelCase word when you cannot.
 - Align the type column within a declaration group; separate groups with blank
   lines or minor rules.
 - Entry parameters take a `px` prefix (`pxTskName`); indicators declare `Ind`;
@@ -1043,8 +1125,21 @@ not evidence that it is still required.
   **`*ENTRY` is how a developer finds the top of the data definitions.** One
   search lands there, however long the header and the control options grow.
   Never leave it out.
-- **Mainline** is linear cycle-main code introduced by a `/// main() ///` doc
-  block. It delegates to subprocedures and ends with `exsr exitPgm` / `return`.
+- **Mainline** is linear cycle-main code introduced by an ILEDoc block, the
+  same as a subroutine or subprocedure, and closed by a full-width rule. It
+  delegates to subprocedures and ends with `exsr exitPgm` / `return`.
+
+  ```rpgle
+  ///
+  // main()
+  ///
+  ```
+
+  The block holds that one line and nothing else — no description, no
+  `@param` lines, no `*ENTRY` (that belongs to the entry interface's block).
+  `main()` is fixed text: the placeholder a developer searches for to land on
+  the mainline. Anything to say about the program as a whole goes in the
+  member's header block or in the entry interface's block, by `*ENTRY`.
 - Use **subroutines** (`begsr`) only for mainline flow plumbing: `exitPgm`
   (set `*inLR`, close handles), `initPgm` (initialization the mainline calls
   explicitly) and `*inzsr` (one-time init, cursor DECLAREs — see 2.7).
