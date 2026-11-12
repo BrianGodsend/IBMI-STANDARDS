@@ -649,11 +649,21 @@ MW  07/21/20  The last change
         would exceed 80 stays on one line (see §6) rather than wrapping
         or being abbreviated — that is what the 134 is for.</li>
         </ul></li>
-        <li><p><strong>Section separators:</strong> a full-width comment
-        rule between major sections and a shorter/dashed rule between
-        minor groups:</p>
+        <li><p><strong>Section separators close a section; they do not
+        head it.</strong> A full-width comment rule follows the last
+        line of each major section: the control options, the file
+        declarations, the copybooks, the constants, the entry interface,
+        each group of declarations, the mainline, and every subroutine
+        and subprocedure. Do not put a banner (rule, title, rule) above
+        a section. That was the old practice, and it is noise: the
+        closing rule already marks the boundary, and the first
+        declaration in a section says what the section is. A one-line
+        comment that says something specific about the next declaration
+        is still welcome. Inside a procedure, a shorter dashed rule
+        separates minor groups (2.5).</p>
         <ul>
-        <li>RPG: <code>// ****...****</code> (major),
+        <li>RPG: <code>// ****...****</code> (free form),
+        <code> * ****...****</code> (fixed form),
         <code>// ----...----</code> (minor)</li>
         <li>CL/SQL: <code>/* ****...**** */</code></li>
         <li>PNLGRP: <code>.* ****...****</code> with a
@@ -661,8 +671,9 @@ MW  07/21/20  The last change
         section</li>
         </ul></li>
         <li><p><strong>Blocks read top-down:</strong> mainline first,
-        error handling next, subroutines/ procedures last, each
-        introduced by a one-line comment saying what it does.</p></li>
+        error handling next, subroutines/ procedures last. In RPG each
+        routine is introduced by its ILEDoc block (2.5); elsewhere, by a
+        one-line comment saying what it does.</p></li>
         </ul>
         <h3 id="15-naming-and-member-families">1.5 Naming and member
         families</h3>
@@ -1505,20 +1516,51 @@ end-ds;</code></pre></li>
         <h3 id="25-program-structure">2.5 Program structure</h3>
         <ul>
         <li><p><strong>Entry:</strong> the program&#39;s
-        <code>dcl-pi PGMNAME</code> sits directly under a
-        <code>// *ENTRY</code> marker, immediately after
+        <code>dcl-pi PGMNAME</code> sits immediately after
         <code>/copy</code> of the program&#39;s own <code>…H</code> copybook
         (the copybook carries the matching
-        <code>dcl-pr … extpgm(&#39;PGMNAME&#39;)</code>).</p></li>
+        <code>dcl-pr … extpgm(&#39;PGMNAME&#39;)</code>), and both sit directly
+        under an ILEDoc block holding the short description and a
+        <code>// *ENTRY</code> marker:</p>
+        <pre class="rpgle"><code>///
+// Handles the Work with Locations UIM exit
+// *ENTRY
+///
+/copy qrpglesrc,tmxxxwrkh
+dcl-pi TMLOCEXT;</code></pre>
+        <p><strong><code>*ENTRY</code> is how a developer finds the top
+        of the data definitions.</strong> One search lands there,
+        however long the header and the control options grow. Never
+        leave it out.</p></li>
         <li><p><strong>Mainline</strong> is linear cycle-main code
         introduced by a <code>/// main() ///</code> doc block. It
         delegates to subprocedures and ends with
         <code>exsr exitPgm</code> / <code>return</code>.</p></li>
         <li><p>Use <strong>subroutines</strong> (<code>begsr</code>)
         only for mainline flow plumbing: <code>exitPgm</code> (set
-        <code>*inLR</code>, close handles) and <code>*inzsr</code>
-        (one-time init, cursor DECLAREs). All real logic goes in
-        <strong>subprocedures</strong> (<code>dcl-proc</code>).</p></li>
+        <code>*inLR</code>, close handles), <code>initPgm</code>
+        (initialization the mainline calls explicitly) and
+        <code>*inzsr</code> (one-time init, cursor DECLAREs — see 2.7).
+        All real logic goes in <strong>subprocedures</strong>
+        (<code>dcl-proc</code>).</p></li>
+        <li><p><strong>The special subroutines come last in the
+        mainline</strong>, after every other subroutine, always in this
+        order:</p>
+        <ol type="1">
+        <li>any other special subroutine — <code>*PSSR</code>, a file
+        I/O handler and the like</li>
+        <li><code>exitPgm</code></li>
+        <li><code>initPgm</code> (<code>srInit</code> in older
+        members)</li>
+        <li><code>*INZSR</code>, always the very last</li>
+        </ol>
+        <p>The order comes from an old practice: keeping the frequently
+        called subroutines close to the mainline, and the run-once ones
+        out of the way, avoided paging and long address jumps. That
+        optimization is unlikely to matter on current hardware and
+        compilers. The convention stays because a fixed position means a
+        reader always knows where to find these routines, without
+        searching.</p></li>
         <li><p>Name subroutines — and subprocedures —
         <code>&lt;verb&gt;&lt;Object&gt;</code> in camelCase:
         <code>getItemHeader</code>, <code>loadList</code>,
@@ -1526,10 +1568,43 @@ end-ds;</code></pre></li>
         that is published to other members through a copybook takes the
         namespace of section 1.5 in front of that name —
         <code>tmxxxwrk_sndStsMsg</code>.</p></li>
-        <li><p>Every procedure carries a <code>///</code> doc block
-        (ILEDoc, see 2.3): a one-line short description, then
-        <code>@param</code> and <code>@return</code> lines as
-        needed.</p></li>
+        <li><p><strong>Every subroutine and subprocedure carries a
+        <code>///</code> doc block</strong> (ILEDoc, see 2.3)
+        immediately before its <code>begsr</code> or
+        <code>dcl-proc</code>, and a full-width rule immediately after
+        its <code>endsr</code> or <code>end-proc</code> (1.4). The block
+        opens with a one-line short description that:</p>
+        <ul>
+        <li>starts with a third-person verb saying what the routine
+        does: <em>Writes</em>, <em>Cleans</em>, <em>Polishes</em>,
+        <em>Retrieves</em>. Not <em>Write</em>, and not <em>This routine
+        writes</em>;</li>
+        <li>is in sentence case;</li>
+        <li>has no closing period.</li>
+        </ul>
+        <p><code>@param</code> and <code>@return</code> lines follow as
+        needed.</p>
+        <pre class="rpgle"><code>///
+// Does something
+///
+begsr something;
+endsr;
+// ****************************************************************</code></pre>
+        <p>Fixed form follows the same rules, in a <code>/** … */</code>
+        block:</p>
+        <pre class="rpgle"><code>     /**
+      * Sends an escape message
+      */
+     p die             b
+     p                 e
+      * ***************************************************************</code></pre></li>
+        <li><p><strong>A hand-coded interface carries only its short
+        description.</strong> A program&#39;s <code>dcl-pi</code>, or a
+        local <code>dcl-pr</code> for another program, gets no
+        <code>@param</code> lines: parameters are documented once, in
+        the include header that publishes the prototype (2.3). Where no
+        header exists, do not create one just to hold the
+        documentation.</p></li>
         <li><p>Subprocedure skeleton:</p>
         <pre class="rpgle"><code>///
 // Loads a panel work with ... list
@@ -1550,7 +1625,8 @@ dcl-proc loadList;
 
   ...body...
   return endOpt &lt;&gt; @QUIM_LSTPOS_FIRST;
-end-proc;</code></pre>
+end-proc;
+// ****************************************************************</code></pre>
         <p><code>dcl-pi *N</code>, locals after a minor rule, single
         exit where practical.</p></li>
         <li><p>Parameters are <code>const</code> unless returned; use
@@ -1749,14 +1825,16 @@ if (objType = @OBJTYPE_FILE)
         <code>CLOSE</code>; row count from <code>sqlEr3</code>:</p>
         <pre class="rpgle"><code>exec sql
   FETCH csrUsrs FOR :@WRKUSRTM_USRS_MAX ROWS INTO :recUsrs;</code></pre></li>
-        <li><p><code>DECLARE CURSOR</code> belongs in the
-        mainline/<code>*inzsr</code>, <strong>not</strong> in a
-        subprocedure (activation-group/scoping surprises).</p>
+        <li><p><strong><code>DECLARE CURSOR</code> goes in
+        <code>*inzsr</code></strong> — always, even when the
+        declarations are the only thing in it. Declaring a cursor in a
+        subprocedure is a warning, not a prohibition: activation-group
+        and scoping surprises make it the wrong default, but some cases
+        need it, service programs above all (below).</p>
         <p><strong>A <code>NOMAIN</code> service program has no
         mainline, and therefore no <code>*inzsr</code> either</strong>,
-        so that rule points nowhere — which reads as a flat prohibition,
-        because there is no legal place left to put the cursor. There is
-        one:</p>
+        so its cursors have to be declared in a procedure. That is the
+        case the warning above allows for:</p>
         <table>
         <thead>
         <tr>
@@ -2091,24 +2169,24 @@ DELETE +
         is resolved at run time (from
         <code>DFTRDBCOL</code>/<code>*CURLIB</code>) instead of being
         hardcoded:</p>
-        <div class="sourceCode" id="cb32"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblNam  <span class="dt">VARCHAR</span>(<span class="dv">10</span>) <span class="kw">DEFAULT</span> <span class="st">&#39;TMTSK&#39;</span>;</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblLib  <span class="dt">VARCHAR</span>(<span class="dv">10</span>);</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblRef  <span class="dt">VARCHAR</span>(<span class="dv">21</span>);</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> sqlStmt <span class="dt">VARCHAR</span>(<span class="dv">5000</span>);</span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">/* Resolve the DFTRDBCOL, CURRENT SCHEMA or *CURLIB reference */</span></span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> bldobj_temp_resolve_dftrdbcol_schema_tmtsk</span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>      (fld1 <span class="dt">char</span>(<span class="dv">1</span>));</span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  GET DIAGNOSTICS CONDITION <span class="dv">1</span> tblLib <span class="op">=</span> DB2_ORDINAL_TOKEN_2;</span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblLib <span class="op">=</span> <span class="fu">TRIM</span>(tblLib);</span>
-<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> sqlStmt <span class="op">=</span> <span class="st">&#39;</span></span>
-<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a><span class="st">      DROP TABLE &#39;</span> <span class="op">||</span> tblLib</span>
-<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>          <span class="op">||</span> <span class="st">&#39;.bldobj_temp_resolve_dftrdbcol_schema_tmtsk&#39;</span>;</span>
-<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">EXECUTE</span> <span class="kw">IMMEDIATE</span> sqlStmt;</span>
-<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblRef <span class="op">=</span> tblLib <span class="op">||</span> <span class="st">&#39;.&#39;</span> <span class="op">||</span> tblNam;</span>
-<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>  <span class="op">..</span>.</span>
-<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span>;</span></code></pre></div>
+        <div class="sourceCode" id="cb35"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblNam  <span class="dt">VARCHAR</span>(<span class="dv">10</span>) <span class="kw">DEFAULT</span> <span class="st">&#39;TMTSK&#39;</span>;</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblLib  <span class="dt">VARCHAR</span>(<span class="dv">10</span>);</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> tblRef  <span class="dt">VARCHAR</span>(<span class="dv">21</span>);</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">DECLARE</span> sqlStmt <span class="dt">VARCHAR</span>(<span class="dv">5000</span>);</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">/* Resolve the DFTRDBCOL, CURRENT SCHEMA or *CURLIB reference */</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> bldobj_temp_resolve_dftrdbcol_schema_tmtsk</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>      (fld1 <span class="dt">char</span>(<span class="dv">1</span>));</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>  GET DIAGNOSTICS CONDITION <span class="dv">1</span> tblLib <span class="op">=</span> DB2_ORDINAL_TOKEN_2;</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblLib <span class="op">=</span> <span class="fu">TRIM</span>(tblLib);</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> sqlStmt <span class="op">=</span> <span class="st">&#39;</span></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a><span class="st">      DROP TABLE &#39;</span> <span class="op">||</span> tblLib</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>          <span class="op">||</span> <span class="st">&#39;.bldobj_temp_resolve_dftrdbcol_schema_tmtsk&#39;</span>;</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">EXECUTE</span> <span class="kw">IMMEDIATE</span> sqlStmt;</span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SET</span> tblRef <span class="op">=</span> tblLib <span class="op">||</span> <span class="st">&#39;.&#39;</span> <span class="op">||</span> tblNam;</span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>  <span class="op">..</span>.</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span>;</span></code></pre></div>
         <ul>
         <li><p><strong>The probe table&#39;s name ends with the MEMBER&#39;s
         name, and that is not optional.</strong> The trick above works
@@ -2135,12 +2213,12 @@ DELETE +
         described there. The two-line form is used in every member
         regardless of how short its name is, so nobody has to
         measure:</p>
-        <div class="sourceCode" id="cb33"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> bldobj_temp_resolve_dftrdbcol_schema_xfbld</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    (fld1 <span class="dt">char</span>(<span class="dv">1</span>));</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="op">..</span>.</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="kw">SET</span> sqlStmt <span class="op">=</span> <span class="st">&#39;</span></span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="st">    DROP TABLE &#39;</span> <span class="op">||</span> tblLib</span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">||</span> <span class="st">&#39;.bldobj_temp_resolve_dftrdbcol_schema_xfbld&#39;</span>;</span></code></pre></div></li>
+        <div class="sourceCode" id="cb36"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> bldobj_temp_resolve_dftrdbcol_schema_xfbld</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    (fld1 <span class="dt">char</span>(<span class="dv">1</span>));</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="op">..</span>.</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="kw">SET</span> sqlStmt <span class="op">=</span> <span class="st">&#39;</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="st">    DROP TABLE &#39;</span> <span class="op">||</span> tblLib</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">||</span> <span class="st">&#39;.bldobj_temp_resolve_dftrdbcol_schema_xfbld&#39;</span>;</span></code></pre></div></li>
         <li><p>Build each statement into <code>sqlStmt</code> and
         <code>EXECUTE IMMEDIATE</code> it.</p></li>
         <li><p>Before re-creating a table, loop the
@@ -2153,18 +2231,18 @@ DELETE +
         <code>MAX(id) + 1</code>.</p></li>
         </ul>
         <h3 id="43-tables-sqlt">4.3 Tables (<code>.SQLT</code>)</h3>
-        <div class="sourceCode" id="cb34"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> <span class="op">..</span>. (</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    task_id           <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskid      BIGINT</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>       <span class="kw">GENERATED</span> <span class="kw">BY</span> <span class="kw">DEFAULT</span></span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>       <span class="kw">AS</span> IDENTITY (<span class="kw">START</span> <span class="kw">WITH</span> <span class="dv">1</span> <span class="kw">INCREMENT</span> <span class="kw">BY</span> <span class="dv">1</span> <span class="kw">CYCLE</span>)</span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>       <span class="kw">PRIMARY</span> <span class="kw">KEY</span></span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>   ,task_name         <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskname    <span class="dt">CHAR</span>(<span class="dv">10</span>)</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="kw">UNIQUE</span></span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>   ,task_status       <span class="cf">FOR</span> <span class="kw">COLUMN</span> tsksts     <span class="dt">CHAR</span>(<span class="dv">1</span>)</span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="st">&#39;&#39;</span>0<span class="st">&#39;&#39;</span></span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>       <span class="kw">CHECK</span>(task_status <span class="kw">BETWEEN</span> <span class="st">&#39;&#39;</span>0<span class="st">&#39;&#39;</span> <span class="kw">AND</span> <span class="st">&#39;&#39;</span>9<span class="st">&#39;&#39;</span>)</span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>   <span class="op">..</span>.</span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>) RCDFMT r<span class="st">&#39; || tblNam;</span></span></code></pre></div>
+        <div class="sourceCode" id="cb37"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> <span class="op">..</span>. (</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    task_id           <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskid      BIGINT</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>       <span class="kw">GENERATED</span> <span class="kw">BY</span> <span class="kw">DEFAULT</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>       <span class="kw">AS</span> IDENTITY (<span class="kw">START</span> <span class="kw">WITH</span> <span class="dv">1</span> <span class="kw">INCREMENT</span> <span class="kw">BY</span> <span class="dv">1</span> <span class="kw">CYCLE</span>)</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>       <span class="kw">PRIMARY</span> <span class="kw">KEY</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>   ,task_name         <span class="cf">FOR</span> <span class="kw">COLUMN</span> tskname    <span class="dt">CHAR</span>(<span class="dv">10</span>)</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="kw">UNIQUE</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>   ,task_status       <span class="cf">FOR</span> <span class="kw">COLUMN</span> tsksts     <span class="dt">CHAR</span>(<span class="dv">1</span>)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>       <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="st">&#39;&#39;</span>0<span class="st">&#39;&#39;</span></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>       <span class="kw">CHECK</span>(task_status <span class="kw">BETWEEN</span> <span class="st">&#39;&#39;</span>0<span class="st">&#39;&#39;</span> <span class="kw">AND</span> <span class="st">&#39;&#39;</span>9<span class="st">&#39;&#39;</span>)</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>   <span class="op">..</span>.</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>) RCDFMT r<span class="st">&#39; || tblNam;</span></span></code></pre></div>
         <ul>
         <li><p><strong>Long descriptive names</strong> with
         <code>FOR COLUMN</code> short (≤10) system names, both
@@ -2204,12 +2282,12 @@ DELETE +
         <code>DEFAULT</code>, and <code>DEFAULT NULL</code> is not one
         of them.</strong> There are three ways to write this column and
         only one of them is defined:</p>
-        <div class="sourceCode" id="cb35"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a> ,expiry_timestamp    <span class="cf">FOR</span> <span class="kw">COLUMN</span> exptms    <span class="dt">TIMESTAMP</span></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>     <span class="kw">DEFAULT</span> <span class="st">&#39;&#39;</span>0001<span class="op">-</span><span class="dv">01</span><span class="op">-</span><span class="dv">01</span><span class="op">-</span><span class="fl">00.00</span>.<span class="fl">00.000000</span><span class="st">&#39;&#39;</span>    <span class="co">-- the only defined form</span></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a> ,expiry_timestamp    <span class="cf">FOR</span> <span class="kw">COLUMN</span> exptms    <span class="dt">TIMESTAMP</span></span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>     <span class="kw">DEFAULT</span> <span class="kw">NULL</span>                              <span class="co">-- current timestamp</span></span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a> ,expiry_timestamp    <span class="cf">FOR</span> <span class="kw">COLUMN</span> exptms    <span class="dt">TIMESTAMP</span></span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>                                               <span class="co">-- current timestamp</span></span></code></pre></div>
+        <div class="sourceCode" id="cb38"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a> ,expiry_timestamp    <span class="cf">FOR</span> <span class="kw">COLUMN</span> exptms    <span class="dt">TIMESTAMP</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>     <span class="kw">DEFAULT</span> <span class="st">&#39;&#39;</span>0001<span class="op">-</span><span class="dv">01</span><span class="op">-</span><span class="dv">01</span><span class="op">-</span><span class="fl">00.00</span>.<span class="fl">00.000000</span><span class="st">&#39;&#39;</span>    <span class="co">-- the only defined form</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a> ,expiry_timestamp    <span class="cf">FOR</span> <span class="kw">COLUMN</span> exptms    <span class="dt">TIMESTAMP</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>     <span class="kw">DEFAULT</span> <span class="kw">NULL</span>                              <span class="co">-- current timestamp</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a> ,expiry_timestamp    <span class="cf">FOR</span> <span class="kw">COLUMN</span> exptms    <span class="dt">TIMESTAMP</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>                                               <span class="co">-- current timestamp</span></span></code></pre></div>
         <p>The last two are the same statement: omitting both
         <code>NOT NULL</code> and <code>DEFAULT</code> is, in the
         <em>SQL Reference</em>&#39;s words, &quot;an implicit specification of
@@ -2348,14 +2426,14 @@ DELETE +
         <code>PREPARE</code> that fails at run time.</p>
         <p>Rewrite as a <code>LEFT JOIN</code> against a derived table
         and test the joined column for <code>NULL</code>:</p>
-        <div class="sourceCode" id="cb37"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> a.name</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>     , <span class="cf">CASE</span> <span class="cf">WHEN</span> d.nam <span class="kw">IS</span> <span class="kw">NULL</span> <span class="cf">THEN</span> <span class="st">&#39;1&#39;</span> <span class="cf">ELSE</span> <span class="st">&#39;0&#39;</span> <span class="cf">END</span></span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> xfxrf a</span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">LEFT</span> <span class="kw">JOIN</span> (<span class="kw">SELECT</span> <span class="kw">DISTINCT</span> z.environment <span class="kw">AS</span> env</span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>                  , <span class="fu">TRIM</span>(z.WHFNAM) <span class="kw">AS</span> nam</span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>               <span class="kw">FROM</span> xfxrf z <span class="kw">WHERE</span> z.environment <span class="op">=</span> ?) d</span>
-<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">ON</span> d.env <span class="op">=</span> a.environment</span>
-<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">AND</span> d.nam <span class="op">=</span> <span class="fu">TRIM</span>(a.WHPNAM)</span></code></pre></div>
+        <div class="sourceCode" id="cb40"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> a.name</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>     , <span class="cf">CASE</span> <span class="cf">WHEN</span> d.nam <span class="kw">IS</span> <span class="kw">NULL</span> <span class="cf">THEN</span> <span class="st">&#39;1&#39;</span> <span class="cf">ELSE</span> <span class="st">&#39;0&#39;</span> <span class="cf">END</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> xfxrf a</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">LEFT</span> <span class="kw">JOIN</span> (<span class="kw">SELECT</span> <span class="kw">DISTINCT</span> z.environment <span class="kw">AS</span> env</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>                  , <span class="fu">TRIM</span>(z.WHFNAM) <span class="kw">AS</span> nam</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>               <span class="kw">FROM</span> xfxrf z <span class="kw">WHERE</span> z.environment <span class="op">=</span> ?) d</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">ON</span> d.env <span class="op">=</span> a.environment</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">AND</span> d.nam <span class="op">=</span> <span class="fu">TRIM</span>(a.WHPNAM)</span></code></pre></div>
         <p>This is usually the better plan anyway — one pass instead of
         a correlated subquery per row — so it is not a workaround being
         tolerated. Restrict the derived table by the same predicate the
@@ -2367,17 +2445,17 @@ DELETE +
         restriction is on a subquery <em>inside</em> the
         search-condition, not on subqueries in the statement, so lifting
         it one level out is enough:</p>
-        <div class="sourceCode" id="cb38"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">WITH</span> r (name, hasref) <span class="kw">AS</span> (</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SELECT</span> a.name</span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>       , (<span class="kw">SELECT</span> <span class="dv">1</span> <span class="kw">FROM</span> xfxrf z</span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>           <span class="kw">WHERE</span> z.environment <span class="op">=</span> a.environment</span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>             <span class="kw">AND</span> z.WHFNAM <span class="op">=</span> a.WHPNAM</span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>           FETCH <span class="fu">FIRST</span> <span class="dv">1</span> <span class="kw">ROWS</span> <span class="kw">ONLY</span>)</span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span> xfxrf a</span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">WHERE</span> a.environment <span class="op">=</span> ? )</span>
-<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> a.name</span>
-<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>     , <span class="cf">CASE</span> <span class="cf">WHEN</span> a.hasref <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="cf">THEN</span> <span class="st">&#39;1&#39;</span> <span class="cf">ELSE</span> <span class="st">&#39;0&#39;</span> <span class="cf">END</span></span>
-<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> r a</span></code></pre></div>
+        <div class="sourceCode" id="cb41"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">WITH</span> r (name, hasref) <span class="kw">AS</span> (</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SELECT</span> a.name</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>       , (<span class="kw">SELECT</span> <span class="dv">1</span> <span class="kw">FROM</span> xfxrf z</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>           <span class="kw">WHERE</span> z.environment <span class="op">=</span> a.environment</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>             <span class="kw">AND</span> z.WHFNAM <span class="op">=</span> a.WHPNAM</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>           FETCH <span class="fu">FIRST</span> <span class="dv">1</span> <span class="kw">ROWS</span> <span class="kw">ONLY</span>)</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span> xfxrf a</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">WHERE</span> a.environment <span class="op">=</span> ? )</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> a.name</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>     , <span class="cf">CASE</span> <span class="cf">WHEN</span> a.hasref <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="cf">THEN</span> <span class="st">&#39;1&#39;</span> <span class="cf">ELSE</span> <span class="st">&#39;0&#39;</span> <span class="cf">END</span></span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> r a</span></code></pre></div>
         <p><strong>Which of the two depends on how many rows the OUTER
         query returns, not on how big the table is.</strong> The
         <code>LEFT JOIN</code> reads its derived table once, whole,
@@ -2561,8 +2639,8 @@ objHi = nam;</code></pre>
         <li><p><strong>Test for null and blank together</strong> when a
         value is &quot;missing or empty&quot;, because a service may express the
         same idea either way:</p>
-        <div class="sourceCode" id="cb40"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="cf">CASE</span> <span class="cf">WHEN</span> <span class="fu">COALESCE</span>(<span class="fu">TRIM</span>(a.text), <span class="st">&#39;&#39;</span>) <span class="op">&lt;&gt;</span> <span class="st">&#39;&#39;</span> <span class="cf">THEN</span> a.text</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>     <span class="cf">ELSE</span> <span class="fu">COALESCE</span>(b.text, <span class="st">&#39;&#39;</span>) <span class="cf">END</span></span></code></pre></div></li>
+        <div class="sourceCode" id="cb43"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="cf">CASE</span> <span class="cf">WHEN</span> <span class="fu">COALESCE</span>(<span class="fu">TRIM</span>(a.text), <span class="st">&#39;&#39;</span>) <span class="op">&lt;&gt;</span> <span class="st">&#39;&#39;</span> <span class="cf">THEN</span> a.text</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>     <span class="cf">ELSE</span> <span class="fu">COALESCE</span>(b.text, <span class="st">&#39;&#39;</span>) <span class="cf">END</span></span></code></pre></div></li>
         <li><p>Weigh the blast radius, not the row. A
         <code>NOT NULL</code> violation fails the whole statement, and
         where that statement is one step of a build that escapes on
@@ -2586,7 +2664,7 @@ objHi = nam;</code></pre>
         <p>Where a sort has to treat a value as &quot;no position&quot; rather
         than as a low one, <code>NULLIF(column, 0)</code> does it on its
         own:</p>
-        <div class="sourceCode" id="cb41"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> <span class="fu">NULLIF</span>(a.libl_position, <span class="dv">0</span>), a.name</span></code></pre></div>
+        <div class="sourceCode" id="cb44"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> <span class="fu">NULLIF</span>(a.libl_position, <span class="dv">0</span>), a.name</span></code></pre></div>
         <p>Rows with <code>0</code> sort to the end because they became
         null, and the rest sort normally. Adding <code>NULLS LAST</code>
         to that is a syntax error, and adding <code>ASC</code> first
@@ -4301,9 +4379,9 @@ sltCri.dlgVarNam = @XFENVWRK_VAR_ENV;</code></pre>
         never carries a gap. Anything else that changes a member must
         leave it in the same state.</p>
         <p>Read a member in the order IBM does:</p>
-        <div class="sourceCode" id="cb66"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> rrn(a), a.srcseq, a.srcdat, a.srcdta</span>
-<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">from</span> mylib.myalias a</span>
-<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a> <span class="kw">order</span> <span class="kw">by</span> rrn(a)</span></code></pre></div>
+        <div class="sourceCode" id="cb69"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> rrn(a), a.srcseq, a.srcdat, a.srcdta</span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">from</span> mylib.myalias a</span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a> <span class="kw">order</span> <span class="kw">by</span> rrn(a)</span></code></pre></div>
         <p>Ordering by <code>srcseq</code> instead shows a different
         member from the one the compiler sees whenever the sequence is
         out of order — which makes the comparison a quick test for
@@ -4382,10 +4460,10 @@ sltCri.dlgVarNam = @XFENVWRK_VAR_ENV;</code></pre>
         definition.</strong> Nothing in the database enforces it. Before
         using a sequence number to identify a line, confirm it is unique
         in that member:</p>
-        <div class="sourceCode" id="cb67"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> a.srcseq, <span class="fu">count</span>(<span class="op">*</span>)</span>
-<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">from</span> mylib.myalias a</span>
-<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a> <span class="kw">group</span> <span class="kw">by</span> a.srcseq</span>
-<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a><span class="kw">having</span> <span class="fu">count</span>(<span class="op">*</span>) <span class="op">&gt;</span> <span class="dv">1</span></span></code></pre></div>
+        <div class="sourceCode" id="cb70"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> a.srcseq, <span class="fu">count</span>(<span class="op">*</span>)</span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">from</span> mylib.myalias a</span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a> <span class="kw">group</span> <span class="kw">by</span> a.srcseq</span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a><span class="kw">having</span> <span class="fu">count</span>(<span class="op">*</span>) <span class="op">&gt;</span> <span class="dv">1</span></span></code></pre></div>
         <h3 id="124-source-dates">12.4 Source dates</h3>
         <ul>
         <li>A <strong>changed</strong> or <strong>inserted</strong> line
@@ -4410,12 +4488,12 @@ sltCri.dlgVarNam = @XFENVWRK_VAR_ENV;</code></pre>
         may change it. <strong>Capture an MD5 of the whole member when
         it is read, and compare it immediately before writing.</strong>
         Hash every column that matters, in physical order:</p>
-        <div class="sourceCode" id="cb68"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> hex(hash_md5(xmlserialize(</span>
-<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>         <span class="fu">xmlagg</span>(xmltext(digits(a.srcseq) <span class="op">||</span> digits(a.srcdat)</span>
-<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>                        <span class="op">||</span> a.srcdta <span class="op">||</span> x<span class="st">&#39;25&#39;</span>)</span>
-<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>                <span class="kw">order</span> <span class="kw">by</span> rrn(a))</span>
-<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>         <span class="kw">as</span> <span class="dt">clob</span>(<span class="dv">8</span>M))))</span>
-<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">from</span> mylib.myalias a</span></code></pre></div>
+        <div class="sourceCode" id="cb71"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> hex(hash_md5(xmlserialize(</span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>         <span class="fu">xmlagg</span>(xmltext(digits(a.srcseq) <span class="op">||</span> digits(a.srcdat)</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>                        <span class="op">||</span> a.srcdta <span class="op">||</span> x<span class="st">&#39;25&#39;</span>)</span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>                <span class="kw">order</span> <span class="kw">by</span> rrn(a))</span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>         <span class="kw">as</span> <span class="dt">clob</span>(<span class="dv">8</span>M))))</span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">from</span> mylib.myalias a</span></code></pre></div>
         <ul>
         <li><code>LISTAGG</code> cannot do this: it caps at roughly 32K,
         which a member of a few hundred lines exceeds.
@@ -4440,7 +4518,7 @@ sltCri.dlgVarNam = @XFENVWRK_VAR_ENV;</code></pre>
         <p>A plain <code>select</code> against a source file reads its
         <strong>first</strong> member only. Reach a specific member
         through an alias:</p>
-        <div class="sourceCode" id="cb69"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="kw">create</span> alias mylib.myalias <span class="cf">for</span> mylib.qrpglesrc (mymbr)</span></code></pre></div>
+        <div class="sourceCode" id="cb72"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="kw">create</span> alias mylib.myalias <span class="cf">for</span> mylib.qrpglesrc (mymbr)</span></code></pre></div>
         <p><code>QSYS2.IFS_READ</code> on the member&#39;s
         <code>/QSYS.LIB/…/…MBR</code> path also reads it, in RRN order,
         but returns only the source text — no <code>SRCSEQ</code> or

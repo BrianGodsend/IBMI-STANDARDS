@@ -382,13 +382,23 @@ whoever notices it next.
     read free-form code past column 80.
   - **PNLGRP:** a `:HELP` title that would exceed 80 stays on one line (see §6)
     rather than wrapping or being abbreviated — that is what the 134 is for.
-- **Section separators:** a full-width comment rule between major sections and a
-  shorter/dashed rule between minor groups:
-  - RPG: `// ****...****` (major), `// ----...----` (minor)
+- **Section separators close a section; they do not head it.** A full-width
+  comment rule follows the last line of each major section: the control
+  options, the file declarations, the copybooks, the constants, the entry
+  interface, each group of declarations, the mainline, and every subroutine
+  and subprocedure. Do not put a banner (rule, title, rule) above a section.
+  That was the old practice, and it is noise: the closing rule already marks
+  the boundary, and the first declaration in a section says what the section
+  is. A one-line comment that says something specific about the next
+  declaration is still welcome. Inside a procedure, a shorter dashed rule
+  separates minor groups (2.5).
+  - RPG: `// ****...****` (free form), ` * ****...****` (fixed form),
+    `// ----...----` (minor)
   - CL/SQL: `/* ****...**** */`
   - PNLGRP: `.* ****...****` with a `.* Title` + `.* -----` underline per section
 - **Blocks read top-down:** mainline first, error handling next, subroutines/
-  procedures last, each introduced by a one-line comment saying what it does.
+  procedures last. In RPG each routine is introduced by its ILEDoc block (2.5);
+  elsewhere, by a one-line comment saying what it does.
 
 ### 1.5 Naming and member families
 
@@ -991,20 +1001,84 @@ not evidence that it is still required.
 
 ### 2.5 Program structure
 
-- **Entry:** the program's `dcl-pi PGMNAME` sits directly under a `// *ENTRY`
-  marker, immediately after `/copy` of the program's own `…H` copybook (the
-  copybook carries the matching `dcl-pr … extpgm('PGMNAME')`).
+- **Entry:** the program's `dcl-pi PGMNAME` sits immediately after `/copy` of
+  the program's own `…H` copybook (the copybook carries the matching
+  `dcl-pr … extpgm('PGMNAME')`), and both sit directly under an ILEDoc block
+  holding the short description and a `// *ENTRY` marker:
+
+  ```rpgle
+  ///
+  // Handles the Work with Locations UIM exit
+  // *ENTRY
+  ///
+  /copy qrpglesrc,tmxxxwrkh
+  dcl-pi TMLOCEXT;
+  ```
+
+  **`*ENTRY` is how a developer finds the top of the data definitions.** One
+  search lands there, however long the header and the control options grow.
+  Never leave it out.
 - **Mainline** is linear cycle-main code introduced by a `/// main() ///` doc
   block. It delegates to subprocedures and ends with `exsr exitPgm` / `return`.
 - Use **subroutines** (`begsr`) only for mainline flow plumbing: `exitPgm`
-  (set `*inLR`, close handles) and `*inzsr` (one-time init, cursor DECLAREs).
+  (set `*inLR`, close handles), `initPgm` (initialization the mainline calls
+  explicitly) and `*inzsr` (one-time init, cursor DECLAREs — see 2.7).
   All real logic goes in **subprocedures** (`dcl-proc`).
+- **The special subroutines come last in the mainline**, after every other
+  subroutine, always in this order:
+
+  1. any other special subroutine — `*PSSR`, a file I/O handler and the like
+  2. `exitPgm`
+  3. `initPgm` (`srInit` in older members)
+  4. `*INZSR`, always the very last
+
+  The order comes from an old practice: keeping the frequently called
+  subroutines close to the mainline, and the run-once ones out of the way,
+  avoided paging and long address jumps. That optimization is unlikely to
+  matter on current hardware and compilers. The convention stays because a
+  fixed position means a reader always knows where to find these routines,
+  without searching.
 - Name subroutines — and subprocedures — `<verb><Object>` in camelCase:
   `getItemHeader`, `loadList`, `sndStsMsg`, `exitPgm`. A subprocedure that is
   published to other members through a copybook takes the namespace of
   section 1.5 in front of that name — `tmxxxwrk_sndStsMsg`.
-- Every procedure carries a `///` doc block (ILEDoc, see 2.3): a one-line
-  short description, then `@param` and `@return` lines as needed.
+- **Every subroutine and subprocedure carries a `///` doc block** (ILEDoc,
+  see 2.3) immediately before its `begsr` or `dcl-proc`, and a full-width rule
+  immediately after its `endsr` or `end-proc` (1.4). The block opens with a
+  one-line short description that:
+  - starts with a third-person verb saying what the routine does: *Writes*,
+    *Cleans*, *Polishes*, *Retrieves*. Not *Write*, and not *This routine
+    writes*;
+  - is in sentence case;
+  - has no closing period.
+
+  `@param` and `@return` lines follow as needed.
+
+  ```rpgle
+  ///
+  // Does something
+  ///
+  begsr something;
+  endsr;
+  // ****************************************************************
+  ```
+
+  Fixed form follows the same rules, in a `/** … */` block:
+
+  ```rpgle
+       /**
+        * Sends an escape message
+        */
+       p die             b
+       p                 e
+        * ***************************************************************
+  ```
+
+- **A hand-coded interface carries only its short description.** A program's
+  `dcl-pi`, or a local `dcl-pr` for another program, gets no `@param` lines:
+  parameters are documented once, in the include header that publishes the
+  prototype (2.3). Where no header exists, do not create one just to hold the
+  documentation.
 - Subprocedure skeleton:
 
   ```rpgle
@@ -1028,6 +1102,7 @@ not evidence that it is still required.
     ...body...
     return endOpt <> @QUIM_LSTPOS_FIRST;
   end-proc;
+  // ****************************************************************
   ```
 
   `dcl-pi *N`, locals after a minor rule, single exit where practical.
@@ -1177,12 +1252,14 @@ not evidence that it is still required.
     FETCH csrUsrs FOR :@WRKUSRTM_USRS_MAX ROWS INTO :recUsrs;
   ```
 
-- `DECLARE CURSOR` belongs in the mainline/`*inzsr`, **not** in a subprocedure
-  (activation-group/scoping surprises).
+- **`DECLARE CURSOR` goes in `*inzsr`** — always, even when the declarations
+  are the only thing in it. Declaring a cursor in a subprocedure is a warning,
+  not a prohibition: activation-group and scoping surprises make it the wrong
+  default, but some cases need it, service programs above all (below).
 
   **A `NOMAIN` service program has no mainline, and therefore no `*inzsr`
-  either**, so that rule points nowhere — which reads as a flat prohibition,
-  because there is no legal place left to put the cursor. There is one:
+  either**, so its cursors have to be declared in a procedure. That is the case
+  the warning above allows for:
 
   | Used by            | Declare it in     |
   | ------------------ | ----------------- |
