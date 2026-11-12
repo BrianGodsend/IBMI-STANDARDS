@@ -222,9 +222,10 @@ is created without it. A command whose `HLPPNLGRP` was on its old `CRTCMD` build
 perfectly and has no help.
 
 **Naming the BUILD library has no source form either, and that moves the
-attribute to the create command.** A command whose library need not be on the
-library list must find its CPP and its help without it — a menu driver
-launched by a qualified name is the case that produced this (`STRMNUIP`).
+attribute to the create command.** When a command library need not be on the
+library list, the references from the command to the CPP and the help panel
+must resolve without the library list — a menu driver launched by a qualified
+name is the case that produced this rule (`STRMNUIP`).
 Source cannot say *the library this is being built into*; only a substitution
 variable can, and BLDOBJ substitutes only in the directives:
 
@@ -239,21 +240,23 @@ Three things follow, and each has been got wrong once:
   "Values that are specified on the CMD statement take precedence over any
   values specified on the CRTCMD command." A `HLPPNLGRP(STRMNUIP)` left on the
   statement silently undoes the qualified one on the create.
-- **`HLPID` goes with `HLPPNLGRP`.** `CRTCMD` validates its own parameters, so
-  it rejects a panel group without a help id even when the `CMD` statement
-  supplies one. Keep the pair together on the create, and off the statement,
-  so a later change to one copy cannot be overridden by the other.
+- **`HLPID` goes with `HLPPNLGRP`.** `CRTCMD` validates the `CRTCMD`
+  parameters on their own, rejecting a panel group without a help id even when
+  the `CMD` statement supplies one. Keep the pair together on the create, and
+  off the statement, so a later change to one copy cannot be overridden by the
+  other.
 - **Qualify only what the command uses.** `MSGF` serves `DEP` statements; a
-  command with none has no use for it, qualified or not.
+  command with no `DEP` statements has no use for `MSGF`, qualified or not.
 
 `&O`, not `&L` — the object library, not the source library. The reference is
 fixed when the command is built, which suits a build-per-location promotion and
 does not suit a copy: a command duplicated, moved or restored into another
-library still calls the library it was built in. Say so in the member header,
-because nothing else will.
+library still references the library the command was built in. Say so in the
+member header, because nothing else will, and give the `CHGCMD` that repoints
+a copied command.
 
-`PRDLIB` is not the alternative it looks like. The product library stays on the
-list for as long as the CPP runs — for a menu, the whole session.
+`PRDLIB` looks like an alternative and is not one. The product library stays on
+the list for as long as the CPP runs — for a menu, the whole session.
 
 **Member text lives in the source.** Source edited off-platform round-trips
 through the IFS, and a source physical file member's **text description does not

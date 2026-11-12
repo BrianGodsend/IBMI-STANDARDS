@@ -422,10 +422,11 @@ MW  07/21/20  The last change
         on its old <code>CRTCMD</code> builds perfectly and has no
         help.</p>
         <p><strong>Naming the BUILD library has no source form either,
-        and that moves the attribute to the create command.</strong> A
-        command whose library need not be on the library list must find
-        its CPP and its help without it — a menu driver launched by a
-        qualified name is the case that produced this
+        and that moves the attribute to the create command.</strong>
+        When a command library need not be on the library list, the
+        references from the command to the CPP and the help panel must
+        resolve without the library list — a menu driver launched by a
+        qualified name is the case that produced this rule
         (<code>STRMNUIP</code>). Source cannot say <em>the library this
         is being built into</em>; only a substitution variable can, and
         BLDOBJ substitutes only in the directives:</p>
@@ -441,23 +442,27 @@ MW  07/21/20  The last change
         undoes the qualified one on the create.</li>
         <li><strong><code>HLPID</code> goes with
         <code>HLPPNLGRP</code>.</strong> <code>CRTCMD</code> validates
-        its own parameters, so it rejects a panel group without a help
-        id even when the <code>CMD</code> statement supplies one. Keep
-        the pair together on the create, and off the statement, so a
-        later change to one copy cannot be overridden by the other.</li>
+        the <code>CRTCMD</code> parameters on their own, rejecting a
+        panel group without a help id even when the <code>CMD</code>
+        statement supplies one. Keep the pair together on the create,
+        and off the statement, so a later change to one copy cannot be
+        overridden by the other.</li>
         <li><strong>Qualify only what the command uses.</strong>
         <code>MSGF</code> serves <code>DEP</code> statements; a command
-        with none has no use for it, qualified or not.</li>
+        with no <code>DEP</code> statements has no use for
+        <code>MSGF</code>, qualified or not.</li>
         </ul>
         <p><code>&amp;O</code>, not <code>&amp;L</code> — the object
         library, not the source library. The reference is fixed when the
         command is built, which suits a build-per-location promotion and
         does not suit a copy: a command duplicated, moved or restored
-        into another library still calls the library it was built in.
-        Say so in the member header, because nothing else will.</p>
-        <p><code>PRDLIB</code> is not the alternative it looks like. The
-        product library stays on the list for as long as the CPP runs —
-        for a menu, the whole session.</p>
+        into another library still references the library the command
+        was built in. Say so in the member header, because nothing else
+        will, and give the <code>CHGCMD</code> that repoints a copied
+        command.</p>
+        <p><code>PRDLIB</code> looks like an alternative and is not one.
+        The product library stays on the list for as long as the CPP
+        runs — for a menu, the whole session.</p>
         <p><strong>Member text lives in the source.</strong> Source
         edited off-platform round-trips through the IFS, and a source
         physical file member&#39;s <strong>text description does not survive
