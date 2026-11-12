@@ -890,6 +890,31 @@ not evidence that it is still required.
   end-ds;
   ```
 
+- **Declare a file externally whenever it has an external description.** Do not
+  code a program-described `disk(n)` file over a file that has one. Positions
+  inside a field are reached through the external field, not through
+  hard-coded record positions. The usual case is an array overlaid on a flag
+  string to divide it into its elements:
+
+  ```rpgle
+  dcl-ds strTb extname('IPSTRTB') qualified inz;
+    selected       Char(1)    dim(@coStxMax) overlay(sarr);
+  end-ds;
+  ```
+- **An externally described file always takes `prefix()` with its base name:**
+  the object name without its two-character application id. A logical takes
+  its physical's base name.
+
+  | File                | Prefix  |
+  | ------------------- | ------- |
+  | `IPSTORE`, `IPSTOREA` | `store` |
+  | `RBOTBPL`           | `otbpl` |
+  | `RBW001A` (work file) | `w001a` |
+
+  ```rpgle
+  dcl-f ipstrtb keyed usage(*INPUT) prefix(strtb);
+  ```
+
 - **Do not use `inz(*EXTDFT)`.** Over a table built to section 4.3 this is not a
   judgement call — such a table always holds at least one timestamp column that
   cannot carry a default, and any date, time, or timestamp field lacking one
