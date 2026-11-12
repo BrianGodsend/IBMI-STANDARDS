@@ -234,7 +234,7 @@ variable can, and BLDOBJ substitutes only in the directives:
 /*>        HLPPNLGRP(&O/STRMNUIP) HLPID(*CMD)                       <*/
 ```
 
-Three things follow, and each has been got wrong once:
+Three rules follow, each learned while building `STRMNUIP`:
 
 - **Take the attribute OFF the `CMD` statement.** *CL Overview and Concepts*:
   "Values that are specified on the CMD statement take precedence over any
