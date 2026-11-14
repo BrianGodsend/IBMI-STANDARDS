@@ -930,15 +930,19 @@ not evidence that it is still required.
   1990s that was IP's standard, for performance; it changed around 2000. Those
   members are not a model.
 
-- **An externally described file always takes `prefix()` with its base name:**
-  the object name without its two-character application id. A logical takes
-  its physical's base name.
+- **An externally described file always takes `prefix()` with its record
+  format name.** A logical takes its physical's format name. The format name
+  is the reliable source. Most formats are the object name without its
+  two-character application id, but not all of them, and the object name can
+  change while the format stays the same. Look the format up rather than
+  working it out from the file name.
 
-  | File                  | Prefix  |
-  | --------------------- | ------- |
-  | `IPSTORE`, `IPSTOREA` | `store` |
-  | `RBOTBPL`             | `otbpl` |
-  | `RBW001A` (work file) | `w001a` |
+  | File                  | Format    | Prefix    |
+  | --------------------- | --------- | --------- |
+  | `IPSTORE`, `IPSTOREA` | `STORE`   | `store`   |
+  | `RBOTBPL`             | `OTBPL`   | `otbpl`   |
+  | `RBW444L` (work file) | `W444L`   | `w444l`   |
+  | `RBCONSTANT`          | `RBCONST` | `rbconst` |
 
   ```rpgle
   dcl-f ipstrtb keyed usage(*INPUT) prefix(strtb);
@@ -948,7 +952,7 @@ not evidence that it is still required.
   prefix**, so its subfields are the file's fields and an input operation
   fills it directly. **Its name must not be a record format name** — IPSTRTB's
   format is `STRTB`, so a structure called `strTb` will not compile once the
-  file is declared. Name it `ds` plus the base name:
+  file is declared. Name it `ds` plus the prefix:
 
   ```rpgle
   dcl-ds dsStrTb extname('IPSTRTB') prefix(strtb) inz;
@@ -989,6 +993,16 @@ not evidence that it is still required.
   ithdrAKey.ithdriSku = sku;
   chain %kds(ithdrAKey) ipithdra;
   ```
+
+- **Use `extfile()` and `extmbr()` with extreme caution.** They read as if
+  they name the file the program opens, but they do not have the last word.
+  The open honours any override in effect for that file, so an override
+  silently replaces what the keyword names. Point a file at another library or
+  member with an override, where the override is visible and scoped:
+  - Under an Island Pacific process phase, the process CL does the override
+    (3.6), and the program declares the file plainly.
+  - A program called interactively, outside a procedure, usually does the
+    override itself before opening the file.
 
 - **Do not use `inz(*EXTDFT)`.** Over a table built to section 4.3 this is not a
   judgement call — such a table always holds at least one timestamp column that
@@ -1099,7 +1113,7 @@ not evidence that it is still required.
   fields start with a one-character file prefix: keep it lowercase and
   TitleCase the rest — `SKEY` is `sKey`, `CDIV` is `cDiv` — and a `prefix()`
   goes in front unchanged: `strtbsKey`. Some IP files use a longer prefix,
-  often close to the base name but not always; case it the same way when you
+  often close to the format name but not always; case it the same way when you
   can tell where it ends, and as one camelCase word when you cannot.
 - Align the type column within a declaration group; separate groups with blank
   lines or minor rules.
@@ -1291,14 +1305,41 @@ not evidence that it is still required.
 
   There is also **no `NOT IN` operator**: `needle not in %list(…)` does not
   compile. The negation goes in front of the parenthesized test.
-- Indent 2 spaces per level. Continuation lines indent 4 spaces; when breaking a
-  parameter list, lead continuation lines with the `:` separator:
+- Indent 2 spaces per level. **A continuation line is double-indented** (two
+  levels, 4 spaces), so it never lines up with the statements of a nested
+  block.
+- **Break before the connecting operator, so the continuation line starts with
+  it**: `and`, `or`, `+`, the `:` between parameters. A line that opens with an
+  operator cannot be read as a statement of its own. Wherever it is seen, alone
+  in a search result or at the top of the screen, it says to look up a line for
+  the start. Break after the operator instead, and the continuation can look
+  complete:
 
   ```rpgle
+  // Wrong: the second line reads like a stand-alone call
+  if (a = b) and
+      isValid();
+
+  // Right
+  if (a = b)
+      and isValid();
+
   quim_displayPanel(hdl: fncKey: pnlIDName: @QUIM_REDISPLAY_YES
       : errc0100: @QUIM_USRTSK_OLD
       : msgRefKey);
+
+  msg = 'RBCONSTANT key "' + %trimr(key)
+      + '" is missing.';
   ```
+
+  The one exception is a continued literal, where the `+` or `-` must end
+  the line. SQL's leading commas (2.7) and CL's wrapping on a keyword boundary
+  (3.2) apply the same idea.
+
+  **Exception: RPGLE source in the `IPTSMOD*` libraries indents 3 spaces per
+  level**, following Island Pacific's own convention there. Continuation lines
+  are still double-indented (6 spaces). The statement inside an `exec sql`
+  still follows the SQL style of 2.7.
 
 ### 2.6 Error handling and messages
 
@@ -1440,7 +1481,9 @@ not evidence that it is still required.
   body starts at 16 — which is a good reason to prefer `SUBR` over wrapping work
   in a `DO`, since it costs no extra level.
 
-  - **Labels** start in column 2 on their own line, at any depth.
+  - **Labels** start in column 2 on their own line, at any depth. The one
+    exception is an Island Pacific process phase's `STEPnn:` label, which
+    shares its line with `IPINCJOB` (3.6).
   - **`DCL` with `STG(*DEFINED)`** is indented 2 under the variable it overlays,
     shifting the line and its continuations right by 2 like any other level.
   - **Comments start in column 1**, not the command column, and then follow the
@@ -1522,7 +1565,8 @@ Order after `PGM`/`COPYRIGHT`/`DCLPRCOPT`:
 
 ### 3.4 Error handling — the STDERR pattern
 
-Every program monitors globally and funnels to one handler:
+Every program monitors globally and funnels to one handler, except an Island
+Pacific setup or process phase program, which has no global trap at all (3.6):
 
 ```text
              DCL        VAR(&STDERR) TYPE(*LGL) VALUE('0')
@@ -1611,6 +1655,55 @@ Every program monitors globally and funnels to one handler:
   program is pointed at real volume — and it fails as a member-full condition on
   a `QTEMP` file, which explains nothing about the program that caused it. A
   limit that only bites in production is worse than one that bites immediately.
+
+### 3.6 Island Pacific setup and process phase programs
+
+An Island Pacific procedure runs as a pair of CLLE programs, in whichever
+repository the procedure lives:
+
+- The **setup phase** collects any options. It then calls `IPSETJOB`, which
+  asks whether to submit or run interactively, and either submits the process
+  phase with `IPSBMJOB` or `CALL`s it with the job id.
+- The **process phase** does the work in recoverable steps. It starts with
+  `IPSTRJOB`, then branches to the step recorded in the LDA (positions 295–296)
+  so that a recovered job resumes where it stopped. Each step opens with its
+  `STEPnn:` label and `IPINCJOB STEP(nn)` **on the same line**, which ties
+  the label and the step it records together. The label is in column 2 and the
+  command in its usual column 14. `STEP99` cleans up — it clears the job id
+  members, removes overrides and ends with `IPENDJOB`.
+
+  ```text
+   STEP01:     IPINCJOB   STEP(01)
+               IPSNDMSG   MSG('Downloading the styles.')
+  ```
+
+Two rules for these programs override the rest of section 3:
+
+- **No global error trap.** Neither phase declares `&STDERR`, the global
+  `MONMSG` or the STDERR handler of 3.4. Any error is left to bubble up. The
+  job stops at the step it was on with the message in front of the operator,
+  and the operator decides what to do: fix the cause and recover the job from
+  that step, or cancel it. A handler adds nothing to that, and anything more
+  elaborate takes the decision away from the person who has to make it.
+
+  Expected conditions are still monitored per command and cleaned up, exactly
+  as in 3.4 — for example, `CPF3288` on the `CHGPFM` that checks whether the
+  job id member already exists.
+- **`IPJOBID` only when the setup itself works with job id members.**
+  `IPSETJOB` returns the job id that `IPSBMJOB` and the `CALL` pass to the
+  process phase. A setup phase with no job id members of its own has no use
+  for `IPJOBID`.
+
+Two more rules apply to the programs the process phase calls:
+
+- **The process phase does the overrides.** Overrides to job id members, and
+  to files that live in another library (resolved in the CL, for example
+  through `RB403Z RETMODLIB`), are done by the process CL, scoped
+  `OVRSCOPE(*CALLLVL)` with `SECURE(*YES)`. The programs it calls declare
+  those files plainly, with no `extfile()` or override of their own (2.4).
+- **Called programs read job values from the LDA.** When a value is in the LDA,
+  such as the procedure's setup program name (`@ldPgm`), the called program
+  reads it there through the LDA copybook. It is not passed as a parameter.
 
 ---
 
