@@ -690,6 +690,57 @@ Rules that keep the family honest:
   pass catches both, and also catches submitted jobs that died without writing
   back.
 
+### 1.7 Control flow
+
+These rules hold in every language: CL, RPG, SQL PL, and C or any other brace
+language. They are **guidelines, not mechanical rules**. Each one exists for
+readability and for ease of maintenance. Where a strict reading would hurt
+either of those, the reading gives way. The recovery branch of an Island
+Pacific process phase (3.6) is the standing example.
+
+- **A label goes on its own line.** The label is easy to find, and a new first
+  statement can be added at the label without disturbing the line that is there
+  now. CL's column rules are in 3.2. The exception is a step label that shares
+  its line with the command recording the step (3.6).
+- **Conditional bodies are blocks.** Code the body of an `IF`, `ELSE` or `WHEN`
+  as a block even when it is one statement: `DO … ENDDO` in CL, braces in C.
+  This is the same reasoning as the label rule. A new first statement goes in
+  without rewriting the conditional, and the block's extent is visible at a
+  glance. CL's recognized one-liners are listed in 3.2.
+- **A branch that leaves stands alone.** When a block ends by leaving, whether
+  by `return`, `leave`, `iter`, `GOTO`, `RTNSUBR` or `break`, do not hang an
+  `else` after it. The code that follows is simply the next statement:
+
+  ```c
+  /* Wrong: the else implies a choice that the return already made */
+  if (a == b) {
+    c = 1;
+    return;
+  } else {
+    d = 3;
+  }
+
+  /* Right */
+  if (a == b) {
+    c = 1;
+    return;
+  }
+
+  d = 3;
+  ```
+
+  The block says "if this condition is met, we end here". An `else` after that
+  end suggests the two paths rejoin, and they do not.
+- **`SELECT` is a switch.** RPG and CL let every `WHEN` test anything. Use
+  `SELECT` the way C uses `switch`: every `WHEN` tests the **same** value or
+  expression against a different result. When the `WHEN`s test different
+  variables, or combine several conditions, the construct is an
+  `if`/`elseif` chain. Write it as one.
+
+  Newer RPG compilers accept the switched value on the `SELECT` itself, which
+  states this intent directly. The compiler in use here does not support it
+  yet, so do not use that form until it does.
+
 ---
 
 ## 2. RPGLE / SQLRPGLE
@@ -1481,8 +1532,8 @@ not evidence that it is still required.
   body starts at 16 — which is a good reason to prefer `SUBR` over wrapping work
   in a `DO`, since it costs no extra level.
 
-  - **Labels** start in column 2 on their own line, at any depth. The one
-    exception is an Island Pacific process phase's `STEPnn:` label, which
+  - **Labels** start in column 2 on their own line, at any depth (1.7). The
+    one exception is an Island Pacific process phase's `STEPnn:` label, which
     shares its line with `IPINCJOB` (3.6).
   - **`DCL` with `STG(*DEFINED)`** is indented 2 under the variable it overlays,
     shifting the line and its continuations right by 2 like any other level.
@@ -1531,10 +1582,11 @@ not evidence that it is still required.
 - Commands UPPERCASE; comments sentence case.
 - **Block form for conditionals:** wrap `IF`/`ELSE`/`WHEN` bodies in
   `DO … ENDDO` even when the body is a single statement, so a block can grow
-  later without rewriting the conditional. Recognized exceptions where a
+  later without rewriting the conditional (1.7). Recognized exceptions where a
   one-liner is fine: the standard STDERR handler (`IF COND(&STDERR)
   THEN(RETURN)` — the most common one, written verbatim across programs),
-  the occasional `SELECT`/`WHEN` one-liner, and legacy code.
+  the occasional `SELECT`/`WHEN` one-liner such as the recovery branch of 3.6,
+  and legacy code.
 
 ### 3.3 Declarations
 
@@ -1676,6 +1728,21 @@ repository the procedure lives:
    STEP01:     IPINCJOB   STEP(01)
                IPSNDMSG   MSG('Downloading the styles.')
   ```
+
+  The branch to the recorded step is a `SELECT` of one-line `GOTO`s:
+
+  ```text
+               SELECT
+                 WHEN       COND(&STP *EQ '01') THEN(GOTO CMDLBL(STEP01))
+                 WHEN       COND(&STP *EQ '05') THEN(GOTO CMDLBL(STEP05))
+                 WHEN       COND(&STP *EQ '99') THEN(GOTO CMDLBL(STEP99))
+               ENDSELECT
+  ```
+
+  A strict reading of 1.7 would make each `WHEN` a `DO`/`GOTO`/`ENDDO` block,
+  or a stand-alone `IF` for each step, because each one leaves. Write it as
+  shown anyway. The pattern is common enough to read at a glance, and a `WHEN`
+  here never grows past its single `GOTO`.
 
 Two rules for these programs override the rest of section 3:
 
