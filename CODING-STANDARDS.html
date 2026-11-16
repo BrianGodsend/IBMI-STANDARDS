@@ -483,11 +483,16 @@ MW  07/21/20  The last change
         statement</td>
         </tr>
         <tr>
-        <td>CL (<code>.CLLE</code>, <code>.CLP</code>)</td>
-        <td><code>TEXT(&#39;…&#39;)</code> on <code>DCLPRCOPT</code></td>
+        <td>CL program (<code>.CLLE</code>, <code>.CLP</code>)</td>
+        <td><code>TEXT(&#39;…&#39;)</code> on <code>DCLPRCOPT</code> (3.1)</td>
         </tr>
         <tr>
-        <td>Everything else</td>
+        <td>RPG with control options (<code>.RPGLE</code>,
+        <code>.SQLRPGLE</code>)</td>
+        <td><code>text(&#39;…&#39;)</code> on <code>ctl-opt</code> (2.2)</td>
+        </tr>
+        <tr>
+        <td>Everything else, RPG copybooks and CL includes too</td>
         <td><code>*&gt; &lt;BLDOBJ TEXT=&quot;…&quot;/&gt;</code></td>
         </tr>
         </tbody>
@@ -1217,6 +1222,7 @@ MW  07/21/20  The last change
 //  *&gt;  &lt;BLDOBJ EOF/&gt;
 
 ctl-opt copyright(&#39;(c) Copyright Godsend Consulting, 2020-2026&#39;);
+ctl-opt text(&#39;Retrieve Location Attributes&#39;);
 ctl-opt option(*NODEBUGIO: *NOUNREF);
 ctl-opt debug(*CONSTANTS);
 ctl-opt decedit(&#39;0.&#39;);
@@ -1227,17 +1233,29 @@ ctl-opt dftactgrp(*NO);
 ctl-opt actgrp(*CALLER);
 /ENDIF</code></pre>
         <ul>
-        <li>One keyword per <code>ctl-opt</code> statement,
-        <code>copyright</code> first.</li>
-        <li>The standard option set is exactly the block above. Add
+        <li><p>One keyword per <code>ctl-opt</code> statement:
+        <code>copyright</code> first, then <code>text</code>. Where a
+        member carries no copyright (client code), <code>text</code> is
+        first.</p></li>
+        <li><p><strong>The member text goes on
+        <code>ctl-opt text(&#39;…&#39;)</code></strong>, not on a
+        <code>BLDOBJ TEXT</code> directive (1.3), 50 characters at
+        most.</p>
+        <p>A member with no control options of its own still needs the
+        directive. That covers any member that is only ever included:
+        prototypes, procedure implementations, fragments of code. Its
+        text goes on <code>*&gt; &lt;BLDOBJ TEXT=&quot;…&quot;/&gt;</code>,
+        usually followed closely by
+        <code>*&gt; &lt;BLDOBJ NOBUILD/&gt;</code> (2.3).</p></li>
+        <li><p>The standard option set is exactly the block above. Add
         <code>bnddir(...)</code>, <code>alwnull(*USRCTL)</code>, etc.
-        only when needed.</li>
-        <li>Guard binding-only keywords with
+        only when needed.</p></li>
+        <li><p>Guard binding-only keywords with
         <code>/IF NOT DEFINED(*CRTRPGMOD)</code> so the member compiles
-        as either a bound program or a module.</li>
-        <li>Activation group: <code>*CALLER</code> for
+        as either a bound program or a module.</p></li>
+        <li><p>Activation group: <code>*CALLER</code> for
         called/service-style programs; <code>*NEW</code> for top-level
-        interactive programs (work-with panels, menus).</li>
+        interactive programs (work-with panels, menus).</p></li>
         </ul>
         <p><strong><code>ctl-opt</code> takes <code>BNDDIR</code>. It
         has never taken <code>BNDSRVPGM</code>.</strong> CL&#39;s
@@ -1736,6 +1754,12 @@ dcl-pi TMLOCEXT;</code></pre>
         subprocedure, and closed by a full-width rule. It delegates to
         subprocedures and ends with <code>exsr exitPgm</code> /
         <code>return</code>.</p>
+        <p><strong>Always code the <code>return;</code></strong>, even
+        though the end of the mainline implies it. It goes at the end of
+        <code>exitPgm</code>, after <code>*inLR = *ON;</code>. A program
+        too simple to need an <code>exitPgm</code>, where the mainline
+        is just a few statements, ends its mainline with
+        <code>*inLR = *ON;</code> and <code>return;</code> instead.</p>
         <pre class="rpgle"><code>///
 // main()
 ///</code></pre>
@@ -2116,7 +2140,19 @@ msg = &#39;RBCONSTANT key &quot;&#39; + %trimr(key)
         directives, then:</p>
         <pre class="text"><code>           PGM        PARM(&amp;TSKNAME &amp;#TOLOC ... &amp;PGMXRF)
            COPYRIGHT  TEXT(&#39;(c) Copyright Godsend Consulting, 2020-2026&#39;)
-           DCLPRCOPT  DFTACTGRP(*NO) ACTGRP(*CALLER)</code></pre></li>
+           DCLPRCOPT  DFTACTGRP(*NO) ACTGRP(*CALLER) +
+                        TEXT(&#39;Retrieve Location Attributes&#39;)</code></pre></li>
+        <li><p><strong>The member text goes on
+        <code>DCLPRCOPT TEXT(&#39;…&#39;)</code></strong>, not on a
+        <code>BLDOBJ TEXT</code> directive (1.3), the same as RPG&#39;s
+        <code>ctl-opt text</code> (2.2). The exception is a member that
+        is only ever pulled in with <code>INCLUDE</code>. It has no
+        <code>PGM</code> or <code>DCLPRCOPT</code> of its own, so its
+        text goes on
+        <code>/*&gt; &lt;BLDOBJ TEXT=&quot;…&quot;/&gt; &lt;*/</code>, usually
+        followed closely by
+        <code>/*&gt; &lt;BLDOBJ NOBUILD/&gt; &lt;*/</code>.
+        <code>FWDMSGH</code> is the worked example.</p></li>
         </ul>
         <h3 id="32-layout">3.2 Layout</h3>
         <ul>

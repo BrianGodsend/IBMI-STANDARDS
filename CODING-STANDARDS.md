@@ -263,11 +263,12 @@ through the IFS, and a source physical file member's **text description does not
 survive that trip**. The only place it can be kept is the member itself, so every
 member carries its own:
 
-| Member type          | Where the text goes                |
-| -------------------- | ---------------------------------- |
-| `.CMD`               | `TEXT('…')` on the `CMD` statement |
-| CL (`.CLLE`, `.CLP`) | `TEXT('…')` on `DCLPRCOPT`         |
-| Everything else      | `*> <BLDOBJ TEXT="…"/>`            |
+| Member type                                          | Where the text goes                |
+| ---------------------------------------------------- | ---------------------------------- |
+| `.CMD`                                               | `TEXT('…')` on the `CMD` statement |
+| CL program (`.CLLE`, `.CLP`)                         | `TEXT('…')` on `DCLPRCOPT` (3.1)   |
+| RPG with control options (`.RPGLE`, `.SQLRPGLE`)     | `text('…')` on `ctl-opt` (2.2)     |
+| Everything else, RPG copybooks and CL includes too   | `*> <BLDOBJ TEXT="…"/>`            |
 
 So altering the source is what preserves the source. This applies even to
 members that are never built — a reference-only layout still has member text
@@ -780,6 +781,7 @@ Pacific process phase (3.6) is the standing example.
 //  *>  <BLDOBJ EOF/>
 
 ctl-opt copyright('(c) Copyright Godsend Consulting, 2020-2026');
+ctl-opt text('Retrieve Location Attributes');
 ctl-opt option(*NODEBUGIO: *NOUNREF);
 ctl-opt debug(*CONSTANTS);
 ctl-opt decedit('0.');
@@ -791,7 +793,15 @@ ctl-opt actgrp(*CALLER);
 /ENDIF
 ```
 
-- One keyword per `ctl-opt` statement, `copyright` first.
+- One keyword per `ctl-opt` statement: `copyright` first, then `text`. Where a
+  member carries no copyright (client code), `text` is first.
+- **The member text goes on `ctl-opt text('…')`**, not on a `BLDOBJ TEXT`
+  directive (1.3), 50 characters at most.
+
+  A member with no control options of its own still needs the directive. That
+  covers any member that is only ever included: prototypes, procedure
+  implementations, fragments of code. Its text goes on `*> <BLDOBJ TEXT="…"/>`,
+  usually followed closely by `*> <BLDOBJ NOBUILD/>` (2.3).
 - The standard option set is exactly the block above. Add `bnddir(...)`,
   `alwnull(*USRCTL)`, etc. only when needed.
 - Guard binding-only keywords with `/IF NOT DEFINED(*CRTRPGMOD)` so the member
@@ -1194,6 +1204,11 @@ not evidence that it is still required.
   same as a subroutine or subprocedure, and closed by a full-width rule. It
   delegates to subprocedures and ends with `exsr exitPgm` / `return`.
 
+  **Always code the `return;`**, even though the end of the mainline implies
+  it. It goes at the end of `exitPgm`, after `*inLR = *ON;`. A program too
+  simple to need an `exitPgm`, where the mainline is just a few statements,
+  ends its mainline with `*inLR = *ON;` and `return;` instead.
+
   ```rpgle
   ///
   // main()
@@ -1499,8 +1514,16 @@ not evidence that it is still required.
   ```text
              PGM        PARM(&TSKNAME &#TOLOC ... &PGMXRF)
              COPYRIGHT  TEXT('(c) Copyright Godsend Consulting, 2020-2026')
-             DCLPRCOPT  DFTACTGRP(*NO) ACTGRP(*CALLER)
+             DCLPRCOPT  DFTACTGRP(*NO) ACTGRP(*CALLER) +
+                          TEXT('Retrieve Location Attributes')
   ```
+
+- **The member text goes on `DCLPRCOPT TEXT('…')`**, not on a `BLDOBJ TEXT`
+  directive (1.3), the same as RPG's `ctl-opt text` (2.2). The exception is a
+  member that is only ever pulled in with `INCLUDE`. It has no `PGM` or
+  `DCLPRCOPT` of its own, so its text goes on `/*> <BLDOBJ TEXT="…"/> <*/`,
+  usually followed closely by `/*> <BLDOBJ NOBUILD/> <*/`. `FWDMSGH` is the
+  worked example.
 
 ### 3.2 Layout
 
