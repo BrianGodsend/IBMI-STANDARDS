@@ -148,6 +148,19 @@ BS  06/15/26  Updated documentation to acknowledge that default
   line with two sentences, so that each can be read, counted and struck off on
   its own. **Lowercase**, like every other ILEDoc command (§2.3): `@todo`, never
   `@TODO` or `@ToDo`.
+- **The `@todo` line is a complete summary on its own.** A search for `@todo`
+  shows that line and nothing else, so it must say what is to be done without
+  the lines under it. Detail, where it is worth keeping, follows on
+  continuation lines indented like a `MODIFICATIONS` continuation:
+
+  ```text
+  @todo Record the screen width each procedure needs, in IPPRGMS or IPMENUS.
+         Some procedures require wide mode (27x132), others narrow
+         (24x80), and nothing tells the menu driver which.
+  ```
+
+  A design discussion outgrows a `@todo`. Put it in its own section of the
+  header and have the `@todo` refer to it.
 
 ### 1.3 BLDOBJ build directives
 
