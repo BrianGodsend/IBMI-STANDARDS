@@ -1632,7 +1632,8 @@ Order after `PGM`/`COPYRIGHT`/`DCLPRCOPT`:
 2. **`DCLF`** if the program reads a file (use `OPNID`).
 3. **Named-constant style variables** (`DCL ... VALUE(...)`) used as enums,
    e.g. `&FROMTO_FRM ... VALUE(1)`.
-4. **Locals, alphabetical.**
+4. **Locals, alphabetical**, except that a pointer comes directly before the
+   variables based on it (below).
 5. **`&STDERR` + the global MONMSG** (see 3.4) — always last.
 
 - Structure overlays use `STG(*DEFINED)` with `DEFVAR`, indented two extra
@@ -1646,6 +1647,40 @@ Order after `PGM`/`COPYRIGHT`/`DCLPRCOPT`:
                             LEN(10) DEFVAR(&JOBD 11)
   ```
 
+- **A declared variable's name is at most 10 characters after the `&`.**
+  The compiler counts the `&` too, so its message gives the limit as 11:
+
+  ```text
+  Value '&ARG_TRSPA' for VAR exceeds 11 characters.
+  Variable &ARG_TRSPASS is referred to but not declared.
+  ```
+
+  A field declared by `DCLF` with an `OPNID` is the exception. The compiler
+  names it from the open ID, an underscore and the field name
+  (`&RD_WRKARCSRC`), and that name can be longer.
+- **Abbreviate names the way IBM does: three characters per component.**
+  `&SAVMBR` is *save member*; a name needs a third part now and then, as in
+  `&PRVEDTMBR`, *previous edit member*. Stay short of the full ten unless
+  trimming would leave the name unreadable.
+- **A pointer comes directly before the variables based on it**, whatever
+  the alphabet says. The compiler has to have seen the pointer named on
+  `BASPTR` by the time it reaches the based variable. Declared the other
+  way round, the based variable is not declared at all, and the compile
+  reports every use of it as a missing declaration. That is exactly what
+  sorting the locals strictly produces, because `&FROMCHAR` sorts ahead of
+  `&FROMPTR`. The pair sorts as one, by the pointer's name:
+
+  ```text
+             DCL        VAR(&FROMPTR) TYPE(*PTR)
+             DCL        VAR(&FROMCHAR) TYPE(*CHAR) STG(*BASED) +
+                          LEN(1) BASPTR(&FROMPTR)
+  ```
+
+- A matter of style rather than a rule: an overlay often takes an
+  abbreviation of its base variable's name as a prefix, two letters and an
+  underscore, so `&ROWDTA` has `&RD_NAM` and `&RD_LIB`. With only ten
+  characters, a shorter prefix leaves more room for the part of the name
+  that says which field it is.
 - Qualified-object parameters are `*CHAR 20` (name + library) split with
   overlays, as above.
 - A parameter that can carry special values (`*SAME`, `*N`, generics) is named
