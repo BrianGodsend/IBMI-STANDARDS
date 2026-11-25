@@ -491,8 +491,8 @@ MW  07/21/20  The last change
         <tbody>
         <tr>
         <td><code>.CMD</code></td>
-        <td><code>TEXT(&#39;…&#39;)</code> on the <code>CMD</code>
-        statement</td>
+        <td><code>TEXT(*CMDPMT)</code> on the <code>CMD</code> statement
+        (5)</td>
         </tr>
         <tr>
         <td>CL program (<code>.CLLE</code>, <code>.CLP</code>)</td>
@@ -3048,13 +3048,21 @@ objHi = nam;</code></pre>
 /*&gt; &lt;BLDOBJ EOF/&gt;                                                    &lt;*/
 /*  (c) Copyright Godsend Consulting, 2025-2026 */
              CMD        PROMPT(&#39;Add User&#39;) MSGF(TMMSG) HLPID(*CMD) +
-                          HLPPNLGRP(ADDUSRTM)</code></pre>
+                          HLPPNLGRP(ADDUSRTM) TEXT(*CMDPMT)</code></pre>
         <ul>
         <li>Every command declares <code>PROMPT</code>,
         <code>MSGF(TMMSG)</code> (or product message file),
         <code>HLPID(*CMD)</code>, and
         <code>HLPPNLGRP(&lt;own name&gt;)</code> — help is not
         optional.</li>
+        <li><strong>The command&#39;s text is its prompt:
+        <code>TEXT(*CMDPMT)</code>.</strong> Writing the prompt a second
+        time as <code>TEXT(&#39;Add User&#39;)</code> adds nothing but a second
+        literal to keep in step with the first. Write the text out only
+        for a command with no prompt — <code>PROMPT</code> omitted or
+        <code>PROMPT(*NONE)</code> — where there is nothing for
+        <code>*CMDPMT</code> to refer to. <code>ADDTXTDIR</code> applies
+        the same rule when it writes the keyword.</li>
         <li><code>PARM</code> conventions:
         <ul>
         <li><p><code>EXPR(*YES)</code> on user-enterable

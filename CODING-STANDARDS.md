@@ -276,12 +276,12 @@ through the IFS, and a source physical file member's **text description does not
 survive that trip**. The only place it can be kept is the member itself, so every
 member carries its own:
 
-| Member type                                          | Where the text goes                |
-| ---------------------------------------------------- | ---------------------------------- |
-| `.CMD`                                               | `TEXT('…')` on the `CMD` statement |
-| CL program (`.CLLE`, `.CLP`)                         | `TEXT('…')` on `DCLPRCOPT` (3.1)   |
-| RPG with control options (`.RPGLE`, `.SQLRPGLE`)     | `text('…')` on `ctl-opt` (2.2)     |
-| Everything else, RPG copybooks and CL includes too   | `*> <BLDOBJ TEXT="…"/>`            |
+| Member type                                          | Where the text goes                        |
+| ---------------------------------------------------- | ------------------------------------------ |
+| `.CMD`                                               | `TEXT(*CMDPMT)` on the `CMD` statement (5) |
+| CL program (`.CLLE`, `.CLP`)                         | `TEXT('…')` on `DCLPRCOPT` (3.1)           |
+| RPG with control options (`.RPGLE`, `.SQLRPGLE`)     | `text('…')` on `ctl-opt` (2.2)             |
+| Everything else, RPG copybooks and CL includes too   | `*> <BLDOBJ TEXT="…"/>`                    |
 
 So altering the source is what preserves the source. This applies even to
 members that are never built — a reference-only layout still has member text
@@ -2262,11 +2262,17 @@ CREATE OR REPLACE TABLE ... (
 /*> <BLDOBJ EOF/>                                                    <*/
 /*  (c) Copyright Godsend Consulting, 2025-2026 */
              CMD        PROMPT('Add User') MSGF(TMMSG) HLPID(*CMD) +
-                          HLPPNLGRP(ADDUSRTM)
+                          HLPPNLGRP(ADDUSRTM) TEXT(*CMDPMT)
 ```
 
 - Every command declares `PROMPT`, `MSGF(TMMSG)` (or product message file),
   `HLPID(*CMD)`, and `HLPPNLGRP(<own name>)` — help is not optional.
+- **The command's text is its prompt: `TEXT(*CMDPMT)`.** Writing the prompt a
+  second time as `TEXT('Add User')` adds nothing but a second literal to keep
+  in step with the first. Write the text out only for a command with no
+  prompt — `PROMPT` omitted or `PROMPT(*NONE)` — where there is nothing for
+  `*CMDPMT` to refer to. `ADDTXTDIR` applies the same rule when it writes the
+  keyword.
 - `PARM` conventions:
   - `EXPR(*YES)` on user-enterable parameters.
   - Mixed-case text parameters: `TYPE(*CHAR) LEN(n) CASE(*MIXED)`, **fixed
