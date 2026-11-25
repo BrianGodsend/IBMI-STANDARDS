@@ -344,7 +344,7 @@ whoever notices it next.
   | Source file                                                                            | Line (`SRCDTA`) | Record length |
   | -------------------------------------------------------------------------------------- | --------------- | ------------- |
   | `QRPGLESRC`                                                                            | **100**         | 112           |
-  | `QPNLSRC`                                                                              | **134**         | 146           |
+  | `QPNLSRC`, `QSHSRC`                                                                    | **134**         | 146           |
   | `QTXTSRC`                                                                              | **132**         | 144           |
   | Everything else — `QCLSRC`, `QCMDSRC`, `QSQLSRC`, `QDDSSRC`, `QREXSRC`, `QMNUSRC`, ... | **80**          | 92            |
 
